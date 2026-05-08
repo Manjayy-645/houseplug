@@ -62,7 +62,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   else query = query.order("created_at", { ascending: false })
 
   const { data, count } = await query.range(from, to)
-  const listings = (data ?? []) as Listing[]
+  const listings = (data ?? []) as unknown as Listing[]
   const total = count ?? 0
   const totalPages = Math.max(Math.ceil(total / PER_PAGE), 1)
 
