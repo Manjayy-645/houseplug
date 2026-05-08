@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestPort | Student Housing Near UniPort</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#855300",
+                    "on-primary-container": "#86af99",
+                    "surface-variant": "#dce2f3",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-fixed": "#002113",
+                    "on-secondary-container": "#684000",
+                    "inverse-on-surface": "#ebf1ff",
+                    "tertiary": "#002d1c",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#fea619",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#a5d0b9",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-surface": "#151c27",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed": "#2a1700",
+                    "tertiary-container": "#00452d",
+                    "on-background": "#151c27",
+                    "inverse-surface": "#2a313d",
+                    "outline": "#717973",
+                    "background": "#f9f9ff",
+                    "primary-fixed": "#c1ecd4",
+                    "on-primary-fixed": "#002114",
+                    "surface-tint": "#3f6653",
+                    "surface-container-high": "#e2e8f8",
+                    "surface-container-low": "#f0f3ff",
+                    "surface-container": "#e7eefe",
+                    "on-tertiary-container": "#1abc84",
+                    "surface-container-highest": "#dce2f3",
+                    "surface": "#f9f9ff",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "on-secondary": "#ffffff",
+                    "outline-variant": "#c1c8c2",
+                    "primary": "#012d1d",
+                    "on-surface-variant": "#414844",
+                    "primary-fixed-dim": "#a5d0b9",
+                    "surface-dim": "#d3daea",
+                    "secondary-fixed": "#ffddb8",
+                    "surface-bright": "#f9f9ff",
+                    "on-primary-fixed-variant": "#274e3d",
+                    "tertiary-fixed": "#6ffbbe",
+                    "primary-container": "#1b4332",
+                    "tertiary-fixed-dim": "#4edea3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "md": "16px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "gutter": "16px",
+                    "sm": "12px",
+                    "container-margin": "20px",
+                    "xs": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-lg": ["Inter"],
+                    "title-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "display-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "label-lg": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                    "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .bg-glass {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-background">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm transition-all duration-200">
+<div class="flex justify-between items-center h-16 px-5 md:px-20 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-emerald-900 dark:text-emerald-100">NestPort</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="font-inter text-sm font-semibold text-emerald-700 dark:text-emerald-400 border-b-2 border-emerald-700 py-1" href="#">Browse Listings</a>
+<a class="font-inter text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors" href="#">List Property</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<a class="hidden md:block font-inter text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-emerald-700 dark:hover:text-emerald-300" href="#">Login</a>
+<button class="bg-secondary-container text-primary font-label-lg px-6 py-2.5 rounded-lg active:scale-95 transition-all shadow-sm">
+                    Find a Room
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Hero Section -->
+<section class="relative min-h-[870px] flex items-center justify-center overflow-hidden bg-primary-container">
+<div class="absolute inset-0 opacity-40">
+<img class="w-full h-full object-cover" data-alt="A brightly lit, modern student apartment interior featuring a comfortable bed, a clean study desk with a laptop, and large windows overlooking a lush green campus environment. The space is decorated with minimalist furniture and academic books, bathed in warm afternoon sunlight to create a cozy and reliable atmosphere for University of Port Harcourt students. The color palette is dominated by soft whites and natural wood tones with emerald green accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6fk3q7Adz4eP4TnedaWOHHAdP9eILRmwl7-lXQKJSvTf4y7iRgcRod68gIzsNTPy1sascWEYJ3mtaMuLVGtexGoi8o1Vddrzb3i7rJcvFWyanJHfQRr9qjzkz4cZ02YsDBoefks3lfvQ67jPiPMaaNo0VrXhtsysgh21AcPZakGu-VYJHVLkzq3XjW4QapjpVYaHefEvWFb7A2o9Ns55PO7EM9XRdNjQkyDB0LetS6sJCMwCUoMFF9RfmUscMGVm9qN6CyOvhcTuW"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-transparent"></div>
+<div class="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-20 text-center">
+<h1 class="font-display-lg text-white mb-6 text-4xl md:text-6xl max-w-4xl mx-auto">
+                    Find Your Perfect Student Home Near UniPort
+                </h1>
+<p class="font-body-lg text-on-primary-container mb-12 max-w-2xl mx-auto opacity-90">
+                    Verified rooms and apartments trusted by University of Port Harcourt students. Secure your next home with confidence.
+                </p>
+<!-- Search Bar -->
+<div class="bg-white p-4 md:p-2 rounded-xl md:rounded-full shadow-xl max-w-5xl mx-auto flex flex-col md:flex-row gap-2 items-center border border-white/20">
+<div class="w-full md:w-1/3 flex items-center px-4 gap-3 border-b md:border-b-0 md:border-r border-gray-100 py-3 md:py-0">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<div class="text-left">
+<span class="block text-[10px] uppercase font-bold text-gray-400">Location</span>
+<input class="w-full border-none p-0 text-primary font-semibold focus:ring-0 placeholder:text-gray-300" placeholder="Near UniPort" type="text"/>
+</div>
+</div>
+<div class="w-full md:w-1/3 flex items-center px-4 gap-3 border-b md:border-b-0 md:border-r border-gray-100 py-3 md:py-0">
+<span class="material-symbols-outlined text-primary" data-icon="home_work">home_work</span>
+<div class="text-left w-full">
+<span class="block text-[10px] uppercase font-bold text-gray-400">Room Type</span>
+<select class="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent">
+<option>Self-con</option>
+<option>1-Bedroom</option>
+<option>Shared</option>
+</select>
+</div>
+</div>
+<div class="w-full md:w-1/3 flex items-center px-4 gap-3 py-3 md:py-0">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+<div class="text-left w-full">
+<span class="block text-[10px] uppercase font-bold text-gray-400">Price Range</span>
+<select class="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent">
+<option>₦50k – ₦100k</option>
+<option>₦100k – ₦200k</option>
+<option>₦200k+</option>
+</select>
+</div>
+</div>
+<button class="w-full md:w-auto bg-secondary-container hover:bg-orange-500 text-primary font-label-lg px-8 py-4 rounded-lg md:rounded-full whitespace-nowrap transition-colors active:scale-95">
+                        Search Rooms
+                    </button>
+</div>
+</div>
+</section>
+<!-- Trust Bar -->
+<section class="py-12 bg-white border-b border-gray-100">
+<div class="max-w-7xl mx-auto px-5 md:px-20">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+<div class="flex items-center justify-center gap-4 p-4">
+<div class="bg-primary-fixed p-3 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="verified">verified</span>
+</div>
+<span class="font-title-md text-primary">500+ Verified Listings</span>
+</div>
+<div class="flex items-center justify-center gap-4 p-4 border-y md:border-y-0 md:border-x border-gray-100">
+<div class="bg-primary-fixed p-3 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="group">group</span>
+</div>
+<span class="font-title-md text-primary">Trusted by 2,000+ Students</span>
+</div>
+<div class="flex items-center justify-center gap-4 p-4">
+<div class="bg-primary-fixed p-3 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="badge">badge</span>
+</div>
+<span class="font-title-md text-primary">Landlords Verified by ID</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Listings -->
+<section class="py-20 max-w-7xl mx-auto px-5 md:px-20">
+<div class="flex justify-between items-end mb-12">
+<div>
+<h2 class="font-display-md text-primary mb-2">Rooms Near Campus</h2>
+<p class="text-gray-500 font-body-md">Handpicked quality accommodation in Choba, Abuja, and Aluu.</p>
+</div>
+<a class="text-emerald-700 font-label-lg hover:underline hidden md:block" href="#">View all listings</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all group cursor-pointer">
+<div class="relative aspect-[16/9] overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A spacious and modern self-contained apartment room with polished tiles, a fresh coat of white paint, and a large window providing ample natural light. The room is unfurnished but reflects a high-end, clean finish typical of premium student housing near University of Port Harcourt. The lighting is bright and airy, emphasizing the clean lines and security features of the building." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxFDpJhqYULPLsmb7MVEBt8L3C1oxdd7TPPN-iFKbHIS_1JYxxm2Hg_T4rZw2iWCpnZR5HeEWfJmX57sA4wsxvTtwmqXD7c4KpgIfwe7NPvDRyB10GzLWUDv_AY_CNXbPpX6_p9PgRfD8EquHeVJVw5j_fgYTvKGpqHTBeXGvZeQaV2zkxgVGOlEmOkdQaF86przDnKg94Q9b6Ssl8UCNaFTGdQwOAbciXcSdnMtr8e3CYaRAwNfoUb0EujqWl3uyRkqfWfS9JowI4"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-white/90 backdrop-blur px-3 py-1 rounded-sm text-[10px] font-bold uppercase text-primary">Self-con</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-primary truncate">Green Court Annex</h3>
+<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="verified" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                Verified
+                            </span>
+</div>
+<p class="text-gray-500 font-label-sm mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+                            8 mins from main gate
+                        </p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<div>
+<span class="text-primary font-bold text-xl">₦85,000</span>
+<span class="text-gray-400 text-xs">/yr</span>
+</div>
+<span class="text-gray-500 font-label-sm">Mr. Okezie</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all group cursor-pointer">
+<div class="relative aspect-[16/9] overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A stylishly decorated studio apartment with contemporary furniture, including a compact workstation and a comfortable bed with neutral-colored linens. The interior design is professional and modern, featuring warm ambient lighting and soft green wall accents that align with the NestPort brand identity. The photography is high-contrast and high-resolution, suitable for a premium property listing." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD20VT81pgMkSSr46vVo4qLjcVoPLJp8Cw-oFQQrMB1YFE095ZMglbbc3uSqYLaI05wy1fE6gwDqtPlY3rzEE_7wryl5fiA5JFlKORaIKt4v95RVsnHW3vwN6iOSJgaAm0grmVYwsac4gDex1ahEucQyV9r_qxl5eYveYsO63H0wa5CmHQozPw8E6E3BexfqKeUc76rrfEqeuG5mMhgI1HQAVQoiEVJoTt1mp7h6hKc51O5A7_XBQU0scHEQR7DBwi374u_3gV28y7B"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-white/90 backdrop-blur px-3 py-1 rounded-sm text-[10px] font-bold uppercase text-primary">1-Bedroom</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-primary truncate">Aluu Scholar Lodge</h3>
+<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="verified" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                Verified
+                            </span>
+</div>
+<p class="text-gray-500 font-label-sm mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+                            15 mins from campus
+                        </p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<div>
+<span class="text-primary font-bold text-xl">₦120,000</span>
+<span class="text-gray-400 text-xs">/yr</span>
+</div>
+<span class="text-gray-500 font-label-sm">Estate Mgt</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_16px_rgba(0,0,0,0.08)] transition-all group cursor-pointer">
+<div class="relative aspect-[16/9] overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A vibrant student dormitory space designed for community living, featuring bunk beds and organized storage lockers. The room is clean, brightly lit with natural daylight, and decorated with posters and academic materials. The overall aesthetic is reliable and aspiring, reflecting a safe and focused environment for students. The photograph uses a wide-angle lens to capture the functional layout of the shared accommodation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOZezN2154PjmAemVmf3rwLHVfcCK7TgemaYlNnTkzyAPN_rmPxDhBrNqitKFpUWerTKbgqwxKsMflU7mjM54ndkfN9n4p53sjPNzugUE7HHXNzsHAqIqXw9M4Zyo1uE86UYpB339XAWz5gwb_7JNqa7O59TNtfUTI9ZmjVWQp_jbczGu7zvWTSzfiY0y_7eY4k9dr_wKxXj7YMq82EVCsihr6dXU38-63Aaoa0pYpSQwRX12FRmq2ItgV7ckJiiMw1U94vO1_aqwq"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-white/90 backdrop-blur px-3 py-1 rounded-sm text-[10px] font-bold uppercase text-primary">Shared</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+</div>
+<div class="p-5">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-title-md text-primary truncate">Abuja Campus Suites</h3>
+<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="verified" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified</span>
+                                Verified
+                            </span>
+</div>
+<p class="text-gray-500 font-label-sm mb-4 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="near_me">near_me</span>
+                            5 mins from gate
+                        </p>
+<div class="flex justify-between items-center pt-4 border-t border-gray-50">
+<div>
+<span class="text-primary font-bold text-xl">₦60,000</span>
+<span class="text-gray-400 text-xs">/yr</span>
+</div>
+<span class="text-gray-500 font-label-sm">Mrs. Benson</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- How It Works -->
+<section class="py-24 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-5 md:px-20">
+<div class="text-center mb-16">
+<h2 class="font-display-md text-primary mb-4">Finding a home is easy</h2>
+<div class="h-1 w-20 bg-secondary-container mx-auto rounded-full"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<div class="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-primary-fixed rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="search">search</span>
+</div>
+<h3 class="font-title-lg text-primary mb-3">1. Search</h3>
+<p class="text-gray-500 font-body-md">Browse through hundreds of verified listings near UniPort with high-quality photos and clear prices.</p>
+</div>
+<div class="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-primary-fixed rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="chat">chat</span>
+</div>
+<h3 class="font-title-lg text-primary mb-3">2. Contact</h3>
+<p class="text-gray-500 font-body-md">Connect directly with landlords via WhatsApp or phone. No agents, no hidden commissions.</p>
+</div>
+<div class="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+<div class="w-16 h-16 bg-primary-fixed rounded-2xl flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="house">house</span>
+</div>
+<h3 class="font-title-lg text-primary mb-3">3. Move In</h3>
+<p class="text-gray-500 font-body-md">Schedule a physical inspection, pay securely, and settle into your perfect new student home.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-20 bg-primary">
+<div class="max-w-4xl mx-auto text-center px-5">
+<h2 class="font-display-md text-white mb-6">Ready to find your next home?</h2>
+<p class="font-body-lg text-on-primary-container mb-10 opacity-80">Don't wait until the semester starts. Secure your spot today.</p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button class="bg-secondary-container text-primary font-label-lg px-10 py-4 rounded-lg hover:shadow-lg transition-all active:scale-95">Browse Listings</button>
+<button class="bg-transparent border border-white/20 text-white font-label-lg px-10 py-4 rounded-lg hover:bg-white/10 transition-all">List Your Property</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-5 md:px-20 bg-gray-50 dark:bg-slate-950 border-t border-gray-200 dark:border-gray-800 transition-all duration-300">
+<div class="flex flex-col md:flex-row justify-between items-start gap-12 max-w-7xl mx-auto">
+<div class="max-w-xs">
+<span class="text-lg font-bold text-emerald-900 dark:text-emerald-100 block mb-4">NestPort</span>
+<p class="font-inter text-sm text-gray-500 dark:text-gray-400 mb-6">Student housing, simplified. We connect University of Port Harcourt students with reliable accommodation.</p>
+<div class="flex gap-4">
+<a class="text-gray-400 hover:text-emerald-700 transition-colors" href="#"><span class="material-symbols-outlined" data-icon="facebook">social_leaderboard</span></a>
+<a class="text-gray-400 hover:text-emerald-700 transition-colors" href="#"><span class="material-symbols-outlined" data-icon="public">public</span></a>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-12">
+<div>
+<h4 class="font-bold text-emerald-900 dark:text-emerald-100 mb-6 text-sm uppercase tracking-wider">Navigation</h4>
+<ul class="space-y-4">
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">About Us</a></li>
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">List Property</a></li>
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">Contact Support</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-bold text-emerald-900 dark:text-emerald-100 mb-6 text-sm uppercase tracking-wider">Legal</h4>
+<ul class="space-y-4">
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">Safety Guide</a></li>
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">Terms of Service</a></li>
+<li><a class="font-inter text-sm text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all" href="#">Privacy Policy</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="max-w-7xl mx-auto border-t border-gray-100 dark:border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-inter text-sm text-gray-500 dark:text-gray-400">© 2025 NestPort. Built for Nigerian students.</p>
+<div class="flex items-center gap-2 text-gray-400">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span class="text-xs">Port Harcourt, Nigeria</span>
+</div>
+</div>
+</footer>
+</body></html>

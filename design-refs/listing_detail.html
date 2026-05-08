@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Spacious Self-Contained at Ozuoba - NestPort</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1b4332",
+                        "outline": "#717973",
+                        "inverse-on-surface": "#ebf1ff",
+                        "on-primary-fixed-variant": "#274e3d",
+                        "surface-variant": "#dce2f3",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#1abc84",
+                        "surface-container-high": "#e2e8f8",
+                        "secondary": "#855300",
+                        "surface-container": "#e7eefe",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "secondary-container": "#fea619",
+                        "primary": "#012d1d",
+                        "on-background": "#151c27",
+                        "inverse-surface": "#2a313d",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#86af99",
+                        "surface": "#f9f9ff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#002113",
+                        "surface-bright": "#f9f9ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-container": "#684000",
+                        "tertiary-container": "#00452d",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed": "#2a1700",
+                        "surface-container-highest": "#dce2f3",
+                        "background": "#f9f9ff",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "inverse-primary": "#a5d0b9",
+                        "tertiary": "#002d1c",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#414844",
+                        "on-surface": "#151c27",
+                        "surface-tint": "#3f6653",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "outline-variant": "#c1c8c2",
+                        "on-primary-fixed": "#002114",
+                        "tertiary-fixed": "#6ffbbe",
+                        "primary-fixed": "#c1ecd4",
+                        "primary-fixed-dim": "#a5d0b9",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f0f3ff",
+                        "surface-dim": "#d3daea",
+                        "secondary-fixed": "#ffddb8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sm": "12px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "base": "4px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "title-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "display-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "title-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "display-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-emerald-900 dark:text-emerald-500 font-inter text-sm font-medium fixed top-0 w-full z-50 border-b border-gray-100 dark:border-gray-800 shadow-sm flex justify-between items-center h-16 px-5 md:px-20 max-w-7xl mx-auto inset-x-0">
+<a class="text-xl font-bold tracking-tight text-emerald-900 dark:text-emerald-100" href="#">NestPort</a>
+<nav class="hidden md:flex gap-lg items-center">
+<a class="text-emerald-700 dark:text-emerald-400 font-semibold border-b-2 border-emerald-700 h-16 flex items-center hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors active:scale-95 duration-200" href="#">Browse Listings</a>
+<a class="text-gray-600 dark:text-gray-400 h-16 flex items-center hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors active:scale-95 duration-200" href="#">List Property</a>
+</nav>
+<button class="bg-primary-container text-on-primary font-label-lg px-md py-sm rounded-lg hover:bg-on-tertiary-fixed-variant transition-colors active:scale-95 duration-200 flex items-center gap-xs">
+            Find a Room
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[80px] pb-xl px-5 md:px-20 max-w-7xl mx-auto w-full flex flex-col gap-xl">
+<!-- Photo Gallery Bento -->
+<section class="flex flex-col gap-sm relative">
+<div class="h-[300px] md:h-[500px] w-full rounded-xl overflow-hidden relative group">
+<img alt="Main view of a clean, modern student room" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A brightly lit, modern student bedroom interior featuring a neatly made bed with white linens, a wooden study desk with a laptop, and a large window letting in natural sunlight. The room is painted in soft white tones with subtle warm wood accents. The overall aesthetic is clean, minimalist, and highly organized, conveying a peaceful academic environment suitable for a premium student housing platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuoQN3jTao7l2uJ2rTAQQwXasuCI7a0ID5uQXcbDfwrkA1xuog8daKRdQ3TvTIaIoHatiFsXT0a8fun237O17T3nOPPgco3OJxgfIqt_dgSeth7JKIxTmGlnocnJ0-NgW0expKtwTp1YQBRSFQPSxEIuKc5PGtOjr-TdBEzL1NhWZXWPl8O1v5ZNoOAulacKO-xaddYZqhiaYhjs-So-6prbaFF5BTdpFZFn9-tqcYKntf2H6lO3zPois6fzJHtTBzqUzwJnhOp9gY"/>
+<button class="absolute bottom-md right-md bg-surface-container-lowest/90 backdrop-blur-sm text-on-surface font-label-lg px-md py-xs rounded-lg shadow-sm flex items-center gap-xs hover:bg-surface-container-lowest transition-colors border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">grid_view</span>
+                    View all photos
+                </button>
+</div>
+<div class="hidden md:grid grid-cols-4 gap-sm h-[120px]">
+<img alt="Room thumbnail 1" class="w-full h-full object-cover rounded-lg" data-alt="A close up shot of a modern kitchen area in a small apartment. Clean white countertops, a small induction stove, and modern wooden cabinets. Sunlight streams in from a nearby window, creating a warm and inviting atmosphere. The design is compact and efficient, perfect for student living." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWsOURLzdpjhCK276BuvrRjaKfNHey4GsvYs5F-bb4oyeYw366bRTVb0dBdBGSID8Yh0Dv6xxhcoJFsvp-IGlTeS30Zn3MOLJXg8XHtSAdDZlI1UOjEHXCyRxI-deK1BxSQvDGF6lCzOO5E6aJRb0a1ryDk1UBxIh5DqMUkaeaEOHB2eJzCQ42OBlfLIuIPeX1lJ-sqgyWOizYJioQQLZTi08cphekX9X4fhxWVuEfMyS0CddEvHK-BEyf2xKRdCQOus1hhyC4XIJ7"/>
+<img alt="Room thumbnail 2" class="w-full h-full object-cover rounded-lg" data-alt="A clean, minimalist bathroom featuring a glass shower stall, a modern white sink vanity, and light grey tiling. The lighting is bright and even, highlighting the spotless condition of the facilities. A neatly folded white towel hangs on a chrome rack." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKYz7d4CHuRaQKO9LCcBI_wV-QfF9Yfm_5pGioZD-WoCqc6qXBcGRTFS7_z0kx8NveDeoatwX8e3MAPzBW61KnKTZlrzJX7qP6vuPX72l8bf6gKmXDPt7n4aJYj7tzqoE2qYaaXi7F54PO1EpAxZ7e6KN13QcbCcXiO2-wqxy3Dy4AEQQCIWhrrGobDBly5kcs-dYlPtjjV35l6ONVTf3eI-8XM4WjX-SDnjh0tr8eVdSbxfQFXTDewnEMWVuYLT_VrCQIn3ZrbEY_"/>
+<img alt="Room thumbnail 3" class="w-full h-full object-cover rounded-lg" data-alt="A cozy study nook located in the corner of a student apartment. A sleek wooden desk is paired with an ergonomic black chair. Above the desk are floating shelves holding a few textbooks and a small green potted plant. The space is well-lit by a modern desk lamp, creating a focused study environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQ4aRYLx-bdiZ4jIjxeP8a4ZXPwKcHb9NaJdv_hT7o_INX58WyxkqfbmrR2GicX0o9h1zWvQoLyIRa42OugbfjffC-sv40UbXnSm0_FsPt0ytuww5MkTz7CDyGVz77lHf1QrQsTHdAXFx5U1bMqb-MDSUAKM6nrhYWT6AStJq6kWhYcFqllOpyGllSQ2vzeeiQWU7rcHIdKWjC3dAb9MKoAL_8FNaToIXp5D4mynK6G1cgNHUGIYNZLWw4H9_f_x9rHdQkTUREqlsB"/>
+<img alt="Room thumbnail 4" class="w-full h-full object-cover rounded-lg" data-alt="The exterior view of a modern, well-maintained apartment building featuring clean lines, large windows, and secure entry gates. A small paved walkway leads to the entrance, flanked by neat landscaping with vibrant green shrubs. The scene is captured on a clear, sunny day, projecting safety and order." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB12buZKkCoB_NrIvt2VIii9zqKsVSAvb5dW8aeMmi6maX47blBKsoCGb6eM__uo63X8pV8OxdrAz6u7ydllsxOwNN7orjqH399c0a6XYUlLNtXnXNzMa5HdzjNIQLYHt_CHltfdq8ivn-yQJvpLWzx7UEwx-TGpAJVV9GB_euR_TsbcjOTjiFLsbrUwSZQSo-z37w7wD3ykLjrGelmQHBnHOH0-XRYD33OBLASy2yfBRMSKKE46JH3pkf-5--wNkbT0Rv7OHbBzTgZ"/>
+</div>
+</section>
+<!-- Main Layout Split -->
+<div class="flex flex-col lg:flex-row gap-xl relative items-start">
+<!-- Left Column: Content -->
+<div class="flex-1 flex flex-col gap-xl w-full">
+<!-- Listing Header -->
+<div class="flex flex-col gap-md border-b border-outline-variant pb-xl">
+<div class="flex flex-col gap-xs">
+<h1 class="font-display-lg text-display-lg text-on-surface">Spacious Self-Contained at Ozuoba</h1>
+<div class="flex flex-wrap items-center gap-sm mt-xs">
+<span class="bg-secondary-container/20 text-secondary font-label-sm px-xs py-[2px] rounded">Self-con</span>
+<span class="bg-tertiary-fixed/20 text-on-tertiary-fixed-variant font-label-sm px-xs py-[2px] rounded flex items-center gap-[2px]">
+<span class="material-symbols-outlined text-[14px]">verified</span> Verified
+                            </span>
+<span class="bg-surface-variant text-on-surface-variant font-label-sm px-xs py-[2px] rounded flex items-center gap-[2px]">
+<span class="material-symbols-outlined text-[14px]">location_on</span> 12 mins from UniPort gate
+                            </span>
+</div>
+</div>
+<div class="flex items-center gap-xs text-on-surface font-title-md text-title-md">
+<span class="material-symbols-outlined text-secondary-container text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                        4.8 <span class="font-body-md text-body-md text-on-surface-variant underline cursor-pointer ml-xs">· 14 reviews</span>
+</div>
+</div>
+<!-- About -->
+<section class="flex flex-col gap-md border-b border-outline-variant pb-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface">About this room</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">
+                        This newly renovated self-contained apartment offers a perfect blend of comfort and convenience for students. Located in a secure, gated compound in Ozuoba, it features a spacious main room, a private kitchen with modern cabinets, and a clean en-suite bathroom. The property benefits from regular power supply and is just a short commute to the university campus.
+                    </p>
+<button class="font-label-lg text-label-lg text-primary-container flex items-center gap-xs self-start hover:underline mt-xs">
+                        Show more <span class="material-symbols-outlined text-[18px]">expand_more</span>
+</button>
+</section>
+<!-- Room Details Grid -->
+<section class="flex flex-col gap-md border-b border-outline-variant pb-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface">Room Details</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-y-md gap-x-xl">
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Room Type</span>
+<span class="font-label-lg text-on-surface">Self-Contained</span>
+</div>
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Occupancy</span>
+<span class="font-label-lg text-on-surface">1 Person (Max 2)</span>
+</div>
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Size</span>
+<span class="font-label-lg text-on-surface">24 sq meters</span>
+</div>
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Floor</span>
+<span class="font-label-lg text-on-surface">Ground Floor</span>
+</div>
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Furnishing</span>
+<span class="font-label-lg text-on-surface">Unfurnished</span>
+</div>
+<div class="flex justify-between border-b border-surface-variant pb-xs">
+<span class="text-on-surface-variant">Availability</span>
+<span class="font-label-lg text-on-tertiary-container">Available Now</span>
+</div>
+</div>
+</section>
+<!-- Amenities -->
+<section class="flex flex-col gap-md border-b border-outline-variant pb-xl">
+<h2 class="font-title-lg text-title-lg text-on-surface">Amenities</h2>
+<div class="flex flex-wrap gap-sm">
+<div class="border border-outline-variant rounded-full px-md py-xs flex items-center gap-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary-container">water_drop</span>
+<span class="font-body-md">Running water</span>
+</div>
+<div class="border border-outline-variant rounded-full px-md py-xs flex items-center gap-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary-container">security</span>
+<span class="font-body-md">Security</span>
+</div>
+<div class="border border-outline-variant rounded-full px-md py-xs flex items-center gap-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary-container">kitchen</span>
+<span class="font-body-md">Private kitchen</span>
+</div>
+<div class="border border-outline-variant rounded-full px-md py-xs flex items-center gap-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary-container">shower</span>
+<span class="font-body-md">En-suite bathroom</span>
+</div>
+<div class="border border-outline-variant rounded-full px-md py-xs flex items-center gap-xs text-on-surface">
+<span class="material-symbols-outlined text-[20px] text-primary-container">bolt</span>
+<span class="font-body-md">Prepaid Meter</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Sticky Contact Card -->
+<div class="w-full lg:w-[380px] hidden lg:block sticky top-[100px]">
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_8px_16px_rgba(0,0,0,0.08)] border border-surface-variant p-lg flex flex-col gap-lg">
+<div class="flex flex-col gap-xs">
+<div class="font-display-md text-display-md text-primary-container">₦95,000 <span class="font-body-md text-body-md text-on-surface-variant font-normal">/ year</span></div>
+<div class="text-on-surface-variant font-body-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">info</span> Total upfront includes agent fees
+                        </div>
+</div>
+<div class="flex flex-col gap-sm mt-sm">
+<button class="w-full bg-[#25D366] text-white font-label-lg text-label-lg py-sm rounded-lg flex items-center justify-center gap-xs hover:bg-[#1DA851] transition-colors active:scale-95 duration-200">
+                            Contact on WhatsApp
+                        </button>
+<button class="w-full border-2 border-primary-container text-primary-container font-label-lg text-label-lg py-sm rounded-lg flex items-center justify-center gap-xs hover:bg-surface-container transition-colors active:scale-95 duration-200">
+                            Reveal Phone Number
+                        </button>
+</div>
+<div class="bg-surface-container-low p-md rounded-lg flex gap-sm items-start border border-surface-variant mt-sm">
+<span class="material-symbols-outlined text-primary-container">shield</span>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">
+                            This landlord's identity and property ownership have been verified by NestPort.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-gray-50 dark:bg-slate-950 text-emerald-900 dark:text-emerald-500 font-inter text-sm text-gray-500 dark:text-gray-400 w-full py-12 px-5 md:px-20 border-t border-gray-200 dark:border-gray-800 flat no shadows flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto mt-auto">
+<div class="text-lg font-bold text-emerald-900 dark:text-emerald-100">NestPort</div>
+<div class="text-sm">© 2024 NestPort. Built for the UniPort Community.</div>
+<div class="flex flex-wrap gap-4 justify-center">
+<a class="text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300" href="#">About Us</a>
+<a class="text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300" href="#">Safety Guide</a>
+<a class="text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300" href="#">Terms of Service</a>
+<a class="text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300" href="#">Privacy Policy</a>
+<a class="text-gray-500 dark:text-gray-400 hover:underline hover:text-emerald-700 dark:hover:text-emerald-300 transition-all duration-300" href="#">Contact Support</a>
+</div>
+</footer>
+</body></html>

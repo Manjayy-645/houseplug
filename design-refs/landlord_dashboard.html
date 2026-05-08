@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NestPort Landlord Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#c1c8c2",
+                        "primary-fixed-dim": "#a5d0b9",
+                        "primary": "#012d1d",
+                        "on-surface-variant": "#414844",
+                        "surface-dim": "#d3daea",
+                        "secondary-fixed": "#ffddb8",
+                        "tertiary-fixed": "#6ffbbe",
+                        "surface-bright": "#f9f9ff",
+                        "on-primary-fixed-variant": "#274e3d",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "primary-container": "#1b4332",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#dce2f3",
+                        "surface": "#f9f9ff",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "surface-tint": "#3f6653",
+                        "surface-container-low": "#f0f3ff",
+                        "surface-container-high": "#e2e8f8",
+                        "surface-container": "#e7eefe",
+                        "on-tertiary-container": "#1abc84",
+                        "tertiary-container": "#00452d",
+                        "on-background": "#151c27",
+                        "outline": "#717973",
+                        "inverse-surface": "#2a313d",
+                        "background": "#f9f9ff",
+                        "primary-fixed": "#c1ecd4",
+                        "on-primary-fixed": "#002114",
+                        "on-surface": "#151c27",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#2a1700",
+                        "on-secondary-container": "#684000",
+                        "inverse-on-surface": "#ebf1ff",
+                        "tertiary": "#002d1c",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#fea619",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#a5d0b9",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#dce2f3",
+                        "secondary": "#855300",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "on-primary-container": "#86af99",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#002113"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "base": "4px",
+                        "gutter": "16px",
+                        "sm": "12px",
+                        "container-margin": "20px",
+                        "xs": "8px",
+                        "xl": "32px",
+                        "md": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "title-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "display-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "title-lg": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md h-screen flex overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[220px] bg-primary-container text-on-primary flex flex-col justify-between hidden md:flex shrink-0 border-r border-outline-variant/20 relative z-20">
+<div>
+<div class="p-lg">
+<span class="font-display-md text-on-primary tracking-tight">NestPort</span>
+</div>
+<nav class="flex flex-col px-md gap-xs mt-sm">
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg bg-surface-tint/30 text-on-primary font-label-lg transition-colors" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+                    My Listings
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+                    Add New Listing
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">visibility</span>
+                    Views &amp; Contacts
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">star_rate</span>
+                    Reviews
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">subscriptions</span>
+                    Subscription
+                </a>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">person</span>
+                    Profile
+                </a>
+</nav>
+</div>
+<div class="p-md border-t border-surface-tint/30">
+<div class="bg-secondary-container/20 border border-secondary-container/50 rounded-lg p-sm mb-sm flex flex-col gap-base">
+<span class="font-label-sm text-secondary-container uppercase tracking-wider">Current Plan</span>
+<span class="font-title-md text-on-primary">Free Plan</span>
+<span class="font-body-md text-on-primary-container text-xs">1 Active Listing allowed</span>
+</div>
+<a class="flex items-center gap-sm px-sm py-xs rounded-lg text-on-primary-container hover:bg-surface-tint/10 hover:text-on-primary transition-colors font-label-lg" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Logout
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-hidden relative">
+<!-- Top Bar -->
+<header class="h-16 flex items-center justify-between px-container-margin md:px-lg border-b border-surface-container-high bg-surface/80 backdrop-blur-md shrink-0 z-10">
+<div class="flex items-center gap-sm md:hidden">
+<button class="text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-title-lg text-primary tracking-tight">NestPort</span>
+</div>
+<h1 class="font-title-lg text-on-surface hidden md:block">Good morning, Emmanuel 👋</h1>
+<div class="flex items-center gap-md">
+<button class="relative text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<img alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-surface-container-high" data-alt="A close-up portrait of a professional young man with a warm smile, wearing a casual button-down shirt. The lighting is soft and natural, suggesting a friendly and approachable demeanor. The background is slightly blurred, emphasizing the subject's face. The overall aesthetic is clean, modern, and trustworthy, perfectly suited for a landlord profile picture in a premium off-campus housing platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKd-7sqGn59_RTJnoHuHG9WckV6e5hBqrEFepeXMvjMN5zpzfKIPv4yxbM8tyTsZ2C8I6BxDQ8hIImqKm01f7iCOswyoEeKPGaL0dhhqJWBw_D_6_G9SgQkTd4YWguJaP_vfJ9cGKoYj2MjijXZ4v0ipEDqSKNqYlppL6pY_DoQZIxbZjaq3G6_EF1sFMOF4mzwC4MzJ9ENbHzaBSuMEWJ59tCMIx-V3RQAR0o1_FuPhRfMHap3lSlfy76AwxJIOp8d6AIG1f8aNM3"/>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-container-margin md:p-xl space-y-xl bg-background">
+<!-- Upgrade Notice -->
+<div class="bg-secondary-container/10 border border-secondary-container/20 rounded-xl p-md flex items-center justify-between gap-md shadow-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-secondary-container mt-0.5">info</span>
+<div>
+<h3 class="font-label-lg text-on-surface">Upgrade your plan to add more listings</h3>
+<p class="font-body-md text-on-surface-variant">You've reached the limit of 1 active listing on the Free Plan.</p>
+</div>
+</div>
+<button class="bg-secondary-container text-on-secondary-container font-label-lg px-md py-xs rounded-lg shadow-sm hover:brightness-105 transition-all whitespace-nowrap hidden sm:block">View Plans</button>
+</div>
+<!-- Stats Row -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-md md:gap-lg">
+<div class="bg-surface-container-lowest p-md rounded-xl border border-surface-container-high shadow-sm flex flex-col gap-xs">
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">visibility</span>
+<span class="font-label-sm uppercase tracking-wider">Total Views</span>
+</div>
+<span class="font-display-md text-primary">284</span>
+<span class="font-label-sm text-tertiary-container flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +12% this week</span>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-surface-container-high shadow-sm flex flex-col gap-xs">
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">chat</span>
+<span class="font-label-sm uppercase tracking-wider">Total Contacts</span>
+</div>
+<span class="font-display-md text-primary">31</span>
+<span class="font-label-sm text-tertiary-container flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +5 new messages</span>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-surface-container-high shadow-sm flex flex-col gap-xs">
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">home</span>
+<span class="font-label-sm uppercase tracking-wider">Active Listings</span>
+</div>
+<span class="font-display-md text-primary">1</span>
+<span class="font-label-sm text-outline flex items-center gap-1">Max limit reached</span>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-surface-container-high shadow-sm flex flex-col gap-xs">
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-lg">star</span>
+<span class="font-label-sm uppercase tracking-wider">Avg. Rating</span>
+</div>
+<span class="font-display-md text-primary">4.8</span>
+<span class="font-label-sm text-tertiary-container flex items-center gap-1">Based on 12 reviews</span>
+</div>
+</div>
+<!-- My Listings -->
+<section class="space-y-md">
+<div class="flex items-center justify-between">
+<h2 class="font-title-lg text-on-surface">My Listings</h2>
+<button class="bg-secondary-container text-on-secondary-container font-label-lg px-md py-sm rounded-lg shadow-sm hover:brightness-105 transition-all flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="hidden sm:inline">Add New Listing</span>
+</button>
+</div>
+<div class="bg-surface-container-lowest border border-surface-container-high rounded-xl overflow-hidden shadow-sm">
+<!-- Listing Row 1 -->
+<div class="flex flex-col sm:flex-row p-md gap-md border-b border-surface-container-high hover:bg-surface-container-low transition-colors group">
+<div class="w-full sm:w-48 h-32 rounded-lg overflow-hidden shrink-0 relative">
+<img alt="Room interior" class="w-full h-full object-cover" data-alt="A bright, modern bedroom in an off-campus apartment tailored for university students. The room features a neatly made bed with crisp white linens, a minimalist desk setup near a large window, and light wood flooring. Sunlight streams through the window, creating a warm, inviting light-mode aesthetic. The decor is simple and functional, using a palette of soft whites, warm wood tones, and subtle green accents, conveying a sense of academic focus and comfort." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEqtpCmW59-XNW3eoCHIpVIW7EYXBbXv54YxQRFzQC_WK3TSIdFzTablRBfWsnAzUC36N3fg3W9KnTDk8tRK5YDTFUS00KckdsgXw7w8np896y2-syx9CzeFAOt5H3yZfxoAGGK51zwhKGBXq2vVMoUvDLfg-7JIwf19P3jPHDp6GNJ6MzwHSJL7RUj0fqmPOWUeLKG--IFDja0Tv_eHNVIOqxzNdrexDaMO1-SVqwrd28-fPcsO_TEpL7nj06KgYdjBwirpalu6ZB"/>
+<div class="absolute top-xs left-xs bg-tertiary-container text-on-tertiary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed"></span> Active
+                            </div>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-title-md text-on-surface group-hover:text-primary transition-colors">Spacious En-suite Room near Choba Gate</h3>
+<span class="font-title-md text-primary ml-sm whitespace-nowrap">₦180,000<span class="text-xs text-on-surface-variant font-normal">/yr</span></span>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant mt-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-body-md text-sm">Aluu, 5 mins from campus</span>
+</div>
+</div>
+<div class="flex items-center gap-md mt-sm pt-sm border-t border-surface-container-high/50">
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span class="font-label-sm">284 views</span>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span class="font-label-sm">31 contacts</span>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant ml-auto">
+<button class="p-1 hover:bg-surface-container-high rounded text-outline transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded text-outline transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Listing Row 2 -->
+<div class="flex flex-col sm:flex-row p-md gap-md hover:bg-surface-container-low transition-colors group opacity-75 grayscale-[20%]">
+<div class="w-full sm:w-48 h-32 rounded-lg overflow-hidden shrink-0 relative">
+<img alt="Room interior" class="w-full h-full object-cover" data-alt="A compact, well-organized studio apartment designed for a single student. The space includes a comfortable bed, a small kitchenette with modern appliances, and a study area. The lighting is soft and even, highlighting the efficient use of space. The color palette is predominantly neutral with light grey walls and white furniture, creating a clean, distraction-free environment suitable for focused study sessions. The overall mood is practical and peaceful." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6mz-leHDULog8DTkkpjh4VtJTu91BU9-XhBv9VOwmgyngHzqBzuFzfCf_oKk008624TjfiB5r4wLloll8XXoAfGOmWF16UP0hJJWHCsL8egTa4FwjWEvaBoBpkAdx32wxudyQ-T4sOfKkeFxU1JK_oTkKcRCZgZ48tSMsvEte-bd9dOskbIeHShQiKHo26blW2SWgTz_bYcmBLYk-7sGrBi0XGbHuXX46Fv6hK0vZW7D2YB1yXPMVIABQYrEuak19qXzKvpwS5Q2u"/>
+<div class="absolute top-xs left-xs bg-surface-variant text-on-surface-variant border border-outline-variant px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Pending Upgrade
+                            </div>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-title-md text-on-surface group-hover:text-primary transition-colors">Premium Studio Apartment - Abuja Campus</h3>
+<span class="font-title-md text-primary ml-sm whitespace-nowrap">₦250,000<span class="text-xs text-on-surface-variant font-normal">/yr</span></span>
+</div>
+<div class="flex items-center gap-xs text-on-surface-variant mt-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-body-md text-sm">Ozuoba, 10 mins from campus</span>
+</div>
+</div>
+<div class="flex items-center gap-md mt-sm pt-sm border-t border-surface-container-high/50">
+<span class="font-label-sm text-secondary-container bg-secondary-container/10 px-2 py-1 rounded">Requires Pro Plan to activate</span>
+<div class="flex items-center gap-xs text-on-surface-variant ml-auto">
+<button class="p-1 hover:bg-surface-container-high rounded text-outline transition-colors"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1 hover:bg-surface-container-high rounded text-outline transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Navigation Shell Support for Mobile -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest border-t border-surface-container-high pb-safe z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="flex justify-around items-center h-16">
+<button class="flex flex-col items-center gap-1 p-2 text-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span>
+<span class="font-label-sm text-[10px]">Listings</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">chat</span>
+<span class="font-label-sm text-[10px]">Messages</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-[10px]">Profile</span>
+</button>
+</div>
+</nav>
+<!-- Overlay Modal (Hidden by default, showing for structural completeness of prompt) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-container-margin bg-on-background/50 backdrop-blur-sm hidden">
+<div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg max-h-[921px] overflow-y-auto flex flex-col">
+<div class="p-md border-b border-surface-container-high flex justify-between items-center sticky top-0 bg-surface-container-lowest z-10">
+<h2 class="font-title-lg text-on-surface">List Your Property</h2>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+</div>
+<div class="p-md flex-1">
+<div class="mb-lg">
+<div class="flex justify-between font-label-sm text-on-surface-variant mb-xs">
+<span>Step 1 of 4: Basic Details</span>
+<span>25%</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 25%"></div>
+</div>
+</div>
+<form class="space-y-md">
+<div>
+<label class="block font-label-sm text-on-surface mb-xs">Property Title</label>
+<input class="w-full border border-surface-container-high rounded-lg px-sm py-2 font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none" placeholder="e.g. Spacious En-suite Room" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-md">
+<div>
+<label class="block font-label-sm text-on-surface mb-xs">Room Type</label>
+<select class="w-full border border-surface-container-high rounded-lg px-sm py-2 font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none bg-surface-container-lowest text-on-surface">
+<option>Self Con</option>
+<option>1 Bedroom</option>
+<option>Shared Room</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-on-surface mb-xs">Annual Rent (₦)</label>
+<input class="w-full border border-surface-container-high rounded-lg px-sm py-2 font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none" placeholder="150,000" type="number"/>
+</div>
+</div>
+<div>
+<label class="block font-label-sm text-on-surface mb-xs">Distance from Campus</label>
+<select class="w-full border border-surface-container-high rounded-lg px-sm py-2 font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none bg-surface-container-lowest text-on-surface">
+<option>Under 5 mins walk</option>
+<option>5-15 mins walk</option>
+<option>Requires transport</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-on-surface mb-xs">Availability</label>
+<div class="flex gap-sm">
+<label class="flex items-center gap-xs font-body-md text-on-surface cursor-pointer">
+<input checked="" class="text-primary-container focus:ring-primary-container" name="avail" type="radio"/> Available Now
+                            </label>
+<label class="flex items-center gap-xs font-body-md text-on-surface cursor-pointer">
+<input class="text-primary-container focus:ring-primary-container" name="avail" type="radio"/> Coming Soon
+                            </label>
+</div>
+</div>
+</form>
+</div>
+<div class="p-md border-t border-surface-container-high flex justify-end gap-sm sticky bottom-0 bg-surface-container-lowest z-10">
+<button class="px-lg py-2 font-label-lg text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors">Cancel</button>
+<button class="px-lg py-2 bg-primary-container text-on-primary font-label-lg rounded-lg shadow-sm hover:brightness-110 transition-all">Next Step</button>
+</div>
+</div>
+</div>
+</body></html>
