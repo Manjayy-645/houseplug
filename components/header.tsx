@@ -32,7 +32,7 @@ export function Header() {
   const isActive = (path: string) => pathname === path
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm transition-all duration-200">
+    <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 shadow-sm transition-all duration-200">
       <div className="flex justify-between items-center h-16 px-5 md:px-20 max-w-7xl mx-auto">
         <div className="flex items-center gap-8">
           <Link href="/" className="text-xl font-bold tracking-tight text-primary">
@@ -101,7 +101,7 @@ export function Header() {
 
       {/* Mobile Nav */}
       {isOpen && (
-        <div className="fixed inset-0 top-[65px] z-40 bg-white/90 backdrop-blur-xl md:hidden animate-in slide-in-from-top duration-300">
+        <div className="fixed inset-0 top-[65px] z-40 bg-white md:hidden animate-in slide-in-from-top duration-300">
           <nav className="flex flex-col h-full p-6 text-base font-semibold text-on-background">
             <div className="flex flex-col gap-6">
               <Link 
