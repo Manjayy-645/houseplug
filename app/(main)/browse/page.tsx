@@ -80,7 +80,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB] px-4 py-6 lg:px-6">
+    <main className="min-h-screen bg-[#F9FAFB] px-4 py-8 pt-24 lg:px-6 lg:pt-28">
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex flex-col gap-3 lg:block rounded-2xl border border-gray-200 bg-white p-3 lg:p-4 shadow-sm">
           <div className="flex items-center gap-2">

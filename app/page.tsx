@@ -50,7 +50,7 @@ export default async function LandingPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-24 sm:pt-20">
         {/* Hero Section */}
         <section className="relative min-h-[700px] flex items-center justify-center overflow-hidden bg-primary-container">
           <div className="absolute inset-0 opacity-40">
