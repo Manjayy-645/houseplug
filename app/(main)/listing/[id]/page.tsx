@@ -169,7 +169,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   const listing: Listing = {
     ...(listingRowData as Listing),
-    landlord: landlordRowData ?? undefined,
+    landlord: landlordRowData as unknown as any,
     reviews,
     photos: (listingRowData as any).photos ?? [],
     amenities: (listingRowData as any).amenities ?? []
