@@ -1,10 +1,10 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createSupabaseClient(supabaseUrl, serviceKey)
-
 export async function processSuccessfulPayment(transaction: any) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const supabase = createSupabaseClient(supabaseUrl, serviceKey)
+
   const { metadata, reference, amount } = transaction
   const { landlord_id, type, plan, billing_cycle, listing_id, boost_type } = metadata
 
