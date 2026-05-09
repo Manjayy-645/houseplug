@@ -1,7 +1,8 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
@@ -11,19 +12,47 @@ type ListingRowActionsProps = {
 
 export function ListingRowActions({ listingId }: ListingRowActionsProps) {
   const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeactivating, setIsDeactivating] = useState(false)
 
   const onDeactivate = async () => {
-    const supabase = createClient()
-    await supabase.from("listings").update({ status: "inactive" }).eq("id", listingId)
-    router.refresh()
+    if (isDeactivating) return
+    setIsDeactivating(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("listings")
+        .update({ status: "inactive" })
+        .eq("id", listingId)
+
+      if (error) throw error
+      router.refresh()
+    } catch (error: any) {
+      console.error("Error deactivating listing:", error)
+      alert(error.message || "Failed to deactivate listing. Please try again.")
+    } finally {
+      setIsDeactivating(false)
+    }
   }
 
   const onDelete = async () => {
+    if (isDeleting) return
     const confirmed = window.confirm("Delete this listing permanently?")
     if (!confirmed) return
-    const supabase = createClient()
-    await supabase.from("listings").delete().eq("id", listingId)
-    router.refresh()
+
+    setIsDeleting(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from("listings").delete().eq("id", listingId)
+
+      if (error) throw error
+      router.refresh()
+    } catch (error: any) {
+      console.error("Error deleting listing:", error)
+      alert(error.message || "Failed to delete listing. Please try again.")
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
@@ -43,15 +72,19 @@ export function ListingRowActions({ listingId }: ListingRowActionsProps) {
           <button
             type="button"
             onClick={onDeactivate}
-            className="block w-full rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100"
+            disabled={isDeactivating}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
           >
+            {isDeactivating ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
             Deactivate
           </button>
           <button
             type="button"
             onClick={onDelete}
-            className="block w-full rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50"
+            disabled={isDeleting}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
           >
+            {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
             Delete
           </button>
         </div>
