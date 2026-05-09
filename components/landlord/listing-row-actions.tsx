@@ -3,17 +3,20 @@
 import { useState } from "react"
 import Link from "next/link"
 import { MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 type ListingRowActionsProps = {
   listingId: string
+  status: string
 }
 
-export function ListingRowActions({ listingId }: ListingRowActionsProps) {
+export function ListingRowActions({ listingId, status }: ListingRowActionsProps) {
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeactivating, setIsDeactivating] = useState(false)
+  const [isActivating, setIsActivating] = useState(false)
 
   const onDeactivate = async () => {
     if (isDeactivating) return
@@ -32,6 +35,26 @@ export function ListingRowActions({ listingId }: ListingRowActionsProps) {
       alert(error.message || "Failed to deactivate listing. Please try again.")
     } finally {
       setIsDeactivating(false)
+    }
+  }
+
+  const onActivate = async () => {
+    if (isActivating) return
+    setIsActivating(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from("listings")
+        .update({ status: "active" })
+        .eq("id", listingId)
+
+      if (error) throw error
+      router.refresh()
+    } catch (error: any) {
+      console.error("Error activating listing:", error)
+      alert(error.message || "Failed to activate listing. Please try again.")
+    } finally {
+      setIsActivating(false)
     }
   }
 
@@ -69,15 +92,27 @@ export function ListingRowActions({ listingId }: ListingRowActionsProps) {
           <MoreHorizontal className="h-4 w-4" />
         </summary>
         <div className="absolute right-0 z-10 mt-1 w-40 rounded-md border border-gray-200 bg-white p-1 shadow-lg">
-          <button
-            type="button"
-            onClick={onDeactivate}
-            disabled={isDeactivating}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-          >
-            {isDeactivating ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            Deactivate
-          </button>
+          {status === "active" || status === "pending" ? (
+            <button
+              type="button"
+              onClick={onDeactivate}
+              disabled={isDeactivating}
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+            >
+              {isDeactivating ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              Deactivate
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onActivate}
+              disabled={isActivating}
+              className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-emerald-600 hover:bg-emerald-50 disabled:opacity-50"
+            >
+              {isActivating ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              Reactivate
+            </button>
+          )}
           <button
             type="button"
             onClick={onDelete}

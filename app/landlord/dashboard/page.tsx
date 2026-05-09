@@ -176,7 +176,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                   </p>
                 </div>
               </div>
-              <ListingRowActions listingId={listing.id} />
+              <ListingRowActions listingId={listing.id} status={listing.status} />
             </article>
           ))}
 
