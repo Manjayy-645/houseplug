@@ -15,8 +15,13 @@ export async function GET(request: Request) {
     const transaction = await verifyPaystackTransaction(reference)
 
     if (transaction.status === 'success') {
-      await processSuccessfulPayment(transaction)
-      return NextResponse.redirect(new URL('/landlord/dashboard?payment=success', request.url))
+      try {
+        await processSuccessfulPayment(transaction)
+        return NextResponse.redirect(new URL('/landlord/billing?success=true', request.url))
+      } catch (err) {
+        console.error('processSuccessfulPayment failed:', err)
+        return NextResponse.redirect(new URL('/landlord/billing?error=true', request.url))
+      }
     } else {
       const supabase = createClient()
       await supabase
