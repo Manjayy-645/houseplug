@@ -18,7 +18,7 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role")
+    .select("*")
     .eq("id", user.id)
     .single()
 
@@ -50,7 +50,12 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900 lg:flex">
-      <LandlordSidebar plan={plan} listingCount={count ?? 0} listingLimit={listingLimit} />
+      <LandlordSidebar 
+        plan={plan} 
+        listingCount={count ?? 0} 
+        listingLimit={listingLimit} 
+        verificationStatus={profile.verification_status || 'unverified'}
+      />
       <main className="flex-1">{children}</main>
     </div>
   )

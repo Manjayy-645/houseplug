@@ -8,6 +8,17 @@ export type Profile = {
   role: UserRole
   avatar_url?: string
   banned?: boolean
+  verification_status: "unverified" | "pending" | "verified" | "rejected"
+  verification_type?: "identity" | "property"
+  id_document_url?: string
+  id_document_back_url?: string
+  selfie_url?: string
+  id_document_type?: string
+  nin_number?: string
+  property_document_url?: string
+  verification_note?: string
+  verified_at?: string
+  verified_by?: string
   created_at: string
 }
 

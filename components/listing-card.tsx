@@ -12,7 +12,7 @@ type ListingCardProps = {
 
 export function ListingCard({ listing }: ListingCardProps) {
   const photo = listing.photos?.[0]
-  const isVerified = listing.status === "active"
+  const isVerified = listing.landlord?.verification_status === "verified"
   const isFeatured = listing.is_featured
   
   const reviews = listing.reviews ?? []

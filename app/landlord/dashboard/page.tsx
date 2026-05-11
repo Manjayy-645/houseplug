@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Lock, Star } from "lucide-react"
+import { Lock, Star, ShieldAlert } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
@@ -34,7 +34,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
-      .select("full_name")
+      .select("*")
       .eq("id", user.id)
       .single()
   ])
@@ -46,6 +46,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   })) as Review[]
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"
+  const verificationStatus = (profile as any)?.verification_status || 'unverified'
 
   const now = Date.now()
   const activePlan = (subscriptionData?.active && subscriptionData.expires_at && new Date(subscriptionData.expires_at).getTime() > now)
@@ -77,6 +78,26 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
         <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName} 👋</h1>
         <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
       </header>
+
+      {verificationStatus === 'unverified' && (
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+          <div className="flex items-center gap-4">
+             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                <ShieldAlert className="h-6 w-6" />
+             </div>
+             <div>
+                <p className="text-sm font-bold text-amber-900">Verify your identity</p>
+                <p className="text-xs text-amber-700">Students trust verified landlords more. Get verified to show the ✓ badge on all your listings.</p>
+             </div>
+          </div>
+          <Link 
+            href="/landlord/verification" 
+            className="w-full md:w-auto text-center rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
+          >
+            Get Verified Now &rarr;
+          </Link>
+        </div>
+      )}
 
       {isLimitReached ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">

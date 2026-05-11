@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ShieldCheck, Phone, MessageCircle } from "lucide-react"
+import { ShieldCheck, Phone, MessageCircle, ShieldAlert } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick } from "@/app/actions"
@@ -65,12 +65,17 @@ export default function ContactCard({ listing }: ContactCardProps) {
             </div>
           ) : null}
 
-          {listing.status === "active" ? (
-            <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+          {listing.landlord?.verification_status === "verified" ? (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
               <ShieldCheck className="h-4 w-4 text-[#1B4332]" />
               <span>Landlord ID verified by HousePlug</span>
             </div>
-          ) : null}
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+              <ShieldAlert className="h-4 w-4" />
+              <span>Landlord not yet verified — proceed with caution</span>
+            </div>
+          )}
         </div>
       </div>
 

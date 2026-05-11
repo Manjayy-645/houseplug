@@ -12,15 +12,18 @@ import {
   Star,
   User,
   Menu,
-  X
+  X,
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import type { Plan } from "@/types"
+import type { Plan, Profile } from "@/types"
 
 type SidebarProps = {
   plan: Plan
   listingCount: number
   listingLimit: number
+  verificationStatus?: Profile["verification_status"]
 }
 
 const navItems = [
@@ -29,13 +32,16 @@ const navItems = [
   { href: "/landlord/analytics", label: "Stats", icon: Eye },
   { href: "/landlord/reviews", label: "Reviews", icon: Star },
   { href: "/landlord/subscription", label: "Plan", icon: CreditCard },
+  { href: "/landlord/verification", label: "Verification", icon: ShieldCheck },
   { href: "/landlord/profile", label: "Profile", icon: User }
 ]
 
-export function LandlordSidebar({ plan, listingCount, listingLimit }: SidebarProps) {
+export function LandlordSidebar({ plan, listingCount, listingLimit, verificationStatus }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const isUnverified = verificationStatus === "unverified" || verificationStatus === "rejected"
 
   const onLogout = async () => {
     const supabase = createClient()
@@ -59,18 +65,23 @@ export function LandlordSidebar({ plan, listingCount, listingLimit }: SidebarPro
           {navItems.map((item) => {
             const Icon = item.icon
             const active = pathname === item.href
+            const showWarning = item.href === "/landlord/verification" && isUnverified
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-md border-l-4 px-3 py-2.5 text-sm transition ${
+                className={`flex items-center justify-between rounded-md border-l-4 px-3 py-2.5 text-sm transition ${
                   active
                     ? "border-l-[#F59E0B] bg-[#2A5A45] text-white"
                     : "border-l-transparent text-white/85 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </div>
+                {showWarning && <AlertCircle className="h-4 w-4 text-[#F59E0B]" />}
               </Link>
             )
           })}
