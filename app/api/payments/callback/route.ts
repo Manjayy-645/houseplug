@@ -1,38 +1,41 @@
-import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
-import { verifyPaystackTransaction } from "@/lib/paystack"
-import { processSuccessfulPayment } from "@/lib/billing"
+import { NextResponse } from 'next/server'
+import { verifyPaystackTransaction } from '@/lib/paystack'
+import { processSuccessfulPayment } from '@/lib/billing'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const reference = searchParams.get('reference')
 
+  console.log('[CALLBACK] Reference received:', reference)
+
   if (!reference) {
-    return NextResponse.redirect(new URL('/landlord/billing?error=true', request.url))
+    console.error('[CALLBACK] No reference in URL')
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=no_reference`
+    )
   }
 
   try {
     const transaction = await verifyPaystackTransaction(reference)
+    console.log('[CALLBACK] Transaction status:', transaction.status)
+    console.log('[CALLBACK] Transaction metadata:', transaction.metadata)
 
     if (transaction.status === 'success') {
-      try {
-        await processSuccessfulPayment(transaction)
-        return NextResponse.redirect(new URL('/landlord/billing?success=true', request.url))
-      } catch (err) {
-        console.error('processSuccessfulPayment failed:', err)
-        return NextResponse.redirect(new URL('/landlord/billing?error=true', request.url))
-      }
-    } else {
-      const supabase = createClient()
-      await supabase
-        .from('payments')
-        .update({ status: 'failed' })
-        .eq('paystack_reference', reference)
-      
-      return NextResponse.redirect(new URL('/landlord/billing?error=true', request.url))
+      await processSuccessfulPayment(transaction)
+      console.log('[CALLBACK] processSuccessfulPayment completed')
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?success=true`
+      )
     }
+
+    console.error('[CALLBACK] Payment not successful:', transaction.status)
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=payment_failed`
+    )
   } catch (error) {
-    console.error('Payment callback error:', error)
-    return NextResponse.redirect(new URL('/landlord/billing?error=true', request.url))
+    console.error('[CALLBACK] Error:', error)
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=server_error`
+    )
   }
 }

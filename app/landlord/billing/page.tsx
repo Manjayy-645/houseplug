@@ -1,58 +1,65 @@
-"use client"
+'use client'
+import { useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
-import { useEffect, useState } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import Link from "next/link"
-import { CheckCircle2, XCircle, ArrowRight, RefreshCcw } from "lucide-react"
-
-export default function BillingResultPage() {
+export default function BillingPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const success = searchParams.get('success') === 'true'
-  const error = searchParams.get('error') === 'true'
+  const success = searchParams.get('success')
+  const error = searchParams.get('error')
 
-  if (!success && !error) {
-    router.push('/landlord/subscription')
-    return null
+  useEffect(() => {
+    // After successful payment, force router refresh so dashboard 
+    // re-fetches subscription from DB
+    if (success) {
+      router.refresh()
+    }
+  }, [success, router])
+
+  if (success) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 p-6 text-center">
+        <div className="text-6xl">🎉</div>
+        <h1 className="text-2xl font-bold text-[#1B4332]">Payment Successful!</h1>
+        <p className="text-gray-600">Your plan has been upgraded. Your listings are now featured.</p>
+        
+        <Link
+          href="/landlord/dashboard"
+          className="bg-[#1B4332] text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+        >
+          Go to Dashboard
+        </Link>
+      </div>
+    )
   }
 
-  return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center">
-      <div className="max-w-md w-full rounded-3xl border border-gray-100 bg-white p-8 shadow-xl">
-        {success ? (
-          <>
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
-              <CheckCircle2 className="h-12 w-12" />
-            </div>
-            <h1 className="mb-2 text-2xl font-black text-gray-900">Payment Successful!</h1>
-            <p className="mb-8 text-gray-600">
-              Your plan has been updated and your listings have been boosted. Thank you for choosing HousePlug!
-            </p>
-            <Link
-              href="/landlord/dashboard"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B4332] py-4 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:brightness-110 active:scale-95"
-            >
-              Go to Dashboard <ArrowRight className="h-4 w-4" />
-            </Link>
-          </>
-        ) : (
-          <>
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500">
-              <XCircle className="h-12 w-12" />
-            </div>
-            <h1 className="mb-2 text-2xl font-black text-gray-900">Payment Failed</h1>
-            <p className="mb-8 text-gray-600">
-              We couldn't process your payment. Please check your card details or try a different payment method.
-            </p>
-            <Link
-              href="/landlord/subscription"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-4 text-sm font-bold text-white transition hover:bg-gray-800 active:scale-95"
-            >
-              <RefreshCcw className="h-4 w-4" /> Try Again
-            </Link>
-          </>
-        )}
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 p-6 text-center">
+        <div className="text-6xl">❌</div>
+        <h1 className="text-2xl font-bold text-red-600">Payment Failed</h1>
+        <p className="text-gray-600">
+          {error === 'no_reference' && 'No payment reference found.'}
+          {error === 'payment_failed' && 'Your payment was not completed.'}
+          {error === 'server_error' && 'A server error occurred. Contact support.'}
+          {!['no_reference', 'payment_failed', 'server_error'].includes(error) && 'An unknown error occurred.'}
+        </p>
+        
+        <Link
+          href="/landlord/subscription"
+          className="bg-[#F59E0B] text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
+        >
+          Try Again
+        </Link>
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Redirect if accessed directly without params
+  if (!success && !error && typeof window !== 'undefined') {
+    router.push('/landlord/subscription')
+  }
+
+  return null
 }
