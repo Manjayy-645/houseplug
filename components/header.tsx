@@ -67,7 +67,10 @@ export function Header() {
             {user ? (
               <div className="flex items-center gap-4">
                 {role === "admin" && (
-                  <Link href="/admin/listings" className="text-sm font-semibold text-primary">Admin</Link>
+                  <>
+                    <Link href="/admin/users" className="text-sm font-semibold text-primary">Admin</Link>
+                    <Link href="/landlord/dashboard" className="text-sm font-semibold text-gray-600 hover:text-primary">Dashboard</Link>
+                  </>
                 )}
                 {role === "landlord" && (
                   <Link href="/landlord/dashboard" className="text-sm font-semibold text-primary">Dashboard</Link>
@@ -132,13 +135,22 @@ export function Header() {
               {user ? (
                 <>
                   {role === "admin" && (
-                    <Link 
-                      href="/admin/listings" 
-                      onClick={() => setIsOpen(false)}
-                      className="rounded-xl bg-surface-container px-4 py-3 text-center"
-                    >
-                      Admin Panel
-                    </Link>
+                    <>
+                      <Link 
+                        href="/admin/users" 
+                        onClick={() => setIsOpen(false)}
+                        className="rounded-xl bg-surface-container px-4 py-3 text-center mb-2"
+                      >
+                        Admin Panel
+                      </Link>
+                      <Link 
+                        href="/landlord/dashboard" 
+                        onClick={() => setIsOpen(false)}
+                        className="rounded-xl bg-primary px-4 py-3 text-center text-white"
+                      >
+                        Landlord Dashboard
+                      </Link>
+                    </>
                   )}
                   {role === "landlord" && (
                     <Link 
