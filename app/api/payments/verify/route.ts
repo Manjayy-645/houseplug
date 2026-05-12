@@ -54,12 +54,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: subError.message }, { status: 500 })
   }
 
-  // Feature all current active listings for this landlord
-  await service
+  // Restore featured on all active listings (not rejected ones)
+  const { error: featuredError } = await service
     .from("listings")
     .update({ is_featured: true })
     .eq("landlord_id", user.id)
     .eq("status", "active")
+    .is("rejection_reason", null)
+
+  if (featuredError) {
+    console.error('[VERIFY] Failed to restore featured:', featuredError)
+  }
+
+  console.log('[VERIFY] Featured restored for landlord:', user.id)
 
   return NextResponse.json({ success: true })
 }

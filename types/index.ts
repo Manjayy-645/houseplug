@@ -104,11 +104,12 @@ export type Subscription = {
   id: string
   landlord_id: string
   plan: Plan
-  billing_cycle: BillingCycle
+  billing_cycle: BillingCycle | null
   active: boolean
+  expired?: boolean
   amount_paid?: number
   paystack_reference?: string
-  expires_at: string
+  expires_at: string | null
   cancelled_at?: string
   created_at: string
 }

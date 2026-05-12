@@ -2,6 +2,7 @@ import { ListingForm } from "@/components/landlord/listing-form"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
 
 export default async function NewListingPage() {
   const supabase = createClient()
@@ -11,57 +12,42 @@ export default async function NewListingPage() {
 
   if (!user) redirect("/login")
 
-  const [{ data: subscription }, { count }] = await Promise.all([
-    supabase
-      .from("subscriptions")
-      .select("plan, active, expires_at")
-      .eq("landlord_id", user.id)
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("listings")
-      .select("id", { count: "exact", head: true })
-      .eq("landlord_id", user.id)
-      .in("status", ["active", "pending"])
-  ])
+  const subscription = await getLandlordSubscription(user.id)
+  const limit = getListingLimit(subscription.plan)
+  
+  const { count } = await supabase
+    .from("listings")
+    .select("id", { count: "exact", head: true })
+    .eq("landlord_id", user.id)
+    .eq("status", "active")
 
-  const now = Date.now()
-  const activePlan = (subscription?.active && subscription.expires_at && new Date(subscription.expires_at).getTime() > now)
-    ? subscription.plan
-    : "free"
+  const activeCount = count ?? 0
 
-  const limits = {
-    free: 1,
-    pro: 5,
-    business: 1000
-  }
-
-  const currentLimit = limits[activePlan as keyof typeof limits] || 1
-  const isLimitReached = (count ?? 0) >= currentLimit
-
-  if (isLimitReached) {
-    const nextTier = activePlan === "free" ? "Pro" : activePlan === "pro" ? "Business" : null
-    
+  if (activeCount >= limit) {
     return (
-      <div className="p-4 lg:p-8">
-        <div className="max-w-2xl rounded-xl border border-amber-300 bg-amber-50 p-6">
-          <h1 className="text-xl font-semibold text-amber-900">Listing limit reached</h1>
-          <p className="mt-2 text-sm text-amber-800">
-            {activePlan === "business" 
-              ? "You have reached the maximum number of listings allowed for your account."
-              : `Your ${activePlan} plan allows up to ${currentLimit} active ${currentLimit === 1 ? 'listing' : 'listings'}. ${nextTier ? `Upgrade to ${nextTier} to add more.` : ''}`
-            }
-          </p>
-          {nextTier && (
-            <Link 
-              href="/landlord/subscription" 
-              className="mt-4 inline-block rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 transition"
-            >
-              View Plans
-            </Link>
-          )}
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
+        <div className="text-6xl">🔒</div>
+        <h2 className="text-2xl font-bold text-[#111827]">
+          Listing limit reached
+        </h2>
+        <p className="text-gray-600 max-w-md">
+          You have {activeCount} active {activeCount === 1 ? 'listing' : 'listings'} 
+          on your {subscription.plan} plan 
+          {limit !== Infinity ? ` (limit: ${limit})` : ''}.
+          {subscription.expired 
+            ? ' Your plan has expired — renew to add more listings.'
+            : ' Upgrade your plan to add more listings.'
+          }
+        </p>
+        <div className="flex gap-3">
+          <Link href="/landlord/dashboard"
+             className="border border-gray-300 text-gray-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition">
+            Back to Dashboard
+          </Link>
+          <Link href="/landlord/subscription"
+             className="bg-[#F59E0B] text-white px-6 py-3 rounded-lg font-medium hover:brightness-105 transition">
+            {subscription.expired ? 'Renew Plan' : 'Upgrade Plan'}
+          </Link>
         </div>
       </div>
     )
@@ -70,8 +56,7 @@ export default async function NewListingPage() {
   return (
     <div className="p-4 lg:p-8">
       <h1 className="mb-4 text-2xl font-bold text-gray-900">Add New Listing</h1>
-      <ListingForm mode="create" landlordId={user.id} isPro={activePlan !== "free"} />
+      <ListingForm mode="create" landlordId={user.id} isPro={subscription.plan !== "free" && !subscription.expired} />
     </div>
   )
 }
-

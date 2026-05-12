@@ -7,6 +7,7 @@ import { formatNaira, formatDate } from "@/lib/utils"
 import { PLAN_PRICES, BOOST_PRICES } from "@/lib/paystack"
 import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
+import { getLandlordSubscription, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing"
 
 export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly")
@@ -16,6 +17,8 @@ export default function SubscriptionPage() {
   const [listings, setListings] = useState<Listing[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [selectedBoostListings, setSelectedBoostListings] = useState<Record<string, string>>({})
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
   const supabase = createClient()
 
@@ -24,19 +27,19 @@ export default function SubscriptionPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [{ data: subData }, { data: listingsData }, { data: paymentsData }] = await Promise.all([
-        supabase.from("subscriptions").select("*").eq("landlord_id", user.id).maybeSingle(),
+      const [subscriptionData, { data: listingsData }, { data: paymentsData }] = await Promise.all([
+        getLandlordSubscription(user.id),
         supabase.from("listings").select("id, title").eq("landlord_id", user.id).eq("status", "active"),
-        supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }).limit(20)
+        supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false })
       ])
 
-      setSubscription(subData as Subscription)
+      setSubscription(subscriptionData as Subscription)
       setListings(listingsData as Listing[])
       setPayments(paymentsData as Payment[])
       setLoading(false)
     }
     loadData()
-  }, [])
+  }, [supabase])
 
   const handleInitiatePayment = async (payload: any) => {
     setActionLoading(payload.plan || payload.boost_type || 'verification')
@@ -92,12 +95,15 @@ export default function SubscriptionPage() {
     link.click()
   }
 
-  const currentPlan = useMemo(() => {
-    if (!subscription?.active || !subscription.expires_at) return "free"
-    const now = new Date().getTime()
-    const expiry = new Date(subscription.expires_at).getTime()
-    return expiry > now ? subscription.plan : "free"
-  }, [subscription])
+  const currentPlanId = subscription?.plan || "free"
+  const expiringSoon = subscription?.expires_at ? isSubscriptionExpiringSoon(subscription.expires_at) : false
+
+  const paginatedPayments = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return payments.slice(start, start + itemsPerPage)
+  }, [payments, currentPage])
+
+  const totalPages = Math.ceil(payments.length / itemsPerPage)
 
   if (loading) return (
     <div className="flex h-96 items-center justify-center">
@@ -109,32 +115,64 @@ export default function SubscriptionPage() {
     <div className="space-y-10 p-4 lg:p-8 pb-24">
       {/* SECTION 1 — Current Plan Banner */}
       <section>
-        {currentPlan !== "free" ? (
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-emerald-900 p-6 md:p-8 text-white shadow-xl shadow-emerald-900/20">
+        {subscription?.plan !== "free" ? (
+          <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl p-6 md:p-8 text-white shadow-xl ${
+            subscription?.expired ? 'bg-red-900 shadow-red-900/20' : 
+            expiringSoon ? 'bg-amber-700 shadow-amber-900/20' : 
+            'bg-emerald-900 shadow-emerald-900/20'
+          }`}>
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-800 text-emerald-400">
-                <Crown className="h-8 w-8" />
+              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
+                subscription?.expired ? 'bg-red-800 text-red-400' :
+                expiringSoon ? 'bg-amber-600 text-amber-300' :
+                'bg-emerald-800 text-emerald-400'
+              }`}>
+                {subscription?.expired ? <X className="h-8 w-8" /> : <Crown className="h-8 w-8" />}
               </div>
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-emerald-400/80">Active Plan</p>
-                <h2 className="text-3xl font-black capitalize">{currentPlan} Plan</h2>
-                <p className="mt-1 text-emerald-100/80 font-medium">
-                  {subscription?.cancelled_at ? (
-                    `Ending on ${formatDate(subscription.expires_at)}`
+                <div className="flex items-center gap-3">
+                  <p className={`text-sm font-bold uppercase tracking-widest ${
+                    subscription?.expired ? 'text-red-400' :
+                    expiringSoon ? 'text-amber-300' :
+                    'text-emerald-400'
+                  }`}>
+                    {subscription?.expired ? 'Expired Plan' : expiringSoon ? 'Expiring Soon' : 'Active Plan'}
+                  </p>
+                  {subscription?.expired ? (
+                     <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Expired</span>
+                  ) : expiringSoon ? (
+                     <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">⚠ Warning</span>
                   ) : (
-                    `Renews on ${formatDate(subscription?.expires_at || "")}`
+                     <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Active</span>
                   )}
+                </div>
+                <h2 className="text-3xl font-black capitalize">{subscription?.plan} Plan</h2>
+                <p className="mt-1 opacity-80 font-medium">
+                  {subscription?.expired 
+                    ? `Expired on ${formatExpiryDate(subscription.expires_at)} — Listings no longer featured.` 
+                    : subscription?.cancelled_at 
+                    ? `Ending on ${formatExpiryDate(subscription.expires_at)}` 
+                    : `Renews on ${formatExpiryDate(subscription?.expires_at || null)}`
+                  }
                   {" "}&middot; {subscription?.billing_cycle}ly billing
                 </p>
               </div>
             </div>
-            {!subscription?.cancelled_at && (
+            {!subscription?.cancelled_at && !subscription?.expired && (
               <button 
                 onClick={handleCancelSubscription}
                 disabled={actionLoading === 'cancel'}
                 className="text-sm font-bold text-emerald-300 hover:text-white transition underline underline-offset-4"
               >
                 {actionLoading === 'cancel' ? 'Cancelling...' : 'Cancel subscription'}
+              </button>
+            )}
+            {subscription?.expired && (
+              <button 
+                onClick={() => handleInitiatePayment({ type: 'subscription', plan: subscription.plan, billing_cycle: subscription.billing_cycle || 'monthly' })}
+                className="bg-white text-red-900 px-6 py-2.5 rounded-xl font-black text-sm hover:bg-red-50 transition shadow-lg"
+              >
+                Renew Now
               </button>
             )}
           </div>
@@ -194,7 +232,7 @@ export default function SubscriptionPage() {
               features: ["1 active listing", "Standard placement", "Basic analytics", "WhatsApp inquiries"],
               color: "border-gray-200",
               btnText: "Current Plan",
-              active: currentPlan === "free"
+              active: currentPlanId === "free" && !subscription?.expired
             },
             {
               id: "pro",
@@ -204,8 +242,8 @@ export default function SubscriptionPage() {
               features: ["5 active listings", "Featured badge", "Priority placement", "Full analytics dashboard", "Priority support"],
               color: "border-emerald-200 bg-emerald-50/30",
               recommended: true,
-              btnText: currentPlan === "pro" ? "Current Plan" : currentPlan === "business" ? "Downgrade to Pro" : "Upgrade to Pro",
-              active: currentPlan === "pro"
+              btnText: (currentPlanId === "pro" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "pro" ? "Renew Pro" : currentPlanId === "business" ? "Downgrade to Pro" : "Upgrade to Pro",
+              active: currentPlanId === "pro" && !subscription?.expired
             },
             {
               id: "business",
@@ -214,8 +252,8 @@ export default function SubscriptionPage() {
               subtext: billingCycle === "annual" ? "₦10,000 /mo billed yearly" : "billed monthly",
               features: ["Unlimited listings", "Always top of search", "Featured + Verified badges", "Dedicated account manager", "Bulk CSV upload"],
               color: "border-gray-900",
-              btnText: currentPlan === "business" ? "Current Plan" : "Upgrade to Business",
-              active: currentPlan === "business"
+              btnText: (currentPlanId === "business" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "business" ? "Renew Business" : "Upgrade to Business",
+              active: currentPlanId === "business" && !subscription?.expired
             }
           ].map((plan) => (
             <div
@@ -245,10 +283,10 @@ export default function SubscriptionPage() {
               </ul>
 
               <button
-                disabled={plan.active || actionLoading === plan.id}
+                disabled={(plan.active && !subscription?.expired) || actionLoading === plan.id}
                 onClick={() => handleInitiatePayment({ type: 'subscription', plan: plan.id, billing_cycle: billingCycle })}
                 className={`mt-auto w-full rounded-2xl py-4 text-sm font-black transition active:scale-95 ${
-                  plan.active
+                  plan.active && !subscription?.expired
                     ? "bg-gray-100 text-gray-400 cursor-default"
                     : plan.id === 'business'
                       ? "bg-gray-900 text-white hover:bg-gray-800"
@@ -365,14 +403,14 @@ export default function SubscriptionPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {payments.length === 0 ? (
+                {paginatedPayments.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-sm font-medium text-gray-500">
                       No payments found yet.
                     </td>
                   </tr>
                 ) : (
-                  payments.map((p) => (
+                  paginatedPayments.map((p) => (
                     <tr key={p.id} className="hover:bg-gray-50/50 transition">
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-gray-900">
                         {formatDate(p.created_at)}
@@ -404,6 +442,43 @@ export default function SubscriptionPage() {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-50 bg-gray-50/30 px-6 py-4">
+              <p className="text-xs font-bold text-gray-400">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, payments.length)} of {payments.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+                >
+                  <RefreshCcw className="h-4 w-4 -scale-x-100" />
+                </button>
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`h-8 w-8 rounded-lg text-xs font-black transition ${
+                        currentPage === i + 1 ? "bg-[#1B4332] text-white" : "text-gray-400 hover:bg-gray-100"
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                  className="rounded-lg border border-gray-200 bg-white p-2 text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>

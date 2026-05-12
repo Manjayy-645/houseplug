@@ -126,3 +126,68 @@ export async function processSuccessfulPayment(transaction: any) {
     }
   }
 }
+
+export async function getLandlordSubscription(landlord_id: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const supabase = createSupabaseClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+
+  // Get most recent subscription regardless of active status
+  const { data: active } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('landlord_id', landlord_id)
+    .eq('active', true)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  if (active) return { ...active, expired: false }
+
+  // Check if they had a subscription that expired
+  const { data: expired } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('landlord_id', landlord_id)
+    .eq('active', false)
+    .order('expires_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (expired) return { ...expired, expired: true }
+
+  // Never subscribed — return free plan defaults
+  return {
+    plan: 'free',
+    active: true,
+    expired: false,
+    billing_cycle: null,
+    expires_at: null,
+  }
+}
+
+export function getListingLimit(plan: string): number {
+  const limits: Record<string, number> = {
+    free: 1,
+    pro: 5,
+    business: Infinity,
+  }
+  return limits[plan] ?? 1
+}
+
+export function isSubscriptionExpiringSoon(expires_at: string | null): boolean {
+  if (!expires_at) return false
+  const threeDaysFromNow = new Date()
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
+  return new Date(expires_at) < threeDaysFromNow
+}
+
+export function formatExpiryDate(expires_at: string | null): string {
+  if (!expires_at) return "N/A"
+  return new Date(expires_at).toLocaleDateString('en-NG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}

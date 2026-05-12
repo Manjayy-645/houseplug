@@ -1,9 +1,10 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert } from "lucide-react"
+import { Lock, Star, ShieldAlert, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
 import type { Listing, Review } from "@/types"
+import { getLandlordSubscription, getListingLimit, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing"
 
 export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string } }) {
   const supabase = createClient()
@@ -13,30 +14,28 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
   if (!user) return null
 
-  const [{ data: listingsData }, { data: subscriptionData }, { data: reviewsData }, { data: profile }] = await Promise.all([
+  const [
+    { data: listingsData }, 
+    subscription, 
+    { data: profile }, 
+    { data: reviewsData }
+  ] = await Promise.all([
     supabase
       .from("listings")
       .select("*")
       .eq("landlord_id", user.id)
       .order("created_at", { ascending: false }),
-    supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("landlord_id", user.id)
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("reviews")
-      .select("id, listing_id, student_id, rating, comment, created_at, student:profiles(*), listing:listings!inner(landlord_id)")
-      .eq("listing.landlord_id", user.id)
-      .order("created_at", { ascending: false }),
+    getLandlordSubscription(user.id),
     supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
-      .single()
+      .single(),
+    supabase
+      .from("reviews")
+      .select("id, listing_id, student_id, rating, comment, created_at, student:profiles(*), listing:listings!inner(landlord_id)")
+      .eq("listing.landlord_id", user.id)
+      .order("created_at", { ascending: false })
   ])
 
   const listings = (listingsData ?? []) as Listing[]
@@ -45,27 +44,21 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
     student: Array.isArray(review.student) ? review.student[0] : review.student
   })) as Review[]
 
+  const activeListings = listings.filter((l) => l.status === "active")
+  const activeListingsCount = activeListings.length
+  const listingLimit = getListingLimit(subscription.plan)
+  const canAddListing = activeListingsCount < listingLimit
+  const expiringSoon = subscription.expires_at 
+    ? isSubscriptionExpiringSoon(subscription.expires_at) 
+    : false
+
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"
   const verificationStatus = (profile as any)?.verification_status || 'unverified'
 
   const now = Date.now()
-  const activePlan = (subscriptionData?.active && subscriptionData.expires_at && new Date(subscriptionData.expires_at).getTime() > now)
-    ? subscriptionData.plan
-    : "free"
-
-  const limits = {
-    free: 1,
-    pro: 5,
-    business: 1000
-  }
-
-  const currentLimit = limits[activePlan as keyof typeof limits] || 1
-  const isLimitReached = listings.length >= currentLimit
-  const nextTier = activePlan === "free" ? "Pro" : activePlan === "pro" ? "Business" : null
 
   const totalViews = listings.reduce((sum, listing) => sum + (listing.views_count ?? 0), 0)
   const totalClicks = listings.reduce((sum, listing) => sum + (listing.whatsapp_clicks ?? 0), 0)
-  const activeListings = listings.filter((l) => l.status === "active").length
   const avgRating = reviews.length
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 0
@@ -79,54 +72,93 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
         <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
       </header>
 
-      {verificationStatus === 'unverified' && (
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
-          <div className="flex items-center gap-4">
-             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                <ShieldAlert className="h-6 w-6" />
-             </div>
-             <div>
-                <p className="text-sm font-bold text-amber-900">Verify your identity</p>
-                <p className="text-xs text-amber-700">Students trust verified landlords more. Get verified to show the ✓ badge on all your listings.</p>
-             </div>
-          </div>
-          <Link 
-            href="/landlord/verification" 
-            className="w-full md:w-auto text-center rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
-          >
-            Get Verified Now &rarr;
-          </Link>
-        </div>
-      )}
-
-      {isLimitReached ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">
-            {activePlan === "business"
-              ? "You've reached your listing limit. Thank you for your partnership!"
-              : `You've reached your ${activePlan} plan limit (${currentLimit} ${currentLimit === 1 ? 'listing' : 'listings'}). ${nextTier ? `Upgrade to ${nextTier} to add more.` : ''}`}
-          </p>
-          {nextTier && (
-            <Link href="/landlord/subscription" className="mt-2 inline-block text-sm font-semibold text-[#1B4332]">
-              View Plans
+      {/* PRIORITY BANNERS */}
+      <div className="space-y-4">
+        {subscription.expired && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="font-bold text-red-700">Your {subscription.plan} plan has expired</p>
+              <p className="text-sm text-red-600">
+                Your listings are still visible but no longer featured. 
+                You cannot add new listings until you upgrade.
+              </p>
+            </div>
+            <Link href="/landlord/subscription" 
+               className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-red-700 transition">
+              Renew Now
             </Link>
-          )}
-        </div>
-      ) : null}
+          </div>
+        )}
 
-      {searchParams?.payment === 'success' && (
-        <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4">
-          <p className="text-sm font-semibold text-emerald-900">
-            🎉 Payment successful! Your plan has been upgraded.
-          </p>
-        </div>
-      )}
+        {!subscription.expired && expiringSoon && subscription.expires_at && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="font-bold text-amber-700">
+                Your {subscription.plan} plan expires on {formatExpiryDate(subscription.expires_at)}
+              </p>
+              <p className="text-sm text-amber-600">
+                Renew now to avoid losing your featured placement.
+              </p>
+            </div>
+            <Link href="/landlord/subscription"
+               className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-amber-700 transition">
+              Renew Now
+            </Link>
+          </div>
+        )}
+
+        {subscription.plan === 'free' && !subscription.expired && activeListingsCount >= listingLimit && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="font-bold text-amber-700">Free plan limit reached</p>
+              <p className="text-sm text-amber-600">
+                You have used your 1 free listing slot. 
+                Upgrade to Pro to add up to 5 listings.
+              </p>
+            </div>
+            <Link href="/landlord/subscription"
+               className="bg-[#F59E0B] text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:brightness-105 transition">
+              Upgrade to Pro
+            </Link>
+          </div>
+        )}
+
+        {verificationStatus === 'unverified' && !subscription.expired && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+               <ShieldAlert className="h-5 w-5 text-yellow-600" />
+               <div>
+                  <p className="font-bold text-yellow-700">Your account is not verified</p>
+                  <p className="text-sm text-yellow-600">
+                    Verified landlords get more student inquiries. Get the ✓ badge on all your listings.
+                  </p>
+               </div>
+            </div>
+            <Link href="/landlord/verification"
+               className="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-yellow-600 transition">
+              Get Verified
+            </Link>
+          </div>
+        )}
+
+        {searchParams?.payment === 'success' && (
+          <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4">
+            <p className="text-sm font-semibold text-emerald-900">
+              🎉 Payment successful! Your plan has been upgraded.
+            </p>
+          </div>
+        )}
+      </div>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Total Views", value: totalViews.toLocaleString("en-NG"), sub: "Across all listings" },
           { label: "WhatsApp Clicks", value: totalClicks.toLocaleString("en-NG"), sub: "Total contacts" },
-          { label: "Active Listings", value: String(activeListings), sub: `${listings.length} total listings` },
+          { 
+            label: "Active Listings", 
+            value: `${activeListingsCount} / ${listingLimit === Infinity ? '∞' : listingLimit}`, 
+            sub: activeListingsCount >= listingLimit ? "Limit reached — upgrade to add more" : subscription.expired ? "Plan expired" : `${listingLimit - activeListingsCount} slots remaining`
+          },
           { label: "Avg Rating", value: avgRating ? avgRating.toFixed(1) : "0.0", sub: `${reviews.length} reviews` }
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -140,17 +172,27 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
       <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>
-          <Link
-            href={isLimitReached ? "#" : "/landlord/listings/new"}
-            aria-disabled={isLimitReached}
-            className={`rounded-lg px-3 py-2 text-sm font-semibold ${
-              isLimitReached
-                ? "cursor-not-allowed bg-gray-200 text-gray-500"
-                : "bg-[#F59E0B] text-gray-900 hover:brightness-95"
-            }`}
-          >
-            + Add New Listing
-          </Link>
+          <div className="relative group">
+            <Link
+              href={!canAddListing ? "#" : "/landlord/listings/new"}
+              className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
+                !canAddListing
+                  ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                  : "bg-[#1B4332] text-white hover:brightness-110"
+              }`}
+            >
+              + Add New Listing
+            </Link>
+            {!canAddListing && (
+              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 rounded-lg bg-gray-900 p-2 text-[10px] font-bold text-white text-center">
+                {subscription.expired 
+                  ? "Renew your plan to add more listings"
+                  : subscription.plan === 'free'
+                  ? "Upgrade to Pro to add more listings"
+                  : "You've reached your plan limit"}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -183,7 +225,9 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                         ⭐ Featured
                       </span>
-                    ) : activePlan === "free" ? (
+                    ) : (subscription.plan !== "free" && !subscription.expired) ? (
+                      <span className="text-[10px] font-medium text-gray-400">Standard Placement</span>
+                    ) : subscription.plan === "free" ? (
                       <Link href="/landlord/subscription" className="text-[10px] font-medium text-gray-400 hover:text-[#1B4332] hover:underline">
                         Featured &mdash; Upgrade to Pro
                       </Link>
@@ -201,12 +245,14 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
             </article>
           ))}
 
-          {isLimitReached && nextTier ? (
+          {!canAddListing && (
             <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
               <Lock className="mx-auto h-5 w-5 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600 uppercase tracking-wider font-bold">Upgrade to {nextTier} to unlock more listing slots.</p>
+              <p className="mt-2 text-sm text-gray-600 uppercase tracking-wider font-bold">
+                {subscription.expired ? "Renew your plan" : "Upgrade your plan"} to unlock more listing slots.
+              </p>
             </div>
-          ) : null}
+          )}
         </div>
       </section>
 
