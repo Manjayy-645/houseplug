@@ -3,10 +3,37 @@ import Image from "next/image"
 import { Header } from "@/components/header"
 import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
-import { CheckCircle2, Users, BadgeCheck, Search, MessageCircle, Home, ArrowRight, MapPin } from "lucide-react"
+import { CheckCircle2, Users, BadgeCheck, Search, MessageCircle, Home, ArrowRight, MapPin, Plus } from "lucide-react"
+import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
 
 export const revalidate = 3600 // revalidate once per hour
+
+const UniversityLogo = ({ university }: { university: any }) => {
+  // Since we're in a Server Component, we can't use useState for imgError.
+  // For now, we'll rely on the logic that if logoUrl is undefined, we show the initials.
+  // If we had real logos, we'd handle errors in a Client Component or just provide a solid fallback.
+  
+  if (!university.logoUrl) {
+    return (
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center 
+                      text-white font-bold text-sm shadow-inner ${university.bgColor}`}>
+        {university.initials}
+      </div>
+    )
+  }
+  
+  return (
+    <div className="w-12 h-12 relative">
+      <Image
+        src={university.logoUrl}
+        alt={university.name}
+        fill
+        className="object-contain"
+      />
+    </div>
+  )
+}
 
 export default async function LandingPage() {
   // Placeholder featured listings since DB is empty
@@ -97,6 +124,48 @@ export default async function LandingPage() {
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <span className="font-title-md text-primary">Landlords Verified by ID</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Partners/Universities Section */}
+        <section className="bg-gray-50 py-12 border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                Housing for Students at
+              </h2>
+            </div>
+            
+            <div className="flex flex-row items-center justify-start md:justify-center gap-4 overflow-x-auto pb-4 md:pb-0 scrollbar-hide">
+              {UNIVERSITIES.map((uni) => (
+                <Link 
+                  key={uni.id}
+                  href={`/browse?university=${uni.id}`}
+                  className="flex flex-col items-center gap-3 bg-white rounded-xl p-6 shadow-sm border border-gray-100 min-w-[160px] md:min-w-[200px] transition-all hover:shadow-md hover:-translate-y-1 active:scale-95 group"
+                >
+                  <UniversityLogo university={uni} />
+                  <div className="text-center">
+                    <p className="font-bold text-primary group-hover:text-hp-amber transition-colors">
+                      {uni.shortName}
+                    </p>
+                    <p className="text-[10px] text-gray-500 max-w-[140px] truncate">
+                      {uni.name}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+              
+              {/* More Coming Soon Card */}
+              <div className="flex flex-col items-center gap-3 bg-gray-50/50 rounded-xl p-6 border-2 border-dashed border-gray-200 min-w-[160px] md:min-w-[200px] opacity-60">
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                  <Plus className="h-6 w-6" />
+                </div>
+                <div className="text-center">
+                  <p className="font-bold text-gray-400">More Coming</p>
+                  <p className="text-[10px] text-gray-400">Expanding soon</p>
+                </div>
               </div>
             </div>
           </div>

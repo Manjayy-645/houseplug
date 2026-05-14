@@ -4,28 +4,40 @@ export const UNIVERSITIES = [
     name: 'University of Port Harcourt', 
     shortName: 'UniPort',
     area: 'Choba',
-    state: 'Rivers State'
+    state: 'Rivers State',
+    initials: 'UP',
+    bgColor: 'bg-green-700',
+    logoUrl: undefined
   },
   { 
     id: 'rsu', 
     name: 'Rivers State University', 
     shortName: 'RSU',
     area: 'Nkpolu-Oroworukwo',
-    state: 'Rivers State'
+    state: 'Rivers State',
+    initials: 'RSU',
+    bgColor: 'bg-blue-700',
+    logoUrl: undefined
   },
   { 
     id: 'iaue', 
     name: 'Ignatius Ajuru University of Education', 
     shortName: 'IAUE',
     area: 'Rumuola',
-    state: 'Rivers State'
+    state: 'Rivers State',
+    initials: 'IAUE',
+    bgColor: 'bg-purple-700',
+    logoUrl: undefined
   },
   { 
     id: 'kenpoly', 
-    name: 'Ken Saro-Wiwa Polytechnic', 
+    name: "Ken Saro-Wiwa Polytechnic", 
     shortName: 'KenPoly',
     area: 'Bori',
-    state: 'Rivers State'
+    state: 'Rivers State',
+    initials: 'KP',
+    bgColor: 'bg-orange-700',
+    logoUrl: undefined
   },
 ]
 
