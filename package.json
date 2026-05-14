@@ -21,6 +21,7 @@
     "@radix-ui/react-tooltip": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "lucide-react": "latest",
