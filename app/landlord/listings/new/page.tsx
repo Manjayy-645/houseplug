@@ -13,7 +13,7 @@ export default async function NewListingPage() {
   if (!user) redirect("/login")
 
   const subscription = await getLandlordSubscription(user.id)
-  const limit = getListingLimit(subscription.plan)
+  const limit = await getListingLimit(subscription.plan)
   
   const { count } = await supabase
     .from("listings")

@@ -46,10 +46,10 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
   const activeListings = listings.filter((l) => l.status === "active")
   const activeListingsCount = activeListings.length
-  const listingLimit = getListingLimit(subscription.plan)
+  const listingLimit = await getListingLimit(subscription.plan)
   const canAddListing = activeListingsCount < listingLimit
   const expiringSoon = subscription.expires_at 
-    ? isSubscriptionExpiringSoon(subscription.expires_at) 
+    ? await isSubscriptionExpiringSoon(subscription.expires_at) 
     : false
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"

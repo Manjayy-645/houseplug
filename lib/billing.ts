@@ -169,7 +169,7 @@ export async function getLandlordSubscription(landlord_id: string) {
   }
 }
 
-export function getListingLimit(plan: string): number {
+export async function getListingLimit(plan: string): Promise<number> {
   const limits: Record<string, number> = {
     free: 1,
     pro: 5,
@@ -178,14 +178,14 @@ export function getListingLimit(plan: string): number {
   return limits[plan] ?? 1
 }
 
-export function isSubscriptionExpiringSoon(expires_at: string | null): boolean {
+export async function isSubscriptionExpiringSoon(expires_at: string | null): Promise<boolean> {
   if (!expires_at) return false
   const threeDaysFromNow = new Date()
   threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
   return new Date(expires_at) < threeDaysFromNow
 }
 
-export function formatExpiryDate(expires_at: string | null): string {
+export async function formatExpiryDate(expires_at: string | null): Promise<string> {
   if (!expires_at) return "N/A"
   return new Date(expires_at).toLocaleDateString('en-NG', {
     day: 'numeric',
