@@ -41,10 +41,15 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
   ])
 
   const now = Date.now()
-  const activePlan = (subscription?.active && subscription.expires_at && new Date(subscription.expires_at).getTime() > now) 
+  let activePlan = (subscription?.active && subscription.expires_at && new Date(subscription.expires_at).getTime() > now) 
     ? subscription.plan 
     : "free"
     
+  // Admins get unlimited listings (Business plan) automatically
+  if (profile.role === "admin") {
+    activePlan = "business"
+  }
+
   const plan: Plan = activePlan as Plan
   const listingLimit = plan === "business" ? 999 : plan === "pro" ? 5 : 1
 
@@ -54,7 +59,7 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
         plan={plan} 
         listingCount={count ?? 0} 
         listingLimit={listingLimit} 
-        verificationStatus={profile.verification_status || 'unverified'}
+        verificationStatus={profile.role === "admin" ? "verified" : (profile.verification_status || 'unverified')}
       />
       <main className="flex-1">{children}</main>
     </div>

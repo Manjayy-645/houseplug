@@ -12,8 +12,13 @@ export default async function NewListingPage() {
 
   if (!user) redirect("/login")
 
-  const subscription = await getLandlordSubscription(user.id)
-  const limit = await getListingLimit(subscription.plan)
+  const [{ data: profile }, subscription] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    getLandlordSubscription(user.id)
+  ])
+  
+  const isAdmin = profile?.role === "admin"
+  const limit = isAdmin ? Infinity : await getListingLimit(subscription.plan)
   
   const { count } = await supabase
     .from("listings")
@@ -56,7 +61,7 @@ export default async function NewListingPage() {
   return (
     <div className="p-4 lg:p-8">
       <h1 className="mb-4 text-2xl font-bold text-gray-900">Add New Listing</h1>
-      <ListingForm mode="create" landlordId={user.id} isPro={subscription.plan !== "free" && !subscription.expired} />
+      <ListingForm mode="create" landlordId={user.id} isPro={isAdmin || (subscription.plan !== "free" && !subscription.expired)} />
     </div>
   )
 }

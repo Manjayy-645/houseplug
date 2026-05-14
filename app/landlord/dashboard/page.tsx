@@ -44,16 +44,19 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
     student: Array.isArray(review.student) ? review.student[0] : review.student
   })) as Review[]
 
+  const isAdmin = profile?.role === "admin"
   const activeListings = listings.filter((l) => l.status === "active")
   const activeListingsCount = activeListings.length
-  const listingLimit = await getListingLimit(subscription.plan)
+  
+  // Admins get unlimited listings
+  const listingLimit = isAdmin ? Infinity : await getListingLimit(subscription.plan)
   const canAddListing = activeListingsCount < listingLimit
   const expiringSoon = subscription.expires_at 
     ? await isSubscriptionExpiringSoon(subscription.expires_at) 
     : false
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"
-  const verificationStatus = (profile as any)?.verification_status || 'unverified'
+  const verificationStatus = isAdmin ? "verified" : ((profile as any)?.verification_status || 'unverified')
 
   const now = Date.now()
 
