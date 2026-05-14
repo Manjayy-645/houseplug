@@ -1,3 +1,5 @@
+"use server"
+
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function processSuccessfulPayment(transaction: any) {
