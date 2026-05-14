@@ -5,6 +5,7 @@ import { ShieldCheck, Phone, MessageCircle, ShieldAlert } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick } from "@/app/actions"
+import { UNIVERSITIES } from "@/lib/constants"
 
 type ContactCardProps = {
   listing: Listing
@@ -12,6 +13,7 @@ type ContactCardProps = {
 
 export default function ContactCard({ listing }: ContactCardProps) {
   const [showPhone, setShowPhone] = useState(false)
+  const university = UNIVERSITIES.find(u => u.id === listing.university)
 
   const whatsappUrl = useMemo(
     () => buildWhatsAppLink(listing.whatsapp_number, listing.title),

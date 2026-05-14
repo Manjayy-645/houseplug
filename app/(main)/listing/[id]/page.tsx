@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Listing, Review } from "@/types"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
+import { UNIVERSITIES } from "@/lib/constants"
 import PhotoGallery from "@/components/listing/photo-gallery"
 import ContactCard from "@/components/listing/contact-card"
 import AmenitiesGrid from "@/components/listing/amenities-grid"
@@ -37,9 +38,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         ? supabase
             .from("listings")
             .select(`
-              id, landlord_id, title, description, room_type, price_yearly, 
-              distance_from_gate, address, area, landmark, amenities, photos, 
-              status, is_featured, is_urgent, whatsapp_number, views_count
+              *,
+              landlord:profiles(full_name, verification_status)
             `)
             .eq("id", listingId)
             .single()
@@ -97,7 +97,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         distance_from_gate: "5_to_15",
         address: "Scholar Way, Aluu",
         area: "Aluu",
-        landmark: "Near UniPort Main Gate",
+        landmark: "Near University Main Gate",
         amenities: ["Water", "Security", "Parking"],
         photos: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800"],
         status: "active",
@@ -198,7 +198,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               <p className="flex items-center gap-1.5 text-sm font-medium text-gray-500">
                 <span className="text-[#1B4332]">{listing.area}</span>
                 <span className="text-gray-300">·</span>
-                <span>{formatDistance(listing.distance_from_gate)} from gate</span>
+                <span>{formatDistance(listing.distance_from_gate, UNIVERSITIES.find(u => u.id === listing.university)?.shortName)}</span>
               </p>
             </div>
             

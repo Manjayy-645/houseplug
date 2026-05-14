@@ -9,8 +9,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "HousePlug | Student Housing Near UniPort",
-  description: "Verified rooms and apartments trusted by University of Port Harcourt students. Secure your next home with confidence."
+  title: "HousePlug | Find Student Housing Near Your Campus",
+  description: "Verified rooms and apartments for students across Port Harcourt universities. Secure your next home with confidence."
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

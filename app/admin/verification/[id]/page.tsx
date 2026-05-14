@@ -9,18 +9,23 @@ import {
   ShieldAlert, 
   Loader2,
   ChevronLeft,
-  MessageSquare,
   User,
   Phone,
   Mail,
   FileText,
   Calendar,
   ExternalLink,
-  Image as ImageIcon,
   Camera,
-  Clock
+  Clock,
+  LayoutDashboard,
+  Crown,
+  Check,
+  AlertCircle
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { DocumentLightbox } from "@/components/admin/document-lightbox"
+import { formatNaira } from "@/lib/utils"
+import Link from "next/link"
 
 export default function AdminVerificationDetailPage() {
   const { id } = useParams()
@@ -30,304 +35,382 @@ export default function AdminVerificationDetailPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [landlord, setLandlord] = useState<any>(null)
+  const [listings, setListings] = useState<any[]>([])
+  const [subscription, setSubscription] = useState<any>(null)
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const [showRejectModal, setShowRejectModal] = useState(false)
-  const [rejectionReason, setRejectionReason] = useState("")
+  const [rejectionReason, setRejectionReason] = useState("ID document is unclear or unreadable")
+  const [rejectionNote, setRejectionNote] = useState("")
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  
+  // Checklist state
+  const [checklist, setChecklist] = useState({
+    faceMatches: false,
+    idGenuine: false,
+    nameMatches: false,
+    notExpired: false,
+    phoneVerified: false,
+    propertyReviewed: false
+  })
 
   useEffect(() => {
-    async function fetchLandlordData() {
+    async function fetchData() {
       setLoading(true)
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", id)
-        .single()
-      
-      if (error) {
-        console.error("Error fetching landlord:", error)
-        router.push("/admin/verification")
-        return
-      }
-
-      setLandlord(data)
-
-      // Get signed URLs for private images
-      const files = [
-        { key: 'id_front', path: `${id}/id_front` },
-        { key: 'id_back', path: `${id}/id_back` },
-        { key: 'selfie', path: `${id}/selfie` },
-        { key: 'property_doc', path: `${id}/property_doc` }
-      ]
-
-      const urls: Record<string, string> = {}
-      for (const file of files) {
-        const { data: signedData, error: signedError } = await supabase.storage
-          .from('verifications')
-          .createSignedUrl(file.path, 3600)
+      try {
+        const [profileRes, listingsRes, subRes, docsRes] = await Promise.all([
+          supabase.from("profiles").select("*").eq("id", id).single(),
+          supabase.from("listings").select("*").eq("landlord_id", id),
+          supabase.from("subscriptions").select("*").eq("landlord_id", id).eq("active", true).maybeSingle(),
+          fetch(`/api/admin/verification-docs?id=${id}`).then(res => res.json())
+        ])
         
-        if (signedData) {
-          urls[file.key] = signedData.signedUrl
+        if (profileRes.error) {
+          console.error("Error fetching landlord:", profileRes.error)
+          router.push("/admin/verification")
+          return
         }
+
+        setLandlord(profileRes.data)
+        setListings(listingsRes.data || [])
+        setSubscription(subRes.data)
+        setSignedUrls(docsRes.urls || {})
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      } finally {
+        setLoading(false)
       }
-      setSignedUrls(urls)
-      setLoading(false)
     }
-    fetchLandlordData()
+    fetchData()
   }, [id, supabase, router])
 
   const handleApprove = async () => {
     if (!confirm("Are you sure you want to verify this landlord?")) return
 
     setSubmitting(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        verification_status: 'verified',
-        verified_at: new Date().toISOString(),
-        verified_by: user?.id,
-        verification_note: null
+    try {
+      const res = await fetch('/api/admin/verify-landlord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ landlord_id: id, action: 'approve' })
       })
-      .eq("id", id)
-
-    if (error) {
-      alert("Error approving: " + error.message)
-    } else {
+      if (!res.ok) throw new Error(await res.text())
       router.push("/admin/verification")
       router.refresh()
+    } catch (error: any) {
+      alert("Error approving: " + error.message)
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      alert("Please provide a rejection reason.")
-      return
-    }
-
     setSubmitting(true)
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        verification_status: 'rejected',
-        verification_note: rejectionReason
+    try {
+      const res = await fetch('/api/admin/verify-landlord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          landlord_id: id, 
+          action: 'reject', 
+          rejection_reason: rejectionReason,
+          rejection_note: rejectionNote
+        })
       })
-      .eq("id", id)
-
-    if (error) {
-      alert("Error rejecting: " + error.message)
-    } else {
+      if (!res.ok) throw new Error(await res.text())
       router.push("/admin/verification")
       router.refresh()
+    } catch (error: any) {
+      alert("Error rejecting: " + error.message)
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
+
+  const isApproveDisabled = !checklist.faceMatches || !checklist.idGenuine || !checklist.nameMatches || !checklist.notExpired || submitting
 
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#1B4332]" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
+  const lightboxImages = [
+    { url: signedUrls.idFront, label: "Government ID — Front" },
+    { url: signedUrls.idBack, label: "Government ID — Back" },
+    { url: signedUrls.selfie, label: "Selfie holding ID" },
+    { url: signedUrls.propertyDoc, label: "Property Ownership Document" }
+  ].filter(img => img.url)
+
   return (
-    <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-8">
+    <div className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
       <header className="flex items-center gap-4">
         <button 
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-full transition"
+          onClick={() => router.push("/admin/verification")}
+          className="p-2 hover:bg-white rounded-xl border border-gray-100 shadow-sm transition"
         >
-          <ChevronLeft className="h-6 w-6 text-gray-600" />
+          <ChevronLeft className="h-5 w-5 text-gray-600" />
         </button>
         <div>
-          <h1 className="text-2xl font-black text-gray-900">Review Verification</h1>
-          <p className="text-gray-600">Landlord ID: {id}</p>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Review Verification</h1>
+          <p className="text-gray-500 font-medium">Verify identity for {landlord.full_name}</p>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Documents */}
+        {/* Left: Info */}
         <div className="lg:col-span-2 space-y-8">
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-gray-400" /> ID Documents
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Front of ID</p>
-                <a href={signedUrls.id_front} target="_blank" rel="noreferrer" className="block relative aspect-[4/3] rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 hover:opacity-90 transition">
-                  {signedUrls.id_front ? (
-                    <img src={signedUrls.id_front} alt="ID Front" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center text-gray-400">Not provided</div>
-                  )}
-                  <div className="absolute bottom-2 right-2 bg-black/50 p-1.5 rounded-lg text-white">
-                    <ExternalLink className="h-4 w-4" />
-                  </div>
-                </a>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Back of ID</p>
-                <a href={signedUrls.id_back} target="_blank" rel="noreferrer" className="block relative aspect-[4/3] rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 hover:opacity-90 transition">
-                  {signedUrls.id_back ? (
-                    <img src={signedUrls.id_back} alt="ID Back" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center text-gray-400">Not provided</div>
-                  )}
-                  <div className="absolute bottom-2 right-2 bg-black/50 p-1.5 rounded-lg text-white">
-                    <ExternalLink className="h-4 w-4" />
-                  </div>
-                </a>
-              </div>
+          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col md:flex-row gap-8">
+            <div className="h-24 w-24 rounded-3xl bg-primary/5 flex items-center justify-center text-primary font-black text-3xl border border-primary/10 shrink-0">
+              {landlord.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
             </div>
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Camera className="h-5 w-5 text-gray-400" /> Identity Verification (Selfie)
-            </h2>
-            <a href={signedUrls.selfie} target="_blank" rel="noreferrer" className="block relative h-[400px] rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 hover:opacity-90 transition">
-              {signedUrls.selfie ? (
-                <img src={signedUrls.selfie} alt="Selfie" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center text-gray-400">Not provided</div>
-              )}
-              <div className="absolute bottom-4 right-4 bg-black/50 p-2 rounded-lg text-white">
-                <ExternalLink className="h-5 w-5" />
-              </div>
-            </a>
-          </section>
-
-          {landlord.property_document_url && (
-            <section className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-gray-400" /> Property Document
-              </h2>
-              <a href={signedUrls.property_doc} target="_blank" rel="noreferrer" className="flex items-center gap-4 p-6 rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 transition">
-                <FileText className="h-10 w-10 shrink-0" />
-                <div className="flex-1">
-                  <p className="font-bold">Property Ownership Document</p>
-                  <p className="text-sm opacity-80">Click to view full document</p>
+            <div className="flex-1 space-y-4">
+              <div>
+                <h2 className="text-3xl font-black text-gray-900">{landlord.full_name}</h2>
+                <div className="flex flex-wrap gap-4 mt-2">
+                   <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+                      <Mail className="h-4 w-4" /> {landlord.email}
+                   </div>
+                   <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+                      <Phone className="h-4 w-4" /> {landlord.phone}
+                   </div>
+                   <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
+                      <Calendar className="h-4 w-4" /> Joined {new Date(landlord.created_at).toLocaleDateString()}
+                   </div>
                 </div>
-                <ExternalLink className="h-5 w-5" />
-              </a>
-            </section>
-          )}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                 <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${
+                    landlord.verification_status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                    landlord.verification_status === 'verified' ? 'bg-emerald-100 text-emerald-700' :
+                    'bg-red-100 text-red-700'
+                 }`}>
+                    {landlord.verification_status}
+                 </div>
+                 <div className="px-4 py-1.5 rounded-full bg-primary text-white text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                    <Crown className="h-3 w-3" /> {subscription?.plan || 'Free'} Plan
+                 </div>
+                 <div className="px-4 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-black uppercase tracking-widest">
+                    {listings.length} Listings
+                 </div>
+              </div>
+
+              {landlord.verification_note && (
+                <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-black uppercase text-red-800">Previous Rejection Note</p>
+                    <p className="text-sm text-red-700 font-medium mt-1">{landlord.verification_note}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ID FRONT */}
+            <DocumentCard 
+              label="Government ID — Front"
+              url={signedUrls.idFront}
+              idType={landlord.id_document_type}
+              nin={landlord.nin_number}
+              onClick={() => setLightboxIndex(0)}
+            />
+            {/* ID BACK */}
+            <DocumentCard 
+              label="Government ID — Back"
+              url={signedUrls.idBack}
+              onClick={() => setLightboxIndex(1)}
+            />
+            {/* SELFIE */}
+            <DocumentCard 
+              label="Selfie holding ID"
+              url={signedUrls.selfie}
+              note="Verify face matches ID document"
+              onClick={() => setLightboxIndex(2)}
+            />
+            {/* PROPERTY */}
+            <DocumentCard 
+              label="Property Ownership Document"
+              url={signedUrls.propertyDoc}
+              optional
+              onClick={() => setLightboxIndex(3)}
+            />
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+             <h3 className="text-xl font-black text-gray-900 mb-6">Verification Checklist</h3>
+             <div className="space-y-4">
+                {[
+                  { key: 'faceMatches', label: 'Face in selfie matches ID photo', required: true },
+                  { key: 'idGenuine', label: 'ID document appears genuine (not edited)', required: true },
+                  { key: 'nameMatches', label: 'Name on ID matches profile name', required: true },
+                  { key: 'notExpired', label: 'ID is not expired', required: true },
+                  { key: 'phoneVerified', label: 'Phone number verified', required: false },
+                  { key: 'propertyReviewed', label: 'Property document reviewed (if submitted)', required: false }
+                ].map((item) => (
+                  <label key={item.key} className="flex items-center gap-4 p-4 rounded-2xl border border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer group">
+                    <input 
+                      type="checkbox"
+                      checked={(checklist as any)[item.key]}
+                      onChange={(e) => setChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                      className="h-6 w-6 rounded-lg border-2 border-gray-200 text-primary focus:ring-primary transition-all"
+                    />
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-700">{item.label}</p>
+                      {item.required && <span className="text-[10px] font-black uppercase text-red-400">Required</span>}
+                    </div>
+                  </label>
+                ))}
+             </div>
+          </div>
         </div>
 
-        {/* Right: Info & Actions */}
+        {/* Right: Actions */}
         <div className="space-y-6">
-          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">{landlord.full_name}</h3>
-                <p className="text-sm text-gray-500">Registered {new Date(landlord.created_at).toLocaleDateString()}</p>
-              </div>
-            </div>
-
+          <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm sticky top-24">
+            <h3 className="font-black text-gray-900 mb-4 uppercase tracking-widest text-xs">Admin Actions</h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Mail className="h-4 w-4" /> {landlord.email}
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Phone className="h-4 w-4" /> {landlord.phone}
-              </div>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <Calendar className="h-4 w-4" /> ID Type: <span className="font-bold uppercase">{landlord.id_document_type?.replace('_', ' ')}</span>
-              </div>
-              {landlord.nin_number && (
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <ShieldCheck className="h-4 w-4" /> NIN: <span className="font-bold">{landlord.nin_number}</span>
-                </div>
-              )}
+              <button
+                onClick={handleApprove}
+                disabled={isApproveDisabled}
+                className="w-full bg-emerald-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-2"
+              >
+                {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><ShieldCheck className="h-5 w-5" /> Verify Landlord</>}
+              </button>
+              
+              <button
+                onClick={() => setShowRejectModal(true)}
+                disabled={submitting}
+                className="w-full border-2 border-red-100 text-red-500 py-4 rounded-2xl font-black hover:bg-red-50 transition-all flex items-center justify-center gap-2"
+              >
+                <XCircle className="h-5 w-5" /> Reject Verification
+              </button>
             </div>
 
-            <div className="pt-4 border-t border-gray-100">
-              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Current Status</p>
-              {landlord.verification_status === 'pending' ? (
-                <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                  <Clock className="h-4 w-4" /> Under Review
-                </div>
-              ) : landlord.verification_status === 'verified' ? (
-                <div className="bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" /> Verified Landlord
-                </div>
-              ) : (
-                <div className="bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
-                  <XCircle className="h-4 w-4" /> Rejected
-                </div>
-              )}
-            </div>
-
-            {landlord.verification_status === 'pending' && (
-              <div className="grid grid-cols-1 gap-3 pt-4">
-                <button 
-                  onClick={handleApprove}
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 rounded-xl font-bold transition hover:brightness-110 disabled:opacity-50"
-                >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> Verify Identity</>}
-                </button>
-                <button 
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={submitting}
-                  className="w-full flex items-center justify-center gap-2 border border-red-200 text-red-600 py-3 rounded-xl font-bold transition hover:bg-red-50 disabled:opacity-50"
-                >
-                  <XCircle className="h-4 w-4" /> Reject Documents
-                </button>
+            <div className="mt-8 pt-8 border-t border-gray-50 space-y-4">
+              <div className="flex justify-between items-center text-sm font-bold text-gray-400">
+                <span>Active Listings</span>
+                <span className="text-gray-900">{listings.length}</span>
               </div>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-             <h3 className="font-bold text-gray-900 mb-4">Verification Tips</h3>
-             <ul className="text-xs text-gray-500 space-y-2 list-disc pl-4">
-                <li>Ensure the name on ID matches the profile name.</li>
-                <li>Verify that the face in the selfie matches the ID photo.</li>
-                <li>Check that the ID is not expired.</li>
-                <li>If property documents are provided, ensure they mention the landlord's name or area.</li>
-             </ul>
-          </section>
+              <div className="flex justify-between items-center text-sm font-bold text-gray-400">
+                <span>Member Since</span>
+                <span className="text-gray-900">{new Date(landlord.created_at).toLocaleDateString()}</span>
+              </div>
+              <Link 
+                href={`/admin/listings?landlord=${id}`}
+                className="flex items-center justify-center gap-2 text-primary font-black text-xs uppercase tracking-widest hover:underline pt-2"
+              >
+                <LayoutDashboard className="h-4 w-4" /> View All Listings
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Rejection Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Rejection Reason</h3>
-            <p className="text-sm text-gray-600 mb-4">Please specify why you are rejecting these documents. This will be shown to the landlord.</p>
-            
-            <textarea 
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="e.g. ID card photo is blurry, name does not match profile..."
-              className="w-full h-32 rounded-xl border border-gray-200 p-4 text-sm focus:ring-2 focus:ring-[#1B4332]/20 outline-none resize-none mb-4"
-            />
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <DocumentLightbox 
+          images={lightboxImages} 
+          initialIndex={lightboxIndex} 
+          onClose={() => setLightboxIndex(null)} 
+        />
+      )}
 
-            <div className="flex gap-3">
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Reject Verification</h3>
+            <p className="text-gray-500 font-medium mb-8">Please specify why you are rejecting these documents. This will be shown to the landlord.</p>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-black uppercase text-gray-400 mb-2 tracking-widest">Reason Category</label>
+                <select 
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="w-full rounded-2xl border-2 border-gray-100 p-4 font-bold text-gray-700 focus:border-primary outline-none transition-all"
+                >
+                  <option>ID document is unclear or unreadable</option>
+                  <option>Face does not match ID</option>
+                  <option>ID appears to be edited or fake</option>
+                  <option>ID is expired</option>
+                  <option>Name mismatch between ID and profile</option>
+                  <option>Wrong document type submitted</option>
+                  <option>Other (specify below)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase text-gray-400 mb-2 tracking-widest">Additional Notes</label>
+                <textarea 
+                  value={rejectionNote}
+                  onChange={(e) => setRejectionNote(e.target.value)}
+                  placeholder="e.g. Please retake the selfie in better lighting..."
+                  className="w-full h-32 rounded-2xl border-2 border-gray-100 p-4 font-bold text-gray-700 focus:border-primary outline-none resize-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-4 mt-10">
               <button 
                 onClick={() => setShowRejectModal(false)}
-                className="flex-1 py-3 rounded-xl border border-gray-100 font-bold text-gray-600 hover:bg-gray-50 transition"
+                className="flex-1 py-4 rounded-2xl border-2 border-gray-100 font-black text-gray-400 hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleReject}
-                disabled={submitting || !rejectionReason.trim()}
-                className="flex-1 py-3 rounded-xl bg-red-600 text-white font-bold transition hover:bg-red-700 disabled:opacity-50"
+                disabled={submitting || (rejectionReason.includes('Other') && !rejectionNote.trim())}
+                className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-black shadow-lg shadow-red-500/20 transition hover:scale-[1.02] active:scale-95 disabled:opacity-50"
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Confirm Reject"}
+                {submitting ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "Confirm Reject"}
               </button>
             </div>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function DocumentCard({ label, url, idType, nin, note, optional, onClick }: any) {
+  return (
+    <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm flex flex-col">
+       <div className="flex items-center justify-between mb-4">
+          <h4 className="font-black text-gray-900 uppercase tracking-widest text-[10px]">{label}</h4>
+          {optional && <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded text-[8px] font-black uppercase">Optional</span>}
+       </div>
+       
+       <div 
+          onClick={url ? onClick : undefined}
+          className={`relative aspect-[4/3] rounded-2xl border-2 border-dashed overflow-hidden bg-gray-50 transition-all ${url ? 'cursor-pointer border-primary/20 hover:border-primary group' : 'border-gray-100'}`}
+        >
+          {url ? (
+            <>
+              <img src={url} alt={label} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                 <ExternalLink className="text-white h-8 w-8" />
+              </div>
+            </>
+          ) : (
+            <div className="h-full w-full flex flex-col items-center justify-center text-gray-300 gap-2">
+               <FileText className="h-10 w-10" />
+               <span className="text-[10px] font-black uppercase tracking-tighter">Not submitted</span>
+            </div>
+          )}
+        </div>
+
+        {(idType || nin || note) && (
+          <div className="mt-4 p-4 rounded-2xl bg-gray-50 space-y-2">
+            {idType && <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ID Type: <span className="text-gray-900">{idType.replace('_', ' ')}</span></p>}
+            {nin && <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">NIN: <span className="text-primary font-mono tracking-normal">{nin}</span></p>}
+            {note && <p className="text-[10px] font-medium text-gray-500 leading-tight italic">{note}</p>}
+          </div>
+        )}
     </div>
   )
 }

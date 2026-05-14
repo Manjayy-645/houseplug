@@ -47,7 +47,7 @@ export default async function SimilarListings({
 
   return (
     <section className="space-y-4">
-      <h3 className="text-base font-semibold text-gray-900">Other rooms near UniPort</h3>
+      <h3 className="text-base font-semibold text-gray-900">Other rooms near campus</h3>
       <div className="flex gap-4 overflow-x-auto pb-2">
         {enriched.map((listing) => (
           <div key={listing.id} className="w-[320px] shrink-0">

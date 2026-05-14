@@ -3,11 +3,13 @@ import { FilterSidebar } from "@/components/filter-sidebar"
 import { ListingCard } from "@/components/listing-card"
 import { SearchBar } from "@/components/search-bar"
 import { createClient } from "@/lib/supabase/server"
+import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
 
 type BrowsePageProps = {
   searchParams: {
     q?: string
+    university?: string
     room_type?: string
     min_price?: string
     max_price?: string
@@ -26,6 +28,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const supabase = createClient()
 
   const q = searchParams.q?.trim()
+  const university = searchParams.university?.trim()
   const roomType = searchParams.room_type?.trim()
   const minPrice = Number(searchParams.min_price)
   const maxPrice = Number(searchParams.max_price)
@@ -39,9 +42,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   let query = supabase
     .from("listings")
     .select(`
-      id, title, price_yearly, room_type, distance_from_gate, area, photos, 
-      status, is_featured, is_urgent, created_at,
-      landlord:profiles(full_name),
+      *,
+      landlord:profiles(full_name, verification_status),
       reviews(rating)
     `, { count: "exact" })
     .eq("status", "active")
@@ -49,6 +51,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   if (q) {
     query = query.or(`address.ilike.%${q}%,area.ilike.%${q}%,landmark.ilike.%${q}%,title.ilike.%${q}%`)
   }
+  if (university) query = query.eq("university", university)
   if (roomType) query = query.eq("room_type", roomType)
   if (!Number.isNaN(minPrice) && minPrice > 0) query = query.gte("price_yearly", minPrice)
   if (!Number.isNaN(maxPrice) && maxPrice > 0) query = query.lte("price_yearly", maxPrice)
@@ -65,6 +68,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const listings = (data ?? []) as unknown as Listing[]
   const total = count ?? 0
   const totalPages = Math.max(Math.ceil(total / PER_PAGE), 1)
+
+  const selectedUniversity = UNIVERSITIES.find(u => u.id === university)
 
   const previousPage = Math.max(page - 1, 1)
   const nextPage = Math.min(page + 1, totalPages)
@@ -99,9 +104,19 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
 
           <section className="space-y-4">
-            <div className="flex items-center justify-between px-1">
-              <p className="text-sm font-medium text-gray-600">{total} rooms found</p>
-              <div className="hidden sm:block text-xs text-gray-500 bg-emerald-50 px-2 py-1 rounded-full text-emerald-700 font-semibold border border-emerald-100">Featured first</div>
+            <div className="flex flex-col gap-2 px-1">
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                {selectedUniversity 
+                  ? `Rooms near ${selectedUniversity.shortName}` 
+                  : "All Student Rooms in Port Harcourt"}
+              </h1>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-600">
+                  {total} {total === 1 ? "room" : "rooms"} found
+                  {selectedUniversity ? ` near ${selectedUniversity.shortName}` : ""}
+                </p>
+                <div className="hidden sm:block text-xs text-gray-500 bg-emerald-50 px-2 py-1 rounded-full text-emerald-700 font-semibold border border-emerald-100">Featured first</div>
+              </div>
             </div>
 
             {listings.length === 0 ? (

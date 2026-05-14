@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -103,7 +103,12 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  <div className="text-gray-900 font-medium">{listing.landlord?.full_name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="text-gray-900 font-medium">{listing.landlord?.full_name}</div>
+                    {listing.landlord?.verification_status === 'verified' && (
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" title="Verified Landlord" />
+                    )}
+                  </div>
                   <div className="text-gray-500">{listing.landlord?.phone || "No phone"}</div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">

@@ -70,7 +70,7 @@ export default async function OpengraphImage({ params }: OpengraphImageProps) {
             color: "#1B4332"
           }}
         >
-          Find student housing near UniPort — houseplug.ng
+          Find student housing in Port Harcourt — houseplug.ng
         </div>
       </div>
     ),

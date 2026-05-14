@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { BadgeCheck, Heart, MapPin, Star } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
+import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
 
 type ListingCardProps = {
@@ -22,6 +23,7 @@ export function ListingCard({ listing }: ListingCardProps) {
       ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount
       : 0
   const landlordName = (listing.landlord as any)?.full_name ?? "Verified Landlord"
+  const university = UNIVERSITIES.find(u => u.id === listing.university)
 
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-gray-100">
@@ -70,10 +72,15 @@ export function ListingCard({ listing }: ListingCardProps) {
           </div>
         </Link>
         
-        <p className="text-gray-500 text-sm mb-4 flex items-center gap-1">
-          <MapPin className="h-4 w-4" />
-          {formatDistance(listing.distance_from_gate)} from gate
-        </p>
+        <div className="flex flex-col gap-1 mb-4">
+          <p className="text-gray-500 text-sm flex items-center gap-1">
+            <MapPin className="h-4 w-4" />
+            {formatDistance(listing.distance_from_gate, university?.shortName)}
+          </p>
+          <span className="text-xs text-gray-500 ml-5">
+            📚 {university?.shortName ?? 'Near Campus'}
+          </span>
+        </div>
         
         <div className="flex justify-between items-center pt-4 border-t border-gray-50">
           <div>

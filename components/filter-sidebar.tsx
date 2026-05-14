@@ -5,32 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import * as Dialog from "@radix-ui/react-dialog"
 import { SlidersHorizontal, X } from "lucide-react"
 
-const roomTypeOptions = [
-  { label: "Self-con", value: "self_con" },
-  { label: "1-Bedroom", value: "one_bedroom" },
-  { label: "2-Bedroom", value: "two_bedroom" },
-  { label: "Shared Room", value: "shared" }
-]
-
-const distanceOptions = [
-  { label: "Under 5 mins", value: "under_5" },
-  { label: "5-15 mins", value: "5_to_15" },
-  { label: "15-30 mins", value: "15_to_30" },
-  { label: "Any", value: "" }
-]
-
-const amenityOptions = [
-  { label: "Running water", value: "running water" },
-  { label: "24hr electricity / gen", value: "24hr electricity" },
-  { label: "Security", value: "security" },
-  { label: "Prepaid meter", value: "prepaid meter" },
-  { label: "Parking", value: "parking" }
-]
+import { UNIVERSITIES, ROOM_TYPES, DISTANCE_OPTIONS, AMENITIES } from "@/lib/constants"
 
 function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [university, setUniversity] = useState(searchParams.get("university") ?? "")
   const [roomType, setRoomType] = useState(searchParams.get("room_type") ?? "")
   const [minPrice, setMinPrice] = useState(searchParams.get("min_price") ?? "")
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "")
@@ -53,6 +34,9 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
 
   const applyFilters = () => {
     const params = new URLSearchParams(searchParams.toString())
+    if (university) params.set("university", university)
+    else params.delete("university")
+
     if (roomType) params.set("room_type", roomType)
     else params.delete("room_type")
 
@@ -76,6 +60,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   }
 
   const resetFilters = () => {
+    setUniversity("")
     setRoomType("")
     setMinPrice("")
     setMaxPrice("")
@@ -95,9 +80,39 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
     <aside className={boxClass}>
       <div className="space-y-5">
         <section>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">University</h3>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name={`university-${mobile ? "mobile" : "desktop"}`}
+                value=""
+                checked={university === ""}
+                onChange={() => setUniversity("")}
+                className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
+              />
+              All Universities
+            </label>
+            {UNIVERSITIES.map((option) => (
+              <label key={option.id} className="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="radio"
+                  name={`university-${mobile ? "mobile" : "desktop"}`}
+                  value={option.id}
+                  checked={university === option.id}
+                  onChange={() => setUniversity(option.id)}
+                  className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
+                />
+                {option.shortName} — {option.name}
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Room Type</h3>
           <div className="space-y-2">
-            {roomTypeOptions.map((option) => (
+            {ROOM_TYPES.map((option) => (
               <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
@@ -136,7 +151,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
             Distance from Campus
           </h3>
           <div className="space-y-2">
-            {distanceOptions.map((option) => (
+            {DISTANCE_OPTIONS.map((option) => (
               <label key={option.label} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="radio"
@@ -149,6 +164,17 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
                 {option.label}
               </label>
             ))}
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="radio"
+                name={`distance-${mobile ? "mobile" : "desktop"}`}
+                value=""
+                checked={distance === ""}
+                onChange={() => setDistance("")}
+                className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
+              />
+              Any
+            </label>
           </div>
         </section>
 
@@ -168,7 +194,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         <section>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Amenities</h3>
           <div className="space-y-2">
-            {amenityOptions.map((option) => (
+            {AMENITIES.map((option) => (
               <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"

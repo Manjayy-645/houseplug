@@ -2,18 +2,19 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { MapPin, Home, CreditCard } from "lucide-react"
+import { GraduationCap, Home, CreditCard } from "lucide-react"
+import { UNIVERSITIES, ROOM_TYPES } from "@/lib/constants"
 
 export function HeroSearch() {
   const router = useRouter()
-  const [query, setQuery] = useState("")
+  const [university, setUniversity] = useState("")
   const [type, setType] = useState("")
   const [price, setPrice] = useState("")
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams()
-    if (query.trim()) params.append("q", query.trim())
+    if (university) params.append("university", university)
     if (type) params.append("type", type)
     if (price) params.append("price", price)
     
@@ -26,16 +27,19 @@ export function HeroSearch() {
       className="bg-white p-4 md:p-2 rounded-xl md:rounded-full shadow-xl max-w-5xl mx-auto flex flex-col md:flex-row gap-2 items-center border border-white/20 mt-12"
     >
       <div className="w-full md:w-1/3 flex items-center px-4 gap-3 border-b md:border-b-0 md:border-r border-gray-100 py-3 md:py-0">
-        <MapPin className="h-5 w-5 text-primary" />
+        <GraduationCap className="h-5 w-5 text-primary" />
         <div className="text-left w-full">
-          <span className="block text-[10px] uppercase font-bold text-gray-400">Location</span>
-          <input 
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full border-none p-0 text-primary font-semibold focus:ring-0 placeholder:text-gray-300 bg-transparent text-sm" 
-            placeholder="Near UniPort (e.g. Choba)" 
-          />
+          <span className="block text-[10px] uppercase font-bold text-gray-400">University</span>
+          <select 
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
+            className="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent text-sm"
+          >
+            <option value="">Select your university</option>
+            {UNIVERSITIES.map((u) => (
+              <option key={u.id} value={u.id}>{u.shortName}</option>
+            ))}
+          </select>
         </div>
       </div>
       
@@ -49,9 +53,9 @@ export function HeroSearch() {
             className="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent text-sm"
           >
             <option value="">All Types</option>
-            <option value="Self-con">Self-con</option>
-            <option value="1-Bedroom">1-Bedroom</option>
-            <option value="Shared">Shared</option>
+            {ROOM_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
           </select>
         </div>
       </div>

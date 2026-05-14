@@ -1,7 +1,7 @@
 # HousePlug — Project Instructions
 
 ## What this project is
-HousePlug is a student housing platform for Nigerian university students, starting with University of Port Harcourt (UniPort). It connects students to verified off-campus housing listings. "Plug" is Nigerian slang for a trusted connect/source.
+HousePlug is a student housing platform for Nigerian university students. It connects students to verified off-campus housing listings. "Plug" is Nigerian slang for a trusted connect/source.
 
 ## Domain
 houseplug.ng
@@ -31,8 +31,10 @@ houseplug.ng
 - **Formatting:** Always format prices in Nigerian Naira using `.toLocaleString('en-NG')`.
 - **Phone Numbers:** Nigerian format required: `080`/`081`/`070`/`090` + 8 digits.
 - **WhatsApp Links:** Always use the format `wa.me/234XXXXXXXXXX`.
-- **Geographic Scope:** All listings are in Port Harcourt areas: Choba, Ozuoba, Aluu, Rumuola, Elelenwo, Woji.
-- **Distance:** Always measure distance "from UniPort main gate".
+- **Geographic Scope:** Listings can be near any Port Harcourt university.
+- **Distance:** Distance is from the nearest university gate — use university shortName.
+- **Universities:** UniPort (Choba), RSU (Nkpolu), IAUE (Rumuola), KenPoly (Bori).
+- **Imports:** Import UNIVERSITIES constant from @/lib/constants.ts — never hardcode university names.
 - **Search:** Location search is free text (address, area, and landmark) via `ilike`.
 - **Communication:** No in-app messaging. Use WhatsApp directly.
 - **Booking:** No in-app booking system for MVP. Direct contact with landlord only.

@@ -104,8 +104,8 @@ export function Header() {
 
       {/* Mobile Nav */}
       {isOpen && (
-        <div className="fixed inset-0 top-[65px] z-40 bg-white md:hidden animate-in slide-in-from-top duration-300">
-          <nav className="flex flex-col h-full p-6 text-base font-semibold text-on-background">
+        <div className="fixed inset-0 top-[65px] z-40 bg-white md:hidden animate-in slide-in-from-top duration-300 overflow-y-auto">
+          <nav className="flex flex-col p-6 pb-20 text-base font-semibold text-on-background">
             <div className="flex flex-col gap-6">
               <Link 
                 href="/browse" 

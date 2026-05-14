@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X, ShieldCheck } from "lucide-react"
 
 const navItems = [
+  { name: "Verifications", href: "/admin/verification", icon: ShieldCheck, badge: true },
   { name: "Pending Listings", href: "/admin/listings?status=pending", icon: LayoutDashboard },
   { name: "All Listings", href: "/admin/listings", icon: Home },
   { name: "Users", href: "/admin/users", icon: Users },
@@ -13,7 +14,7 @@ const navItems = [
   { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ pendingCount = 0 }: { pendingCount?: number }) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
@@ -32,13 +33,18 @@ export function AdminSidebar() {
           </div>
           <span className="text-xl font-bold tracking-tight">HousePlug Admin</span>
         </Link>
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-white/10 rounded-xl transition-colors active:scale-95"
-          aria-label="Open menu"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-3">
+          {pendingCount > 0 && (
+            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          )}
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors active:scale-95"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Overlay (Mobile) */}
@@ -76,19 +82,28 @@ export function AdminSidebar() {
 
           <nav className="mt-4 flex-1 px-4 space-y-2">
             {navItems.map((item) => {
-              const active = pathname === item.href || (item.href === "/admin/listings" && pathname.startsWith("/admin/listings"))
+              const active = pathname === item.href || (item.href === "/admin/listings" && pathname.startsWith("/admin/listings")) || (item.href === "/admin/verification" && pathname.startsWith("/admin/verification"))
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group ${
+                  className={`flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 group ${
                     active 
                       ? "bg-[#F59E0B] text-[#1B4332] font-bold shadow-xl shadow-[#F59E0B]/10" 
                       : "text-white/70 hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <item.icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${active ? "text-[#1B4332]" : "text-white/40 group-hover:text-white/80"}`} />
-                  <span className="text-sm tracking-wide">{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <item.icon className={`w-5 h-5 transition-transform duration-300 group-hover:scale-110 ${active ? "text-[#1B4332]" : "text-white/40 group-hover:text-white/80"}`} />
+                    <span className="text-sm tracking-wide">{item.name}</span>
+                  </div>
+                  {item.badge && pendingCount > 0 && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                      active ? "bg-[#1B4332] text-white" : "bg-red-500 text-white animate-pulse"
+                    }`}>
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
               )
             })}

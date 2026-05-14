@@ -61,7 +61,7 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
         listingLimit={listingLimit} 
         verificationStatus={profile.role === "admin" ? "verified" : (profile.verification_status || 'unverified')}
       />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-24 lg:pb-0">{children}</main>
     </div>
   )
 }

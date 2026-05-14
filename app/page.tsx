@@ -66,10 +66,10 @@ export default async function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-transparent"></div>
           <div className="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-20 text-center">
             <h1 className="font-display-lg text-white mb-6 text-4xl md:text-6xl max-w-4xl mx-auto leading-tight">
-              Find Your Perfect Student Home Near UniPort
+              Find Your Perfect Student Home
             </h1>
             <p className="font-body-lg text-on-primary-container mb-12 max-w-2xl mx-auto opacity-90">
-              Verified rooms and apartments trusted by University of Port Harcourt students. Secure your next home with confidence.
+              Verified rooms and apartments for students across Port Harcourt universities. Secure your next home with confidence.
             </p>
             
             <HeroSearch />
@@ -90,7 +90,7 @@ export default async function LandingPage() {
                 <div className="bg-primary-fixed p-3 rounded-full flex items-center justify-center text-primary">
                   <Users className="h-6 w-6" />
                 </div>
-                <span className="font-title-md text-primary">Trusted by 2,000+ Students</span>
+                <span className="font-title-md text-primary">Trusted by Students Across PH</span>
               </div>
               <div className="flex items-center justify-center gap-4 p-4">
                 <div className="bg-primary-fixed p-3 rounded-full flex items-center justify-center text-primary">
@@ -107,7 +107,7 @@ export default async function LandingPage() {
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="font-display-md text-primary mb-2">Rooms Near Campus</h2>
-              <p className="text-gray-500 font-body-md">Handpicked quality accommodation in Choba, Abuja, and Aluu.</p>
+              <p className="text-gray-500 font-body-md">Handpicked quality accommodation across Port Harcourt.</p>
             </div>
             <Link href="/browse" className="text-primary font-semibold hover:underline hidden md:flex items-center gap-2">
               View all listings <ArrowRight className="h-4 w-4" />
@@ -134,7 +134,7 @@ export default async function LandingPage() {
                   <Search className="h-8 w-8" />
                 </div>
                 <h3 className="font-title-lg text-primary mb-3">1. Search</h3>
-                <p className="text-gray-500 font-body-md text-sm">Browse through hundreds of verified listings near UniPort with high-quality photos and clear prices.</p>
+                <p className="text-gray-500 font-body-md text-sm">Browse through hundreds of verified listings near campus with high-quality photos and clear prices.</p>
               </div>
               <div className="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-fixed rounded-2xl flex items-center justify-center mb-6 text-primary">
@@ -181,7 +181,7 @@ export default async function LandingPage() {
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 max-w-7xl mx-auto">
           <div className="max-w-xs">
             <span className="text-lg font-bold text-primary block mb-4">HousePlug</span>
-            <p className="text-sm text-gray-500 mb-6">Student housing, simplified. We connect University of Port Harcourt students with reliable accommodation.</p>
+            <p className="text-sm text-gray-500 mb-6">Student housing, simplified. We connect students with reliable accommodation across Port Harcourt universities.</p>
           </div>
           <div className="grid grid-cols-2 gap-12">
             <div>
@@ -203,7 +203,7 @@ export default async function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto border-t border-gray-100 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-500">© 2026 HousePlug. Built for Nigerian students.</p>
+          <p className="text-sm text-gray-500">© 2025 HousePlug. Built for Nigerian students.</p>
           <div className="flex items-center gap-2 text-gray-400">
             <MapPin className="h-4 w-4" />
             <span className="text-xs">Port Harcourt, Nigeria</span>

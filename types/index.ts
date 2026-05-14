@@ -84,6 +84,7 @@ export type Listing = {
   floor?: "ground" | "upper"
   views_count: number
   whatsapp_clicks?: number
+  university: string // university id e.g. 'uniport', 'rsu'
   created_at: string
   landlord?: Profile
   reviews?: Review[]

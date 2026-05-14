@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { GripVertical, Upload, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
 
-const areaSuggestions = ["Choba", "Ozuoba", "Aluu", "Rumuola", "Elelenwo", "Woji", "Other"]
 const amenityOptions = [
   "water",
   "electricity",
@@ -23,6 +23,7 @@ const amenityOptions = [
 
 const listingSchema = z.object({
   title: z.string().min(6, "Title is required").max(80, "Maximum 80 characters"),
+  university: z.string().min(1, "University is required"),
   room_type: z.enum(["self_con", "one_bedroom", "two_bedroom", "shared"]),
   price_yearly: z.number().int().positive("Enter a valid yearly price"),
   distance_from_gate: z.enum(["under_5", "5_to_15", "15_to_30", "above_30"]),
@@ -62,7 +63,7 @@ type ListingFormProps = {
 }
 
 const stepFields: Array<Array<keyof ListingFormValues>> = [
-  ["title", "room_type", "price_yearly", "distance_from_gate", "available_from"],
+  ["title", "university", "room_type", "price_yearly", "distance_from_gate", "available_from"],
   ["address", "area", "landmark", "whatsapp_number", "phone_number"],
   ["amenities", "occupancy", "furnishing", "floor", "description"],
   []
@@ -89,6 +90,7 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
 
   const defaultValues: ListingFormValues = {
     title: listing?.title ?? "",
+    university: listing?.university ?? "uniport",
     room_type: listing?.room_type ?? "self_con",
     price_yearly: listing?.price_yearly ?? 0,
     distance_from_gate: listing?.distance_from_gate ?? "under_5",
@@ -240,6 +242,7 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
         id: listingId,
         landlord_id: landlordId,
         title: values.title,
+        university: values.university,
         description: values.description,
         room_type: values.room_type,
         price_yearly: values.price_yearly,
@@ -320,11 +323,27 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
       {currentStep === 0 ? (
         <section className="space-y-4">
           <h3 className="text-lg font-semibold">Step 1 - Basic Info</h3>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Title</label>
-            <input {...register("title")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-            <p className="mt-1 text-xs text-gray-500">{titleLength}/80</p>
-            {errors.title ? <p className="text-xs text-red-600">{errors.title.message}</p> : null}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">Title</label>
+              <input {...register("title")} placeholder="e.g. Self-con in Choba near Gate" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <p className="mt-1 text-xs text-gray-500">{titleLength}/80</p>
+              {errors.title ? <p className="text-xs text-red-600">{errors.title.message}</p> : null}
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-sm font-medium">Nearest university</label>
+              <select 
+                {...register("university")} 
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">Which university is this property closest to?</option>
+                {UNIVERSITIES.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+              {errors.university ? <p className="text-xs text-red-600">{errors.university.message}</p> : null}
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -370,10 +389,10 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
             <div>
               <label className="mb-1 block text-sm font-medium">Distance from gate</label>
               <select {...register("distance_from_gate")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                <option value="under_5">Under 5 mins</option>
-                <option value="5_to_15">5-15 mins</option>
-                <option value="15_to_30">15-30 mins</option>
-                <option value="above_30">Above 30 mins</option>
+                <option value="under_5">Under 5 mins walk</option>
+                <option value="5_to_15">5-15 mins walk</option>
+                <option value="15_to_30">15-30 mins walk</option>
+                <option value="above_30">30+ mins walk</option>
               </select>
             </div>
             <div>
@@ -389,17 +408,18 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
           <h3 className="text-lg font-semibold">Step 2 - Location</h3>
           <div>
             <label className="mb-1 block text-sm font-medium">Street / compound name</label>
-            <input {...register("address")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            <input {...register("address")} placeholder="e.g. No 12, Scholar Street" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">Area</label>
-              <input list="areas" {...register("area")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-              <datalist id="areas">
-                {areaSuggestions.map((area) => (
-                  <option key={area} value={area} />
-                ))}
-              </datalist>
+              <input 
+                {...register("area")} 
+                placeholder="e.g. Choba, Rumuola, Nkpolu, Woji" 
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" 
+              />
+              <p className="mt-1 text-[10px] text-gray-500 font-medium italic">Enter the area/neighbourhood your property is in</p>
+              {errors.area ? <p className="text-xs text-red-600">{errors.area.message}</p> : null}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Landmark (optional)</label>

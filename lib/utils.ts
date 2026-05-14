@@ -9,12 +9,15 @@ export function formatNaira(amount: number): string {
   return `₦${amount.toLocaleString("en-NG")}`
 }
 
-export function formatDistance(distance: string): string {
+export function formatDistance(
+  distance: string, 
+  universityShortName: string = 'campus'
+): string {
   const map: Record<string, string> = {
-    under_5: "Under 5 mins from gate",
-    "5_to_15": "5-15 mins from gate",
-    "15_to_30": "15-30 mins from gate",
-    above_30: "30+ mins from gate"
+    under_5: `Under 5 mins from ${universityShortName} gate`,
+    '5_to_15': `5–15 mins from ${universityShortName} gate`,
+    '15_to_30': `15–30 mins from ${universityShortName} gate`,
+    above_30: `30+ mins from ${universityShortName} gate`,
   }
   return map[distance] ?? distance
 }

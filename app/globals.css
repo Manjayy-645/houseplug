@@ -4,11 +4,12 @@
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
 }
 
 body {
   background: #f9fafb;
   color: #111827;
+  overflow-x: hidden;
 }
 

@@ -62,7 +62,15 @@ export default function UserTable({ users }: { users: UserWithCounts[] }) {
                       )}
                     </div>
                     <div>
-                      <div className="font-semibold text-gray-900">{user.full_name}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-gray-900">{user.full_name}</span>
+                        {user.role === 'landlord' && user.verification_status === 'verified' && (
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" title="Verified Landlord" />
+                        )}
+                        {user.role === 'landlord' && user.verification_status === 'pending' && (
+                          <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="Verification Pending" />
+                        )}
+                      </div>
                       <div className="text-xs text-gray-500">{user.email}</div>
                     </div>
                   </div>

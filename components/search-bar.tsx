@@ -47,7 +47,7 @@ export function SearchBar() {
         type="text"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search area (e.g. Choba)..."
+        placeholder="Search by area, street or landmark near your campus..."
         className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-10 text-sm font-medium text-gray-900 outline-none transition focus:border-[#1B4332] focus:bg-white"
       />
       {query ? (
