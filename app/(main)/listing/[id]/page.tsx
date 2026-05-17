@@ -134,11 +134,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     }
   }
 
-  if (!listingRowData || listingRowData.status !== "active") notFound()
-
   // Fetch real landlord profile and user profile if needed if not already set by fallback
   const [{ data: dbLandlordRow }, { data: userProfile }, { data: existingReview }] = await Promise.all([
-    !landlordRowData
+    !landlordRowData && listingRowData
       ? supabase.from("profiles").select("id, full_name, phone, avatar_url, created_at").eq("id", listingRowData.landlord_id).single()
       : Promise.resolve({ data: null }),
     user 
@@ -148,6 +146,12 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       ? supabase.from("reviews").select("id").eq("listing_id", listingId).eq("student_id", user.id).maybeSingle()
       : Promise.resolve({ data: null })
   ])
+
+  const isAdmin = userProfile?.role === "admin"
+  const isOwner = user && listingRowData && user.id === listingRowData.landlord_id
+  const canView = listingRowData?.status === "active" || isAdmin || isOwner
+
+  if (!listingRowData || !canView) notFound()
 
   landlordRowData = landlordRowData || dbLandlordRow
   
@@ -160,12 +164,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   const averageRating =
     reviewCount > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0
 
-  // Increment views if it's a real listing
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (listingRow && serviceRoleKey && supabaseUrl) {
-    const admin = createSupabaseClient(supabaseUrl, serviceRoleKey)
-    void admin.from("listings").update({ views_count: (listingRow.views_count ?? 0) + 1 }).eq("id", listingId)
+  // Increment views if it's a real listing and not viewed by owner/admin
+  if (listingRow && !isOwner && !isAdmin) {
+    void supabase.rpc("increment_views", { listing_id: listingId })
   }
 
   const listing: Listing = {
@@ -178,6 +179,12 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-24 lg:pb-12">
+      {listing.status !== "active" && (
+        <div className="bg-[#1B4332] text-white px-4 py-3 text-center text-sm font-bold flex items-center justify-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+          PREVIEW MODE: This listing is {listing.status} and only visible to you.
+        </div>
+      )}
       <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
         <header className="bg-white px-4 py-6 shadow-sm sm:rounded-2xl sm:mt-4 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

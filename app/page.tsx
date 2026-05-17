@@ -5,15 +5,12 @@ import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
 import { CheckCircle2, Users, BadgeCheck, Search, MessageCircle, Home, ArrowRight, MapPin, Plus } from "lucide-react"
 import { UNIVERSITIES } from "@/lib/constants"
+import { createClient } from "@/lib/supabase/server"
 import type { Listing } from "@/types"
 
 export const revalidate = 3600 // revalidate once per hour
 
 const UniversityLogo = ({ university }: { university: any }) => {
-  // Since we're in a Server Component, we can't use useState for imgError.
-  // For now, we'll rely on the logic that if logoUrl is undefined, we show the initials.
-  // If we had real logos, we'd handle errors in a Client Component or just provide a solid fallback.
-  
   if (!university.logoUrl) {
     return (
       <div className={`w-12 h-12 rounded-full flex items-center justify-center 
@@ -36,42 +33,40 @@ const UniversityLogo = ({ university }: { university: any }) => {
 }
 
 export default async function LandingPage() {
-  // Placeholder featured listings since DB is empty
-  const featuredListings: Partial<Listing>[] = [
-    {
-      id: "1",
-      title: "Green Court Annex",
-      room_type: "self_con",
-      price_yearly: 85000,
-      distance_from_gate: "under_5",
-      photos: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800"],
-      status: "active",
-      is_featured: true,
-      landlord: { full_name: "Mr. Okezie" } as any
-    },
-    {
-      id: "2",
-      title: "Aluu Scholar Lodge",
-      room_type: "one_bedroom",
-      price_yearly: 120000,
-      distance_from_gate: "5_to_15",
-      photos: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=800"],
-      status: "active",
-      is_featured: true,
-      landlord: { full_name: "Estate Mgt" } as any
-    },
-    {
-      id: "3",
-      title: "Abuja Campus Suites",
-      room_type: "shared",
-      price_yearly: 60000,
-      distance_from_gate: "under_5",
-      photos: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80&w=800"],
-      status: "active",
-      is_featured: true,
-      landlord: { full_name: "Mrs. Benson" } as any
+  const supabase = createClient()
+  
+  // Fetch real listings pinned to home page, or fallback to latest featured/active listings
+  const { data: homeListings } = await supabase
+    .from("listings")
+    .select(`
+      *,
+      landlord:profiles(full_name, verification_status)
+    `)
+    .eq("status", "active")
+    .eq("show_on_home", true)
+    .order("created_at", { ascending: false })
+    .limit(3)
+
+  let featuredListings: Listing[] = (homeListings ?? []) as Listing[]
+
+  // Fallback if no listings are explicitly pinned to home
+  if (featuredListings.length < 3) {
+    const { data: fallbackListings } = await supabase
+      .from("listings")
+      .select(`
+        *,
+        landlord:profiles(full_name, verification_status)
+      `)
+      .eq("status", "active")
+      .eq("show_on_home", false) // Don't duplicate if already picked
+      .order("is_featured", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(3 - featuredListings.length)
+    
+    if (fallbackListings) {
+      featuredListings = [...featuredListings, ...(fallbackListings as Listing[])]
     }
-  ]
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -178,16 +173,38 @@ export default async function LandingPage() {
               <h2 className="font-display-md text-primary mb-2">Rooms Near Campus</h2>
               <p className="text-gray-500 font-body-md">Handpicked quality accommodation across Port Harcourt.</p>
             </div>
-            <Link href="/browse" className="text-primary font-semibold hover:underline hidden md:flex items-center gap-2">
-              View all listings <ArrowRight className="h-4 w-4" />
-            </Link>
+            {featuredListings.length > 0 && (
+              <Link href="/browse" className="text-primary font-semibold hover:underline hidden md:flex items-center gap-2">
+                View all listings <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-            {featuredListings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing as Listing} />
-            ))}
-          </div>
+          {featuredListings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+              {featuredListings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing as Listing} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border-2 border-dashed border-gray-100 py-20 px-6 text-center shadow-sm">
+              <div className="mx-auto w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-8 text-gray-200">
+                <Home className="h-10 w-10" />
+              </div>
+              <h3 className="text-2xl font-black text-[#1B4332] mb-3">No listings available yet</h3>
+              <p className="text-gray-500 max-w-lg mx-auto mb-10 text-lg leading-relaxed">
+                HousePlug is launching soon! Be the first landlord to list your property and connect with students from UNIPORT, RSU, and IAUE.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/signup" className="bg-[#F59E0B] text-white px-10 py-4 rounded-2xl font-black text-lg hover:brightness-105 transition shadow-lg shadow-amber-200 active:scale-95">
+                  Start Listing Today
+                </Link>
+                <Link href="/browse" className="bg-white border-2 border-gray-100 text-gray-600 px-10 py-4 rounded-2xl font-black text-lg hover:bg-gray-50 transition active:scale-95">
+                  Browse All
+                </Link>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* How It Works */}

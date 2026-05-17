@@ -74,6 +74,7 @@ export type Listing = {
   status: ListingStatus
   rejection_reason?: string
   is_featured: boolean
+  show_on_home: boolean
   is_urgent: boolean
   boost_expires_at?: string
   whatsapp_number: string

@@ -136,60 +136,44 @@ export async function getLandlordSubscription(landlord_id: string) {
     auth: { autoRefreshToken: false, persistSession: false }
   })
 
-  // Get most recent subscription regardless of active status
-  const { data: active } = await supabase
+  // Get the most recent subscription
+  const { data: subscription } = await supabase
     .from('subscriptions')
     .select('*')
     .eq('landlord_id', landlord_id)
-    .eq('active', true)
-    .gt('expires_at', new Date().toISOString())
-    .single()
-
-  if (active) return { ...active, expired: false }
-
-  // Check if they had a subscription that expired
-  const { data: expired } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('landlord_id', landlord_id)
-    .eq('active', false)
     .order('expires_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
-  if (expired) return { ...expired, expired: true }
+  if (!subscription) {
+    // Never subscribed — return free plan defaults
+    return {
+      plan: 'free',
+      active: true,
+      expired: false,
+      billing_cycle: null,
+      expires_at: null,
+    }
+  }
 
-  // Never subscribed — return free plan defaults
-  return {
-    plan: 'free',
-    active: true,
-    expired: false,
-    billing_cycle: null,
-    expires_at: null,
+  const isExpired = !subscription.active || (subscription.expires_at && new Date(subscription.expires_at) < new Date())
+
+  return { 
+    ...subscription, 
+    expired: isExpired 
   }
 }
 
+import { getListingLimit as getListingLimitUtil, isSubscriptionExpiringSoon as isSubscriptionExpiringSoonUtil, formatExpiryDate as formatExpiryDateUtil } from './billing-utils'
+
 export async function getListingLimit(plan: string): Promise<number> {
-  const limits: Record<string, number> = {
-    free: 1,
-    pro: 5,
-    business: Infinity,
-  }
-  return limits[plan] ?? 1
+  return getListingLimitUtil(plan)
 }
 
 export async function isSubscriptionExpiringSoon(expires_at: string | null): Promise<boolean> {
-  if (!expires_at) return false
-  const threeDaysFromNow = new Date()
-  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
-  return new Date(expires_at) < threeDaysFromNow
+  return isSubscriptionExpiringSoonUtil(expires_at)
 }
 
 export async function formatExpiryDate(expires_at: string | null): Promise<string> {
-  if (!expires_at) return "N/A"
-  return new Date(expires_at).toLocaleDateString('en-NG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
+  return formatExpiryDateUtil(expires_at)
 }

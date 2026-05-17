@@ -7,7 +7,8 @@ import { formatNaira, formatDate } from "@/lib/utils"
 import { PLAN_PRICES, BOOST_PRICES } from "@/lib/paystack"
 import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
-import { getLandlordSubscription, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing"
+import { getLandlordSubscription } from "@/lib/billing"
+import { isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
 
 export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly")
@@ -154,7 +155,7 @@ export default function SubscriptionPage() {
                     ? `Ending on ${formatExpiryDate(subscription.expires_at)}` 
                     : `Renews on ${formatExpiryDate(subscription?.expires_at || null)}`
                   }
-                  {" "}&middot; {subscription?.billing_cycle}ly billing
+                  {" "}&middot; {subscription?.billing_cycle === 'monthly' ? 'Monthly' : 'Annual'} billing
                 </p>
               </div>
             </div>

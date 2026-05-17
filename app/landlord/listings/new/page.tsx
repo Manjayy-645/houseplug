@@ -2,7 +2,8 @@ import { ListingForm } from "@/components/landlord/listing-form"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
+import { getLandlordSubscription } from "@/lib/billing"
+import { getListingLimit } from "@/lib/billing-utils"
 
 export default async function NewListingPage() {
   const supabase = createClient()
@@ -18,7 +19,8 @@ export default async function NewListingPage() {
   ])
   
   const isAdmin = profile?.role === "admin"
-  const limit = isAdmin ? Infinity : await getListingLimit(subscription.plan)
+  const effectivePlan = subscription.expired ? 'free' : subscription.plan
+  const limit = isAdmin ? Infinity : getListingLimit(effectivePlan)
   
   const { count } = await supabase
     .from("listings")

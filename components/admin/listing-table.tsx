@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home, ShieldCheck } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -28,6 +28,22 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
 
     if (error) {
       alert("Failed to approve listing")
+    } else {
+      router.refresh()
+    }
+    setLoading(null)
+  }
+
+  const handleToggleHome = async (id: string, currentValue: boolean) => {
+    setLoading(id)
+    const { error } = await supabase
+      .from("listings")
+      .update({ show_on_home: !currentValue })
+      .eq("id", id)
+
+    if (error) {
+      console.error("Error toggling home page status:", error)
+      alert(`Failed to update home page status: ${error.message}`)
     } else {
       router.refresh()
     }
@@ -129,6 +145,20 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                     >
                       <Eye className="w-5 h-5" />
                     </Link>
+                    {listing.status === "active" && (
+                      <button
+                        onClick={() => handleToggleHome(listing.id, !!listing.show_on_home)}
+                        disabled={loading === listing.id}
+                        className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                          listing.show_on_home 
+                            ? "text-amber-600 bg-amber-50 hover:bg-amber-100" 
+                            : "text-gray-400 hover:text-amber-600 hover:bg-gray-100"
+                        }`}
+                        title={listing.show_on_home ? "Remove from Home Page" : "Show on Home Page"}
+                      >
+                        {loading === listing.id ? <Loader2 className="w-5 h-5 animate-spin" /> : listing.show_on_home ? <Pin className="w-5 h-5 fill-current" /> : <PinOff className="w-5 h-5" />}
+                      </button>
+                    )}
                     {listing.status === "pending" && (
                       <>
                         <button

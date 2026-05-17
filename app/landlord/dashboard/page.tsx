@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
 import type { Listing, Review } from "@/types"
-import { getLandlordSubscription, getListingLimit, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing"
+import { getLandlordSubscription } from "@/lib/billing"
+import { getListingLimit, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
 
 export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string } }) {
   const supabase = createClient()
@@ -48,11 +49,12 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   const activeListings = listings.filter((l) => l.status === "active")
   const activeListingsCount = activeListings.length
   
-  // Admins get unlimited listings
-  const listingLimit = isAdmin ? Infinity : await getListingLimit(subscription.plan)
+  // Admins get unlimited listings. Expired plans fall back to free limit.
+  const effectivePlan = subscription.expired ? 'free' : subscription.plan
+  const listingLimit = isAdmin ? Infinity : getListingLimit(effectivePlan)
   const canAddListing = activeListingsCount < listingLimit
   const expiringSoon = subscription.expires_at 
-    ? await isSubscriptionExpiringSoon(subscription.expires_at) 
+    ? isSubscriptionExpiringSoon(subscription.expires_at) 
     : false
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"
@@ -160,7 +162,10 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           { 
             label: "Active Listings", 
             value: `${activeListingsCount} / ${listingLimit === Infinity ? '∞' : listingLimit}`, 
-            sub: activeListingsCount >= listingLimit ? "Limit reached — upgrade to add more" : subscription.expired ? "Plan expired" : `${listingLimit - activeListingsCount} slots remaining`
+            sub: subscription.expired ? "Plan expired — renew to add more" :
+                 activeListingsCount >= listingLimit ? "Limit reached — upgrade to add more" : 
+                 listingLimit === Infinity ? "Unlimited listings available" :
+                 `${listingLimit - activeListingsCount} slots remaining`
           },
           { label: "Avg Rating", value: avgRating ? avgRating.toFixed(1) : "0.0", sub: `${reviews.length} reviews` }
         ].map((stat) => (
@@ -210,10 +215,10 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                     <img src={listing.photos[0]} alt={listing.title} className="h-full w-full object-cover" />
                   ) : null}
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                         listing.status === "active"
                           ? "bg-emerald-100 text-emerald-700"
                           : listing.status === "pending"
@@ -223,16 +228,16 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                     >
                       {listing.status}
                     </span>
-                    <p className="truncate text-sm font-semibold text-gray-900">{listing.title}</p>
+                    <p className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px]">{listing.title}</p>
                     {listing.is_featured ? (
-                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
                         ⭐ Featured
                       </span>
                     ) : (subscription.plan !== "free" && !subscription.expired) ? (
-                      <span className="text-[10px] font-medium text-gray-400">Standard Placement</span>
+                      <span className="shrink-0 text-[10px] font-bold text-gray-400 uppercase tracking-tight">Standard Placement</span>
                     ) : subscription.plan === "free" ? (
-                      <Link href="/landlord/subscription" className="text-[10px] font-medium text-gray-400 hover:text-[#1B4332] hover:underline">
-                        Featured &mdash; Upgrade to Pro
+                      <Link href="/landlord/subscription" className="shrink-0 text-[10px] font-bold text-gray-400 hover:text-[#1B4332] hover:underline uppercase tracking-tight">
+                        Featured &mdash; Upgrade
                       </Link>
                     ) : null}
                   </div>
