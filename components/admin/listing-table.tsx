@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -18,6 +18,27 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
   const [loading, setLoading] = useState<string | null>(null)
   const [rejectingListing, setRejectingListing] = useState<ListingWithLandlord | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to PERMANENTLY delete "${title}"? This cannot be undone.`)) return
+
+    setLoading(id)
+    try {
+      const res = await fetch('/api/admin/listings/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: id, action: 'delete' })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
+      router.refresh()
+    } catch (error: any) {
+      alert(error.message || "Failed to delete listing")
+    }
+    setLoading(null)
+  }
 
   const handleApprove = async (id: string) => {
     setLoading(id)
@@ -151,6 +172,7 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                       href={`/listing/${listing.id}`}
                       target="_blank"
                       className="p-2 text-gray-500 hover:text-[#1B4332] hover:bg-gray-100 rounded-lg transition-colors"
+                      title="View Listing"
                     >
                       <Eye className="w-5 h-5" />
                     </Link>
@@ -174,6 +196,7 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                           onClick={() => handleApprove(listing.id)}
                           disabled={loading === listing.id}
                           className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Approve Listing"
                         >
                           {loading === listing.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
                         </button>
@@ -181,11 +204,20 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                           onClick={() => setRejectingListing(listing)}
                           disabled={loading === listing.id}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                          title="Reject Listing"
                         >
                           <X className="w-5 h-5" />
                         </button>
                       </>
                     )}
+                    <button
+                      onClick={() => handleDelete(listing.id, listing.title)}
+                      disabled={loading === listing.id}
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Delete Listing Permanently"
+                    >
+                      {loading === listing.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                    </button>
                   </div>
                 </td>
               </tr>

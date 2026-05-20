@@ -44,6 +44,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true })
     }
 
+    if (action === 'delete') {
+      const { error } = await serviceClient.from('listings').delete().eq('id', listingId)
+      if (error) throw error
+      await logAdminAction({ admin_id: user.id, action: 'deleted_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title } })
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
