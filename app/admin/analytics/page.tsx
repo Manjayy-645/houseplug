@@ -117,7 +117,7 @@ export default async function AnalyticsPage() {
                        <span className="text-lg font-black text-gray-200">#{i+1}</span>
                        <div>
                           <p className="text-sm font-bold text-gray-900 leading-none">{l.title}</p>
-                          <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-wider">{l.university} &middot; By {l.landlord?.full_name}</p>
+                          <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-wider">{l.university} &middot; By {(l.landlord as any)?.[0]?.full_name || (l.landlord as any)?.full_name || 'Unknown'}</p>
                        </div>
                     </div>
                     <div className="text-right">
@@ -142,7 +142,7 @@ export default async function AnalyticsPage() {
                        <span className="text-gray-900">{item.count}</span>
                     </div>
                     <div className="h-4 bg-gray-50 rounded-full overflow-hidden p-1">
-                       <div className={`h-full rounded-full ${item.color}`} style={{ width: `${activeListingsCount > 0 ? (item.count / activeListingsCount) * 100 : 0}%` }}></div>
+                       <div className={`h-full rounded-full ${item.color}`} style={{ width: `${(activeListingsCount || 0) > 0 ? (item.count / (activeListingsCount as number)) * 100 : 0}%` }}></div>
                     </div>
                  </div>
                ))}
