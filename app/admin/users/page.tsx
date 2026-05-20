@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import UserTable from "@/components/admin/user-table"
 import Link from "next/link"
 
@@ -8,18 +7,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: { role?: string; search?: string; page?: string }
 }) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const supabase = createClient()
 
   const currentRole = searchParams.role || "all"
   const search = searchParams.search || ""
@@ -43,7 +31,11 @@ export default async function AdminUsersPage({
     query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
   }
 
-  const { data: users, count } = await query
+  const { data: users, count, error } = await query
+  
+  if (error) {
+    console.error("[ADMIN_USERS] Error fetching users:", error)
+  }
 
   const totalPages = Math.ceil((count || 0) / pageSize)
 
@@ -71,7 +63,7 @@ export default async function AdminUsersPage({
         </form>
 
         <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-          {["all", "student", "landlord", "admin"].map((role) => (
+          {["all", "student", "landlord", "admin", "super_admin"].map((role) => (
             <Link
               key={role}
               href={`/admin/users?role=${role}&search=${search}`}

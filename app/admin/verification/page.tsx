@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { Profile } from "@/types"
 import Link from "next/link"
 import { ShieldCheck, Clock, CheckCircle2, XCircle, Users } from "lucide-react"
@@ -10,18 +9,7 @@ export default async function AdminVerificationPage({
 }: {
   searchParams: { status?: Profile["verification_status"] | "all"; page?: string }
 }) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const supabase = createClient()
 
   const currentStatus = searchParams.status || "pending"
   const currentPage = parseInt(searchParams.page || "1")
@@ -36,12 +24,13 @@ export default async function AdminVerificationPage({
 
   if (currentStatus !== "all") {
     query = query.eq("verification_status", currentStatus)
-  } else {
-    // For 'all', we might want to exclude 'unverified' if we only care about those who submitted something
-    // But instructions say 'All'.
   }
 
-  const { data: landlords, count } = await query
+  const { data: landlords, count, error } = await query
+  
+  if (error) {
+    console.error("[ADMIN_VERIFY] Error fetching landlords:", error)
+  }
 
   // Fetch pending count for badge
   const { count: pendingCount } = await supabase

@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { formatDate } from "@/lib/utils"
 import { CreditCard, CheckCircle2, XCircle, User } from "lucide-react"
 import Link from "next/link"
@@ -9,23 +8,12 @@ export default async function AdminSubscriptionsPage({
 }: {
   searchParams: { page?: string }
 }) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const supabase = createClient()
 
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  const { data: subscriptions, count } = await supabase
+  const { data: subscriptions, count, error } = await supabase
     .from("subscriptions")
     .select(`
       *,
@@ -33,6 +21,10 @@ export default async function AdminSubscriptionsPage({
     `, { count: "exact" })
     .order("created_at", { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+
+  if (error) {
+    console.error("[ADMIN_SUBS] Error fetching subscriptions:", error)
+  }
 
   const totalPages = Math.ceil((count || 0) / pageSize)
 

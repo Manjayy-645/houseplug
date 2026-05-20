@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { Listing, ListingStatus } from "@/types"
 import ListingTable from "@/components/admin/listing-table"
 import Link from "next/link"
@@ -9,18 +8,7 @@ export default async function AdminListingsPage({
 }: {
   searchParams: { status?: ListingStatus; page?: string }
 }) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const supabase = createClient()
 
   const currentStatus = searchParams.status || "all"
   const currentPage = parseInt(searchParams.page || "1")
@@ -39,7 +27,11 @@ export default async function AdminListingsPage({
     query = query.eq("status", currentStatus)
   }
 
-  const { data: listings, count } = await query
+  const { data: listings, count, error } = await query
+  
+  if (error) {
+    console.error("[ADMIN_LISTINGS] Error fetching listings:", error)
+  }
 
   const totalPages = Math.ceil((count || 0) / pageSize)
 
