@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { initializePaystackTransaction, PLAN_PRICES, BOOST_PRICES, VERIFICATION_FEE } from "@/lib/paystack"
+import { initializePaystackTransaction, getPlanPrices } from "@/lib/paystack"
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -20,18 +20,23 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single()
 
-  if (!profile || (profile.role !== "landlord" && profile.role !== "admin")) {
+  if (!profile || !["landlord", "admin", "super_admin"].includes(profile.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
+  const prices = await getPlanPrices()
+
   let amount = 0
   if (type === 'subscription') {
-    const key = `${plan}_${billing_cycle}` as keyof typeof PLAN_PRICES
-    amount = PLAN_PRICES[key]
+    if (plan === 'pro') {
+      amount = billing_cycle === 'annual' ? prices.pro_annual : prices.pro_monthly
+    } else if (plan === 'business') {
+      amount = billing_cycle === 'annual' ? prices.business_annual : prices.business_monthly
+    }
   } else if (type === 'boost') {
-    amount = BOOST_PRICES[boost_type as keyof typeof BOOST_PRICES]
+    amount = prices[boost_type as keyof typeof prices] || 0
   } else if (type === 'verification') {
-    amount = VERIFICATION_FEE
+    amount = prices.verification
   }
 
   if (!amount) {

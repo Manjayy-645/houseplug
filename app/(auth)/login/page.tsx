@@ -46,16 +46,22 @@ export default function LoginPage() {
       return
     }
 
-    const { data: profile } = await supabase
+    // Fetch user profile to determine role
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .single()
 
-    const role = (profile?.role ?? "student") as UserRole
+    if (profileError || !profile) {
+      router.push("/browse")
+      return
+    }
+
+    const role = profile.role as UserRole
     
-    if (role === "admin") {
-      router.push("/admin/users")
+    if (role === "super_admin" || role === "admin") {
+      router.push("/admin/listings")
     } else if (role === "landlord") {
       router.push("/landlord/dashboard")
     } else {

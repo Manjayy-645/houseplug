@@ -79,7 +79,7 @@ export function ListingRowActions({ listingId, status }: ListingRowActionsProps)
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-end gap-2">
       <Link
         href={`/landlord/listings/${listingId}/edit`}
         className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"

@@ -1,9 +1,10 @@
-export type UserRole = "student" | "landlord" | "admin"
+export type UserRole = "student" | "landlord" | "admin" | "super_admin"
 
 export type Profile = {
   id: string
   email: string
   full_name: string
+  username?: string | null
   phone: string
   role: UserRole
   avatar_url?: string

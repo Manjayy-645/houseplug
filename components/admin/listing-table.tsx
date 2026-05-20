@@ -21,31 +21,39 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
 
   const handleApprove = async (id: string) => {
     setLoading(id)
-    const { error } = await supabase
-      .from("listings")
-      .update({ status: "active" })
-      .eq("id", id)
-
-    if (error) {
-      alert("Failed to approve listing")
-    } else {
+    try {
+      const res = await fetch('/api/admin/listings/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: id, action: 'approve' })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
       router.refresh()
+    } catch (error: any) {
+      alert(error.message || "Failed to approve listing")
     }
     setLoading(null)
   }
 
   const handleToggleHome = async (id: string, currentValue: boolean) => {
     setLoading(id)
-    const { error } = await supabase
-      .from("listings")
-      .update({ show_on_home: !currentValue })
-      .eq("id", id)
-
-    if (error) {
+    try {
+      const res = await fetch('/api/admin/listings/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: id, action: 'toggle_home', show_on_home: !currentValue })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
+      router.refresh()
+    } catch (error: any) {
       console.error("Error toggling home page status:", error)
       alert(`Failed to update home page status: ${error.message}`)
-    } else {
-      router.refresh()
     }
     setLoading(null)
   }
@@ -54,20 +62,21 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
     if (!rejectingListing || !rejectionReason.trim()) return
 
     setLoading(rejectingListing.id)
-    const { error } = await supabase
-      .from("listings")
-      .update({ 
-        status: "rejected",
-        rejection_reason: rejectionReason 
+    try {
+      const res = await fetch('/api/admin/listings/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId: rejectingListing.id, action: 'reject', reason: rejectionReason })
       })
-      .eq("id", rejectingListing.id)
-
-    if (error) {
-      alert("Failed to reject listing")
-    } else {
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
       setRejectingListing(null)
-      setRejectionReason("")
+      rejectionReason && setRejectionReason("")
       router.refresh()
+    } catch (error: any) {
+      alert(error.message || "Failed to reject listing")
     }
     setLoading(null)
   }

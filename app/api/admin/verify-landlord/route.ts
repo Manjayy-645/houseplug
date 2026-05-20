@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { logAdminAction } from '@/lib/audit'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'admin') {
+  if (!['admin', 'super_admin'].includes(profile?.role || "")) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
 
   try {
     if (action === 'approve') {
+      const { data: landlord } = await serviceClient.from('profiles').select('full_name').eq('id', landlord_id).single()
       const { error } = await serviceClient
         .from('profiles')
         .update({
@@ -46,6 +48,15 @@ export async function POST(request: Request) {
         .eq('id', landlord_id)
 
       if (error) throw error
+
+      await logAdminAction({
+        admin_id: user.id,
+        action: 'verified_landlord',
+        target_type: 'user',
+        target_id: landlord_id,
+        details: { landlord_name: landlord?.full_name }
+      })
+
       return NextResponse.json({ success: true, message: 'Landlord verified' })
     }
 
@@ -53,6 +64,7 @@ export async function POST(request: Request) {
       if (!rejection_reason) {
         return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
       }
+      const { data: landlord } = await serviceClient.from('profiles').select('full_name').eq('id', landlord_id).single()
       const full_note = rejection_reason + (rejection_note ? ': ' + rejection_note : '')
       const { error } = await serviceClient
         .from('profiles')
@@ -65,10 +77,20 @@ export async function POST(request: Request) {
         .eq('id', landlord_id)
 
       if (error) throw error
+
+      await logAdminAction({
+        admin_id: user.id,
+        action: 'rejected_verification',
+        target_type: 'user',
+        target_id: landlord_id,
+        details: { landlord_name: landlord?.full_name, reason: full_note }
+      })
+
       return NextResponse.json({ success: true, message: 'Verification rejected' })
     }
 
     if (action === 'revoke') {
+      const { data: landlord } = await serviceClient.from('profiles').select('full_name').eq('id', landlord_id).single()
       const { error } = await serviceClient
         .from('profiles')
         .update({
@@ -80,6 +102,15 @@ export async function POST(request: Request) {
         .eq('id', landlord_id)
 
       if (error) throw error
+
+      await logAdminAction({
+        admin_id: user.id,
+        action: 'revoked_verification',
+        target_type: 'user',
+        target_id: landlord_id,
+        details: { landlord_name: landlord?.full_name }
+      })
+
       return NextResponse.json({ success: true, message: 'Verification revoked' })
     }
 

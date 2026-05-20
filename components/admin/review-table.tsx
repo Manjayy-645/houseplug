@@ -21,15 +21,19 @@ export default function ReviewTable({ reviews }: { reviews: ReviewWithDetails[] 
     if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) return
 
     setLoading(id)
-    const { error } = await supabase
-      .from("reviews")
-      .delete()
-      .eq("id", id)
-
-    if (error) {
-      alert("Failed to delete review")
-    } else {
+    try {
+      const res = await fetch('/api/admin/reviews/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: id, action: 'delete' })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
       router.refresh()
+    } catch (error: any) {
+      alert(error.message || "Failed to delete review")
     }
     setLoading(null)
   }

@@ -1,21 +1,44 @@
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!
 const PAYSTACK_BASE = 'https://api.paystack.co'
 
-export const PLAN_PRICES = {
-  pro_monthly: 500000,      // ₦5,000 in kobo
-  pro_annual: 4500000,      // ₦45,000 in kobo
-  business_monthly: 1500000, // ₦15,000 in kobo
-  business_annual: 12000000, // ₦120,000 in kobo
-}
+export async function getPlanPrices() {
+  const supabase = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 
-export const BOOST_PRICES = {
-  featured_7: 150000,   // ₦1,500 in kobo
-  featured_30: 400000,  // ₦4,000 in kobo
-  urgent: 50000,        // ₦500 in kobo
-  refresh: 30000,       // ₦300 in kobo
-}
+  const { data } = await supabase
+    .from('platform_settings')
+    .select('key, value')
+    .in('key', [
+      'pro_plan_price',
+      'business_plan_price',
+      'verification_fee',
+      'boost_featured_7',
+      'boost_featured_30',
+      'boost_urgent',
+      'boost_refresh'
+    ])
 
-export const VERIFICATION_FEE = 200000 // ₦2,000 in kobo
+  const settings = Object.fromEntries(
+    data?.map(s => [s.key, Number(s.value)]) ?? []
+  )
+
+  return {
+    pro_monthly: settings.pro_plan_price ?? 500000,
+    pro_annual: Math.round((settings.pro_plan_price ?? 500000) * 9),
+    business_monthly: settings.business_plan_price ?? 1500000,
+    business_annual: Math.round((settings.business_plan_price ?? 1500000) * 9),
+    verification: settings.verification_fee ?? 200000,
+    featured_7: settings.boost_featured_7 ?? 150000,
+    featured_30: settings.boost_featured_30 ?? 400000,
+    urgent: settings.boost_urgent ?? 50000,
+    refresh: settings.boost_refresh ?? 30000,
+  }
+}
 
 export async function initializePaystackTransaction({
   email,

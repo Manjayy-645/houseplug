@@ -44,14 +44,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=account_banned", request.url))
   }
 
-  if (request.nextUrl.pathname.startsWith("/admin") && profile?.role !== "admin") {
-    return NextResponse.redirect(new URL("/", request.url))
+  // Maintenance mode check
+  const { data: maintenance } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', 'maintenance_mode')
+    .single()
+
+  if (
+    maintenance?.value === 'true' && 
+    !['admin', 'super_admin'].includes(profile?.role ?? '') &&
+    request.nextUrl.pathname !== '/maintenance'
+  ) {
+    return NextResponse.redirect(new URL('/maintenance', request.url))
+  }
+
+  // Super admin only routes
+  const superAdminRoutes = [
+    '/admin/revenue',
+    '/admin/admins',
+    '/admin/settings',
+    '/admin/analytics',
+    '/admin/export',
+    '/admin/audit',
+  ]
+
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    if (!["admin", "super_admin"].includes(profile?.role ?? "")) {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+
+    if (superAdminRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+      if (profile?.role !== 'super_admin') {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      }
+    }
   }
 
   if (
     request.nextUrl.pathname.startsWith("/landlord") &&
-    profile?.role !== "landlord" &&
-    profile?.role !== "admin"
+    !["landlord", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
     return NextResponse.redirect(new URL("/", request.url))
   }
@@ -60,5 +92,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/landlord/:path*", "/admin/:path*"]
+  matcher: ["/landlord/:path*", "/admin/:path*", "/maintenance"]
 }

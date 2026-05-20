@@ -20,15 +20,23 @@ export default function UserTable({ users }: { users: UserWithCounts[] }) {
     if (!confirm(`Are you sure you want to ${isBanned ? "unban" : "ban"} this user?`)) return
 
     setLoading(id)
-    const { error } = await supabase
-      .from("profiles")
-      .update({ banned: !isBanned })
-      .eq("id", id)
-
-    if (error) {
-      alert(`Failed to ${isBanned ? "unban" : "ban"} user`)
-    } else {
+    try {
+      const res = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          targetUserId: id, 
+          action: isBanned ? 'unban' : 'ban',
+          reason: isBanned ? null : 'Violating platform policies'
+        })
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error)
+      }
       router.refresh()
+    } catch (error: any) {
+      alert(error.message || `Failed to ${isBanned ? "unban" : "ban"} user`)
     }
     setLoading(null)
   }

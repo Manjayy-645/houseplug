@@ -33,7 +33,7 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .single()
 
-  if (profile?.role !== "admin") {
+  if (!["admin", "super_admin"].includes(profile?.role || "")) {
     redirect("/")
   }
 
@@ -46,7 +46,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      <AdminSidebar pendingCount={pendingVerifications || 0} />
+      <AdminSidebar role={profile?.role} pendingCount={pendingVerifications || 0} />
 
       {/* Main content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8">

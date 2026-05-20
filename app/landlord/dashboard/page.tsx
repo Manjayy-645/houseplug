@@ -177,6 +177,18 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
         ))}
       </section>
 
+      {activeListingsCount > 0 && profile?.username && (
+        <div className="bg-white border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+          <div>
+            <p className="text-sm text-gray-600 font-bold">📤 Share your listings</p>
+            <p className="text-xs text-[#1B4332] font-medium mt-0.5">houseplug.ng/card/{profile.username}</p>
+          </div>
+          <Link href="/landlord/profile" className="text-amber-600 font-bold text-sm hover:text-amber-700 transition">
+            Share Card &rarr;
+          </Link>
+        </div>
+      )}
+
       <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>

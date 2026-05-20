@@ -4,7 +4,6 @@ import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
 import { Check, X, Zap, Flame, Star, RefreshCcw, CreditCard, Download, ShieldCheck, Crown } from "lucide-react"
 import { formatNaira, formatDate } from "@/lib/utils"
-import { PLAN_PRICES, BOOST_PRICES } from "@/lib/paystack"
 import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { getLandlordSubscription } from "@/lib/billing"
@@ -17,6 +16,7 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [listings, setListings] = useState<Listing[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [prices, setPrices] = useState<any>(null)
   const [selectedBoostListings, setSelectedBoostListings] = useState<Record<string, string>>({})
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
@@ -28,11 +28,28 @@ export default function SubscriptionPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [subscriptionData, { data: listingsData }, { data: paymentsData }] = await Promise.all([
+      const [subscriptionData, { data: listingsData }, { data: paymentsData }, { data: settingsData }] = await Promise.all([
         getLandlordSubscription(user.id),
         supabase.from("listings").select("id, title").eq("landlord_id", user.id).eq("status", "active"),
-        supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false })
+        supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }),
+        supabase.from('platform_settings').select('key, value')
       ])
+
+      const settings = Object.fromEntries(
+        settingsData?.map(s => [s.key, Number(s.value)]) ?? []
+      )
+
+      setPrices({
+        pro_monthly: settings.pro_plan_price ?? 500000,
+        pro_annual: Math.round((settings.pro_plan_price ?? 500000) * 9),
+        business_monthly: settings.business_plan_price ?? 1500000,
+        business_annual: Math.round((settings.business_plan_price ?? 1500000) * 9),
+        verification: settings.verification_fee ?? 200000,
+        featured_7: settings.boost_featured_7 ?? 150000,
+        featured_30: settings.boost_featured_30 ?? 400000,
+        urgent: settings.boost_urgent ?? 50000,
+        refresh: settings.boost_refresh ?? 30000,
+      })
 
       setSubscription(subscriptionData as Subscription)
       setListings(listingsData as Listing[])
@@ -106,7 +123,7 @@ export default function SubscriptionPage() {
 
   const totalPages = Math.ceil(payments.length / itemsPerPage)
 
-  if (loading) return (
+  if (loading || !prices) return (
     <div className="flex h-96 items-center justify-center">
       <RefreshCcw className="h-8 w-8 animate-spin text-[#1B4332]" />
     </div>
@@ -238,8 +255,8 @@ export default function SubscriptionPage() {
             {
               id: "pro",
               name: "Pro",
-              price: billingCycle === "monthly" ? "₦5,000" : "₦45,000",
-              subtext: billingCycle === "annual" ? "₦3,750 /mo billed yearly" : "billed monthly",
+              price: billingCycle === "monthly" ? formatNaira(prices.pro_monthly / 100) : formatNaira(prices.pro_annual / 100),
+              subtext: billingCycle === "annual" ? `${formatNaira(Math.round(prices.pro_annual / 12 / 100))} /mo billed yearly` : "billed monthly",
               features: ["5 active listings", "Featured badge", "Priority placement", "Full analytics dashboard", "Priority support"],
               color: "border-emerald-200 bg-emerald-50/30",
               recommended: true,
@@ -249,8 +266,8 @@ export default function SubscriptionPage() {
             {
               id: "business",
               name: "Business",
-              price: billingCycle === "monthly" ? "₦15,000" : "₦120,000",
-              subtext: billingCycle === "annual" ? "₦10,000 /mo billed yearly" : "billed monthly",
+              price: billingCycle === "monthly" ? formatNaira(prices.business_monthly / 100) : formatNaira(prices.business_annual / 100),
+              subtext: billingCycle === "annual" ? `${formatNaira(Math.round(prices.business_annual / 12 / 100))} /mo billed yearly` : "billed monthly",
               features: ["Unlimited listings", "Always top of search", "Featured + Verified badges", "Dedicated account manager", "Bulk CSV upload"],
               color: "border-gray-900",
               btnText: (currentPlanId === "business" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "business" ? "Renew Business" : "Upgrade to Business",
@@ -313,7 +330,7 @@ export default function SubscriptionPage() {
             { 
               id: "featured_7", 
               name: "Featured 7 days", 
-              price: 1500, 
+              price: prices.featured_7, 
               icon: Star, 
               color: "text-amber-500 bg-amber-50",
               desc: "Top placement with ⭐ badge for 7 days"
@@ -321,7 +338,7 @@ export default function SubscriptionPage() {
             { 
               id: "featured_30", 
               name: "Featured 30 days", 
-              price: 4000, 
+              price: prices.featured_30, 
               icon: Crown, 
               color: "text-emerald-500 bg-emerald-50",
               desc: "Maximum exposure for a full month"
@@ -329,7 +346,7 @@ export default function SubscriptionPage() {
             { 
               id: "urgent", 
               name: "Urgent Tag", 
-              price: 500, 
+              price: prices.urgent, 
               icon: Flame, 
               color: "text-red-500 bg-red-50",
               desc: "Adds 🔥 Urgent badge for immediate fill"
@@ -337,7 +354,7 @@ export default function SubscriptionPage() {
             { 
               id: "refresh", 
               name: "Refresh Now", 
-              price: 300, 
+              price: prices.refresh, 
               icon: RefreshCcw, 
               color: "text-blue-500 bg-blue-50",
               desc: "Bumps your listing to the very top"
@@ -348,7 +365,7 @@ export default function SubscriptionPage() {
                 <boost.icon className="h-6 w-6" />
               </div>
               <h3 className="font-black text-gray-900">{boost.name}</h3>
-              <p className="mt-1 text-xs font-bold text-gray-400 uppercase">{formatNaira(boost.price)}</p>
+              <p className="mt-1 text-xs font-bold text-gray-400 uppercase">{formatNaira(boost.price / 100)}</p>
               <p className="mt-3 text-xs font-medium text-gray-500 leading-relaxed">{boost.desc}</p>
               
               <div className="mt-6 space-y-3">
