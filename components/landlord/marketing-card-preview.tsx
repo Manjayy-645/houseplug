@@ -110,7 +110,7 @@ export function MarketingCardPreview({
 
           {/* Link Box */}
           <a 
-            href={cardUrl}
+            href={`/landlord/${profile.username}`}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full bg-[#FFFBEB] border-[1.5px] border-[#F59E0B] rounded-xl p-4 cursor-pointer hover:bg-amber-50 transition"
