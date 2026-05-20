@@ -238,12 +238,3 @@ function SaveButton({ loading, success, onClick }: any) {
       </button>
    )
 }
-? 'bg-emerald-500 text-white shadow-emerald-500/20' 
-            : 'bg-[#1B4332] text-white shadow-[#1B4332]/20 hover:brightness-110 active:scale-95'
-        } disabled:opacity-50`}
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : success ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-        {success ? 'Saved!' : 'Save Changes'}
-      </button>
-   )
-}
