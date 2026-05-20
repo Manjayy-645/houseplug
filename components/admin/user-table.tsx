@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Ban, ShieldCheck, Loader2, User } from "lucide-react"
+import { Ban, ShieldCheck, Loader2, User, Crown } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface UserWithCounts extends Profile {
@@ -72,6 +72,11 @@ export default function UserTable({ users }: { users: UserWithCounts[] }) {
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-gray-900">{user.full_name}</span>
+                        {user.role === 'super_admin' && (
+                           <span title="Super Admin">
+                             <Crown className="w-3.5 h-3.5 text-amber-500" />
+                           </span>
+                        )}
                         {user.role === 'landlord' && user.verification_status === 'verified' && (
                           <>
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" aria-hidden="true" />
@@ -90,12 +95,13 @@ export default function UserTable({ users }: { users: UserWithCounts[] }) {
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                  <span className={`px-2 py-1 text-[10px] font-black uppercase tracking-wider rounded-full ${
+                    user.role === 'super_admin' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
                     user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                     user.role === 'landlord' ? 'bg-blue-100 text-blue-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {user.role}
+                    {user.role.replace('_', ' ')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">

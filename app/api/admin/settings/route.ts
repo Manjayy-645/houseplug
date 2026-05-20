@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   try {
     const updates = Object.entries(settings).map(([key, value]) => ({
        key,
-       value: JSON.stringify(value),
+       value,
        updated_by: user.id,
        updated_at: new Date().toISOString()
     }))

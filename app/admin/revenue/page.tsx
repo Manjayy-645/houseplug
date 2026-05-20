@@ -13,12 +13,12 @@ export default async function RevenuePage() {
   // Fetch in parallel
   const [
     { data: payments },
-    { data: proSubscriptions },
-    { data: businessSubscriptions },
+    { count: proCount },
+    { count: businessCount },
   ] = await Promise.all([
     supabase.from('payments').select('*').order('created_at', { ascending: false }),
-    supabase.from('subscriptions').select('id', { count: 'exact' }).eq('plan', 'pro').eq('active', true),
-    supabase.from('subscriptions').select('id', { count: 'exact' }).eq('plan', 'business').eq('active', true),
+    supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('plan', 'pro').eq('active', true),
+    supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('plan', 'business').eq('active', true),
   ])
 
   const totalRevenue = payments?.filter(p => p.status === 'success').reduce((acc, p) => acc + p.amount, 0) || 0
@@ -49,22 +49,33 @@ export default async function RevenuePage() {
   })
 
   // Real data aggregation for University Revenue
-  // Note: This requires a join or parallel processing since payments don't have university info
-  // I'll aggregate from listings which have payments joined (as prepared in previous turn but not fully used)
   const uniRevenueMap: Record<string, number> = { 'UniPort': 0, 'RSU': 0, 'IAUE': 0, 'KenPoly': 0 }
   
-  // Refetch to include listing data in payments or vice versa
-  const { data: listingsWithPayments } = await supabase
-    .from('listings')
-    .select('university, payments(amount, status)')
-    .not('payments', 'is', null)
+  // Fetch successful payments with their listing or landlord info
+  const { data: allSuccessfulPayments } = await supabase
+    .from('payments')
+    .select('amount, listing_id, landlord_id, listing:listings(university)')
+    .eq('status', 'success')
 
-  listingsWithPayments?.forEach(l => {
-    l.payments?.forEach((p: any) => {
-      if (p.status === 'success') {
-        uniRevenueMap[l.university] = (uniRevenueMap[l.university] || 0) + (p.amount / 100)
-      }
-    })
+  // To handle payments without listing_id (like subscriptions), 
+  // we'll need a mapping of landlords to their primary university
+  const { data: landlordUnis } = await supabase
+    .from('listings')
+    .select('landlord_id, university')
+    .order('created_at', { ascending: false })
+
+  const landlordUniMap: Record<string, string> = {}
+  landlordUnis?.forEach(l => {
+    if (!landlordUniMap[l.landlord_id]) {
+      landlordUniMap[l.landlord_id] = l.university
+    }
+  })
+
+  allSuccessfulPayments?.forEach((p: any) => {
+    const university = p.listing?.university || landlordUniMap[p.landlord_id]
+    if (university && uniRevenueMap.hasOwnProperty(university)) {
+      uniRevenueMap[university] += (p.amount / 100)
+    }
   })
 
   const universityRevenue = Object.entries(uniRevenueMap).map(([name, amount]) => ({
@@ -98,14 +109,14 @@ export default async function RevenuePage() {
         />
         <StatsCard 
           title="Active Pro" 
-          value={String(proSubscriptions?.length || 0)} 
+          value={String(proCount || 0)} 
           subtitle="₦5k/mo subscribers"
           icon={Crown}
           color="bg-amber-500"
         />
         <StatsCard 
           title="Active Business" 
-          value={String(businessSubscriptions?.length || 0)} 
+          value={String(businessCount || 0)} 
           subtitle="₦15k/mo subscribers"
           icon={BarChart2}
           color="bg-purple-500"
