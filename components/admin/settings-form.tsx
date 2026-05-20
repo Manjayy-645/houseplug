@@ -176,7 +176,7 @@ export function SettingsForm({ settings: initialSettings }: { settings: Record<s
                  <div>
                     <p className="text-sm font-bold text-red-900">System Visibility</p>
                     <p className="text-xs font-medium text-red-700/70 mt-0.5">
-                       {settings.maintenance_mode === 'true' ? 'Site is currently locked for maintenance.' : 'Site is live and accessible to all users.'}
+                       {(settings.maintenance_mode === 'true' || settings.maintenance_mode === true) ? 'Site is currently locked for maintenance.' : 'Site is live and accessible to all users.'}
                     </p>
                  </div>
               </div>
@@ -230,6 +230,15 @@ function SaveButton({ loading, success, onClick }: any) {
         className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-sm font-black transition-all shadow-lg ${
           success 
             ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+            : 'bg-[#1B4332] text-white shadow-[#1B4332]/20 hover:brightness-110 active:scale-95'
+        } disabled:opacity-50`}
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : success ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+        {success ? 'Saved!' : 'Save Changes'}
+      </button>
+   )
+}
+? 'bg-emerald-500 text-white shadow-emerald-500/20' 
             : 'bg-[#1B4332] text-white shadow-[#1B4332]/20 hover:brightness-110 active:scale-95'
         } disabled:opacity-50`}
       >

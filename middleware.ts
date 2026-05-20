@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
     .single()
 
   if (
-    maintenance?.value === 'true' && 
+    (maintenance?.value === 'true' || maintenance?.value === true) && 
     !['admin', 'super_admin'].includes(profile?.role ?? '') &&
     request.nextUrl.pathname !== '/maintenance'
   ) {
