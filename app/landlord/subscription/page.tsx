@@ -36,19 +36,21 @@ export default function SubscriptionPage() {
       ])
 
       const settings = Object.fromEntries(
-        settingsData?.map(s => [s.key, Number(s.value)]) ?? []
+        settingsData?.map(s => [s.key, s.value]) ?? []
       )
 
       setPrices({
-        pro_monthly: settings.pro_plan_price ?? 500000,
-        pro_annual: Math.round((settings.pro_plan_price ?? 500000) * 9),
-        business_monthly: settings.business_plan_price ?? 1500000,
-        business_annual: Math.round((settings.business_plan_price ?? 1500000) * 9),
-        verification: settings.verification_fee ?? 200000,
-        featured_7: settings.boost_featured_7 ?? 150000,
-        featured_30: settings.boost_featured_30 ?? 400000,
-        urgent: settings.boost_urgent ?? 50000,
-        refresh: settings.boost_refresh ?? 30000,
+        pro_monthly: Number(settings.pro_plan_price ?? 500000),
+        pro_annual: Math.round(Number(settings.pro_plan_price ?? 500000) * 9),
+        business_monthly: Number(settings.business_plan_price ?? 1500000),
+        business_annual: Math.round(Number(settings.business_plan_price ?? 1500000) * 9),
+        verification: Number(settings.verification_fee ?? 200000),
+        featured_7: Number(settings.boost_featured_7 ?? 150000),
+        featured_30: Number(settings.boost_featured_30 ?? 400000),
+        urgent: Number(settings.boost_urgent ?? 50000),
+        refresh: Number(settings.boost_refresh ?? 30000),
+        max_free: Number(settings.max_free_listings ?? 1),
+        max_pro: Number(settings.max_pro_listings ?? 5),
       })
 
       setSubscription(subscriptionData as Subscription)
@@ -247,7 +249,7 @@ export default function SubscriptionPage() {
               id: "free",
               name: "Free",
               price: "₦0",
-              features: ["1 active listing", "Standard placement", "Basic analytics", "WhatsApp inquiries"],
+              features: [`${prices.max_free} active listing${prices.max_free !== 1 ? 's' : ''}`, "Standard placement", "Basic analytics", "WhatsApp inquiries"],
               color: "border-gray-200",
               btnText: "Current Plan",
               active: currentPlanId === "free" && !subscription?.expired
@@ -257,7 +259,7 @@ export default function SubscriptionPage() {
               name: "Pro",
               price: billingCycle === "monthly" ? formatNaira(prices.pro_monthly / 100) : formatNaira(prices.pro_annual / 100),
               subtext: billingCycle === "annual" ? `${formatNaira(Math.round(prices.pro_annual / 12 / 100))} /mo billed yearly` : "billed monthly",
-              features: ["5 active listings", "Featured badge", "Priority placement", "Full analytics dashboard", "Priority support"],
+              features: [`${prices.max_pro} active listings`, "Featured badge", "Priority placement", "Full analytics dashboard", "Priority support"],
               color: "border-emerald-200 bg-emerald-50/30",
               recommended: true,
               btnText: (currentPlanId === "pro" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "pro" ? "Renew Pro" : currentPlanId === "business" ? "Downgrade to Pro" : "Upgrade to Pro",

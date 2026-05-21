@@ -164,11 +164,29 @@ export async function getLandlordSubscription(landlord_id: string) {
   }
 }
 
-import { getListingLimit as getListingLimitUtil, isSubscriptionExpiringSoon as isSubscriptionExpiringSoonUtil, formatExpiryDate as formatExpiryDateUtil } from './billing-utils'
-
 export async function getListingLimit(plan: string): Promise<number> {
-  return getListingLimitUtil(plan)
+  if (plan === 'business') return Infinity
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const supabase = createSupabaseClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+
+  const { data } = await supabase
+    .from('platform_settings')
+    .select('key, value')
+    .in('key', ['max_free_listings', 'max_pro_listings'])
+
+  const settings = Object.fromEntries(
+    data?.map(s => [s.key, Number(s.value)]) ?? []
+  )
+
+  if (plan === 'pro') return settings.max_pro_listings ?? 5
+  return settings.max_free_listings ?? 1
 }
+
+import { isSubscriptionExpiringSoon as isSubscriptionExpiringSoonUtil, formatExpiryDate as formatExpiryDateUtil } from './billing-utils'
 
 export async function isSubscriptionExpiringSoon(expires_at: string | null): Promise<boolean> {
   return isSubscriptionExpiringSoonUtil(expires_at)

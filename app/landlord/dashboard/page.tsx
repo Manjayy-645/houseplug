@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
 import type { Listing, Review } from "@/types"
-import { getLandlordSubscription } from "@/lib/billing"
-import { getListingLimit, isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
+import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
+import { isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
 
 export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string } }) {
   const supabase = createClient()
@@ -51,7 +51,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   
   // Admins get unlimited listings. Expired plans fall back to free limit.
   const effectivePlan = subscription.expired ? 'free' : subscription.plan
-  const listingLimit = isAdmin ? Infinity : getListingLimit(effectivePlan)
+  const listingLimit = isAdmin ? Infinity : await getListingLimit(effectivePlan)
   const canAddListing = activeListingsCount < listingLimit
   const expiringSoon = subscription.expires_at 
     ? isSubscriptionExpiringSoon(subscription.expires_at) 
