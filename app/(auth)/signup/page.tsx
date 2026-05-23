@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
+import { OTPInput } from "@/components/auth/otp-input"
+import { Mail, ArrowLeft, CheckCircle2, Loader2, ShieldCheck, RefreshCw } from "lucide-react"
+import { redirectByRole } from "@/lib/auth"
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -21,13 +23,22 @@ const signupSchema = z.object({
 type SignupValues = z.infer<typeof signupSchema>
 
 export default function SignupPage() {
-  const router = useRouter()
+  const [formState, setFormState] = useState<'form' | 'verify'>('form')
+  const [authEmail, setEmail] = useState("")
+  const [otp, setOtp] = useState("")
   const [authError, setAuthError] = useState<string | null>(null)
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resendStatus, setResendStatus] = useState<string | null>(null)
+
+  const supabase = createClient()
 
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
     watch,
     formState: { errors, isSubmitting }
   } = useForm<SignupValues>({
@@ -43,10 +54,16 @@ export default function SignupPage() {
 
   const selectedRole = watch("role")
 
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [resendCooldown])
+
   const onSubmit = async (values: SignupValues) => {
     setAuthError(null)
-
-    const supabase = createClient()
     const { data: authData, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -55,7 +72,8 @@ export default function SignupPage() {
           full_name: values.full_name,
           role: values.role,
           phone: values.phone
-        }
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     })
 
@@ -69,30 +87,140 @@ export default function SignupPage() {
     }
 
     if (authData.user) {
-      // Fallback: create profile directly if trigger didn't
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', authData.user.id)
-        .single()
-
-      if (!existingProfile) {
-        await supabase.from('profiles').insert({
-          id: authData.user.id,
-          email: authData.user.email!,
-          full_name: values.full_name,
-          role: values.role,
-          phone: values.phone
-        })
-      }
-
-      // Redirect based on role
-      if (values.role === 'landlord') {
-        router.push('/landlord/dashboard')
-      } else {
-        router.push('/browse')
-      }
+      setEmail(values.email)
+      setFormState('verify')
     }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) return
+    
+    setOtpLoading(true)
+    setOtpError(null)
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: authEmail,
+        token: otp,
+        type: 'signup'
+      })
+
+      if (error) throw error
+
+      if (data.user) {
+        // Fallback: Ensure profile exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        if (!profile) {
+           const values = getValues()
+           await supabase.from('profiles').insert({
+             id: data.user.id,
+             email: data.user.email!,
+             full_name: values.full_name,
+             role: values.role,
+             phone: values.phone
+           })
+           redirectByRole(values.role)
+        } else {
+           redirectByRole(profile.role)
+        }
+      }
+    } catch (err: any) {
+      setOtpError(err.message || 'Invalid or expired code. Try again.')
+      setOtpLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return
+    
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: authEmail,
+    })
+
+    if (error) {
+      setOtpError(error.message)
+    } else {
+      setResendStatus("Email resent!")
+      setResendCooldown(60)
+      setTimeout(() => setResendStatus(null), 3000)
+    }
+  }
+
+  // Auto-submit when OTP reaches 6 chars
+  useEffect(() => {
+    if (otp.length === 6) {
+      handleVerifyOtp()
+    }
+  }, [otp])
+
+  if (formState === 'verify') {
+    return (
+      <div className="text-center py-4">
+        <div className="flex justify-center mb-6">
+          <div className="bg-emerald-50 p-4 rounded-full">
+            <Mail className="h-10 w-10 text-[#1B4332]" />
+          </div>
+        </div>
+        
+        <h2 className="text-2xl font-black text-gray-900 mb-2">Check your email</h2>
+        <p className="text-gray-500 font-medium mb-6">
+          We sent a verification link to:<br/>
+          <span className="text-[#1B4332] font-black">{authEmail}</span>
+        </p>
+        
+        <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8">
+          <p className="text-sm font-bold text-gray-600 mb-4 uppercase tracking-widest">— or enter the OTP code —</p>
+          
+          <OTPInput 
+            value={otp} 
+            onChange={setOtp} 
+            disabled={otpLoading} 
+          />
+
+          {otpError && (
+            <p className="mt-4 text-sm font-bold text-red-600">{otpError}</p>
+          )}
+
+          <button
+            onClick={handleVerifyOtp}
+            disabled={otp.length !== 6 || otpLoading}
+            className="w-full mt-6 rounded-xl bg-[#1B4332] px-4 py-3 text-sm font-black text-white transition hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:grayscale"
+          >
+            {otpLoading ? <RefreshCw className="h-5 w-5 animate-spin mx-auto" /> : "Verify Code"}
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 font-medium">
+            Didn't receive the email?{" "}
+            {resendStatus ? (
+              <span className="text-emerald-600 font-bold">{resendStatus}</span>
+            ) : (
+              <button 
+                onClick={handleResend}
+                disabled={resendCooldown > 0}
+                className="text-[#F59E0B] font-black hover:underline disabled:opacity-50"
+              >
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend verification email"}
+              </button>
+            )}
+          </p>
+
+          <button 
+            onClick={() => setFormState('form')}
+            className="flex items-center justify-center gap-2 mx-auto text-sm font-bold text-gray-400 hover:text-gray-600 transition"
+          >
+            <ArrowLeft className="h-4 w-4" /> Use a different email
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
