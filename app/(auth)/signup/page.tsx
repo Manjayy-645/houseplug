@@ -47,7 +47,7 @@ export default function SignupPage() {
     setAuthError(null)
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
@@ -68,7 +68,31 @@ export default function SignupPage() {
       return
     }
 
-    router.push(values.role === "landlord" ? "/landlord/dashboard" : "/browse")
+    if (authData.user) {
+      // Fallback: create profile directly if trigger didn't
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', authData.user.id)
+        .single()
+
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          id: authData.user.id,
+          email: authData.user.email!,
+          full_name: values.full_name,
+          role: values.role,
+          phone: values.phone
+        })
+      }
+
+      // Redirect based on role
+      if (values.role === 'landlord') {
+        router.push('/landlord/dashboard')
+      } else {
+        router.push('/browse')
+      }
+    }
   }
 
   return (

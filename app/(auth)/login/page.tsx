@@ -36,24 +36,31 @@ export default function LoginPage() {
     setAuthError(null)
 
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password
     })
 
-    if (error || !data.user) {
+    if (error || !authData.user) {
       setAuthError("Invalid email or password")
       return
     }
 
-    // Fetch user profile to determine role
+    // Check profile exists
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
-      .eq("id", data.user.id)
+      .select("id, role")
+      .eq("id", authData.user.id)
       .single()
 
-    if (profileError || !profile) {
+    if (!profile) {
+      // Create missing profile
+      await supabase.from('profiles').insert({
+        id: authData.user.id,
+        email: authData.user.email!,
+        full_name: authData.user.user_metadata?.full_name ?? 'User',
+        role: authData.user.user_metadata?.role ?? 'student',
+      })
       router.push("/browse")
       return
     }
