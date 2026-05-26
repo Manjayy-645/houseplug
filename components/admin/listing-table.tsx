@@ -158,7 +158,7 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                       </>
                     )}
                   </div>
-                  <div className="text-gray-500">{listing.landlord?.phone || "No phone"}</div>
+                  <div className="text-gray-500">{listing.landlord?.phone || listing.whatsapp_number || "No phone"}</div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {formatDate(listing.created_at)}

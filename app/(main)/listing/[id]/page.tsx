@@ -13,6 +13,7 @@ import LandlordCard from "@/components/listing/landlord-card"
 import ReviewsSection from "@/components/listing/reviews-section"
 import ReviewForm from "@/components/listing/review-form"
 import SimilarListings from "@/components/listing/similar-listings"
+import ViewTracker from "@/components/listing/view-tracker"
 
 type ListingDetailPageProps = {
   params: { id: string }
@@ -179,6 +180,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-24 lg:pb-12">
+      <ViewTracker listingId={listing.id} />
       {listing.status !== "active" && (
         <div className="bg-[#1B4332] text-white px-4 py-3 text-center text-sm font-bold flex items-center justify-center gap-2">
           <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />

@@ -1,11 +1,13 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ShieldCheck, Phone, MessageCircle, ShieldAlert } from "lucide-react"
+import { useMemo, useState, useEffect } from "react"
+import { ShieldCheck, Phone, MessageCircle, ShieldAlert, Lock } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick } from "@/app/actions"
 import { UNIVERSITIES } from "@/lib/constants"
+import { createClient } from "@/lib/supabase/client"
+import Link from "next/link"
 
 type ContactCardProps = {
   listing: Listing
@@ -13,15 +15,42 @@ type ContactCardProps = {
 
 export default function ContactCard({ listing }: ContactCardProps) {
   const [showPhone, setShowPhone] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+  
   const university = UNIVERSITIES.find(u => u.id === listing.university)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      setLoading(false)
+    })
+  }, [supabase])
 
   const whatsappUrl = useMemo(
     () => buildWhatsAppLink(listing.whatsapp_number, listing.title),
     [listing.whatsapp_number, listing.title]
   )
 
-  const handleWhatsAppClick = () => {
+  const handleWhatsAppClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      window.location.href = `/login?returnTo=/listing/${listing.id}`
+      return
+    }
     recordWhatsAppClick(listing.id)
+  }
+
+  const handleRevealPhone = () => {
+    if (!user) {
+      window.location.href = `/login?returnTo=/listing/${listing.id}`
+      return
+    }
+    if (!showPhone) {
+      import("@/app/actions").then(actions => actions.recordPhoneReveal(listing.id))
+    }
+    setShowPhone((v) => !v)
   }
 
   const revealedPhone = listing.phone_number ?? ""
@@ -40,28 +69,43 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
           <p className="text-sm text-gray-600">No agent fees. Pay landlord directly.</p>
 
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            onClick={handleWhatsAppClick}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Contact on WhatsApp
-          </a>
+          {!loading && !user ? (
+            <div className="space-y-3">
+              <Link
+                href={`/login?returnTo=/listing/${listing.id}`}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-4 py-3 text-sm font-bold text-white hover:brightness-95 shadow-md transition active:scale-95"
+              >
+                <Lock className="h-4 w-4" />
+                Login to Contact Landlord
+              </Link>
+              <p className="text-[10px] text-center text-gray-400 font-medium">Authentication required to prevent spam</p>
+            </div>
+          ) : (
+            <>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={handleWhatsAppClick}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Contact on WhatsApp
+              </a>
 
-          <button
-            type="button"
-            onClick={() => setShowPhone((v) => !v)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
-          >
-            <Phone className="h-4 w-4" />
-            Reveal Phone Number
-          </button>
+              <button
+                type="button"
+                onClick={handleRevealPhone}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+              >
+                <Phone className="h-4 w-4" />
+                Reveal Phone Number
+              </button>
+            </>
+          )}
 
-          {showPhone ? (
-            <div className="rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-800">
+          {showPhone && user ? (
+            <div className="rounded-xl bg-gray-50 px-3 py-2 text-sm text-gray-800 animate-in fade-in slide-in-from-top-1">
               <p className="font-medium">Phone number</p>
               <p>{revealedPhone ? revealedPhone : "Phone number not available for this listing."}</p>
             </div>
@@ -91,16 +135,26 @@ export default function ContactCard({ listing }: ContactCardProps) {
               </p>
             </div>
 
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              onClick={handleWhatsAppClick}
-              className="flex-1 max-w-[200px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4332] py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/10 transition active:scale-95"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Chat Landlord
-            </a>
+            {!loading && !user ? (
+              <Link
+                href={`/login?returnTo=/listing/${listing.id}`}
+                className="flex-1 max-w-[200px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4332] py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/10 transition active:scale-95"
+              >
+                <Lock className="h-4 w-4" />
+                Login to Chat
+              </Link>
+            ) : (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={handleWhatsAppClick}
+                className="flex-1 max-w-[200px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4332] py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/10 transition active:scale-95"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chat Landlord
+              </a>
+            )}
           </div>
         </div>
         <div className="h-24" />
@@ -108,4 +162,5 @@ export default function ContactCard({ listing }: ContactCardProps) {
     </>
   )
 }
+
 

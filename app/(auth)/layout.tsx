@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import type { ReactNode } from "react"
 
 type AuthLayoutProps = {
@@ -11,7 +12,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       <div className="w-full max-w-md">
         <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
           <div className="mb-8 text-center">
-            <Link href="/" className="inline-block">
+            <Link href="/" className="inline-flex items-center gap-3">
+              <Image src="/logo.png" alt="HousePlug Logo" width={48} height={48} className="rounded-xl" />
               <h1 className="text-3xl font-bold text-[#1B4332]">HousePlug</h1>
             </Link>
             <p className="mt-2 text-sm text-gray-600">Your trusted housing plug 🔌</p>

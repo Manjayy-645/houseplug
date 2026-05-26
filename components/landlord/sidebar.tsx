@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import {
   CreditCard,
@@ -54,11 +55,14 @@ export function LandlordSidebar({ plan, listingCount, listingLimit, verification
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden w-[220px] flex-col bg-[#1B4332] text-white lg:flex sticky top-0 h-screen">
-        <div className="border-b border-white/15 px-4 py-5">
-          <Link href="/landlord/dashboard" className="text-xl font-bold hover:text-[#F59E0B] transition">
-            HousePlug
-          </Link>
-          <p className="mt-1 text-xs text-white/70">Landlord Console</p>
+        <div className="border-b border-white/15 px-4 py-5 flex items-center gap-2">
+          <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg bg-white p-0.5" />
+          <div>
+            <Link href="/landlord/dashboard" className="text-xl font-bold hover:text-[#F59E0B] transition">
+              HousePlug
+            </Link>
+            <p className="text-[10px] text-white/70 uppercase font-black tracking-widest">Landlord</p>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 px-2 py-3">
@@ -114,9 +118,7 @@ export function LandlordSidebar({ plan, listingCount, listingLimit, verification
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/landlord/dashboard" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1B4332] text-white font-bold text-xs">
-            H
-          </div>
+          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
           <span className="font-bold text-[#1B4332]">Landlord Console</span>
         </Link>
         <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-gray-600 active:bg-gray-50 rounded-lg">

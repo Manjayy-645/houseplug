@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
-import { House, X } from "lucide-react"
+import { House, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 
 type PhotoGalleryProps = {
   photos: string[]
@@ -12,9 +12,19 @@ type PhotoGalleryProps = {
 export default function PhotoGallery({ photos }: PhotoGalleryProps) {
   const safePhotos = photos ?? []
   const [heroIndex, setHeroIndex] = useState(0)
-  const heroPhoto = safePhotos[heroIndex]
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
+  const heroPhoto = safePhotos[heroIndex]
   const thumbnails = useMemo(() => safePhotos.slice(0, 4), [safePhotos])
+
+  const nextPhoto = () => setLightboxIndex((prev) => (prev + 1) % safePhotos.length)
+  const prevPhoto = () => setLightboxIndex((prev) => (prev - 1 + safePhotos.length) % safePhotos.length)
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
 
   if (safePhotos.length === 0) {
     return (
@@ -29,7 +39,10 @@ export default function PhotoGallery({ photos }: PhotoGalleryProps) {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden sm:rounded-2xl border-y sm:border border-gray-200 bg-white shadow-sm">
+      <div 
+        className="group relative overflow-hidden sm:rounded-2xl border-y sm:border border-gray-200 bg-white shadow-sm cursor-zoom-in"
+        onClick={() => openLightbox(heroIndex)}
+      >
         {heroPhoto ? (
           <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full">
             <Image 
@@ -38,8 +51,13 @@ export default function PhotoGallery({ photos }: PhotoGalleryProps) {
               fill
               priority
               sizes="(max-width: 1280px) 100vw, 1280px"
-              className="object-cover" 
+              className="object-cover transition duration-500 group-hover:scale-105" 
             />
+            <div className="absolute inset-0 bg-black/0 transition group-hover:bg-black/10 flex items-center justify-center opacity-0 group-hover:opacity-100">
+               <div className="bg-white/90 p-3 rounded-full shadow-lg">
+                  <Maximize2 className="w-6 h-6 text-gray-900" />
+               </div>
+            </div>
           </div>
         ) : null}
       </div>
@@ -66,55 +84,83 @@ export default function PhotoGallery({ photos }: PhotoGalleryProps) {
           ))}
         </div>
 
-        <Dialog.Root>
-          <Dialog.Trigger asChild>
-            <button
-              type="button"
-              className="shrink-0 rounded-lg sm:rounded-xl bg-[#F59E0B] px-3 py-2 text-xs sm:text-sm font-bold text-gray-900 hover:brightness-95 shadow-sm active:scale-95 transition"
-            >
-              {safePhotos.length}+ Photos
-            </button>
-          </Dialog.Trigger>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 animate-in fade-in duration-200" />
-            <Dialog.Content className="fixed inset-0 z-50 m-auto h-[80vh] w-[92vw] max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-                <Dialog.Title className="text-sm font-semibold text-gray-900">All Photos</Dialog.Title>
-                <Dialog.Close asChild>
-                  <button
-                    type="button"
-                    aria-label="Close"
-                    className="rounded p-1 text-gray-600 hover:bg-gray-100"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </Dialog.Close>
-              </div>
-              <div className="h-[calc(80vh-49px)] overflow-auto p-4">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {safePhotos.map((src, idx) => (
-                    <button
-                      key={`${src}-${idx}`}
-                      type="button"
-                      onClick={() => setHeroIndex(idx)}
-                      className="relative aspect-square overflow-hidden rounded-xl border border-gray-200 hover:border-[#1B4332]/60"
-                    >
-                      <Image 
-                        src={src} 
-                        alt={`Photo ${idx + 1}`} 
-                        fill
-                        sizes="(max-width: 768px) 50vw, 250px"
-                        className="object-cover" 
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="shrink-0 rounded-lg sm:rounded-xl bg-[#F59E0B] px-3 py-2 text-xs sm:text-sm font-bold text-gray-900 hover:brightness-95 shadow-sm active:scale-95 transition"
+        >
+          {safePhotos.length}+ Photos
+        </button>
       </div>
+
+      <Dialog.Root open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/95 animate-in fade-in duration-300" />
+          <Dialog.Content className="fixed inset-0 z-[101] flex flex-col items-center justify-center animate-in zoom-in-95 duration-300">
+            <div className="absolute top-4 right-4 z-[102] flex items-center gap-4">
+              <span className="text-white text-sm font-medium bg-white/10 px-3 py-1 rounded-full backdrop-blur-sm">
+                {lightboxIndex + 1} / {safePhotos.length}
+              </span>
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  aria-label="Close"
+                  className="rounded-full p-2 text-white hover:bg-white/10 transition-colors backdrop-blur-sm"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </Dialog.Close>
+            </div>
+
+            <div className="relative h-full w-full max-w-5xl flex items-center justify-center p-4">
+               {safePhotos.length > 1 && (
+                 <>
+                  <button 
+                    onClick={prevPhoto}
+                    className="absolute left-4 z-[102] p-2 text-white hover:bg-white/10 rounded-full transition-colors backdrop-blur-sm sm:left-8"
+                  >
+                    <ChevronLeft className="h-8 w-8" />
+                  </button>
+                  <button 
+                    onClick={nextPhoto}
+                    className="absolute right-4 z-[102] p-2 text-white hover:bg-white/10 rounded-full transition-colors backdrop-blur-sm sm:right-8"
+                  >
+                    <ChevronRight className="h-8 w-8" />
+                  </button>
+                 </>
+               )}
+               
+               <div className="relative h-[80vh] w-full animate-in fade-in duration-500">
+                 <Image 
+                   src={safePhotos[lightboxIndex]} 
+                   alt={`Photo ${lightboxIndex + 1}`} 
+                   fill
+                   className="object-contain" 
+                   sizes="100vw"
+                 />
+               </div>
+            </div>
+
+            <div className="absolute bottom-6 left-0 right-0 overflow-x-auto pb-2 scrollbar-hide">
+               <div className="flex justify-center gap-2 px-4 min-w-max">
+                 {safePhotos.map((src, idx) => (
+                   <button
+                     key={idx}
+                     onClick={() => setLightboxIndex(idx)}
+                     className={`relative h-16 w-16 overflow-hidden rounded-lg border-2 transition-all ${
+                       lightboxIndex === idx ? "border-[#F59E0B] scale-110" : "border-transparent opacity-50 hover:opacity-100"
+                     }`}
+                   >
+                     <Image src={src} alt="" fill className="object-cover" />
+                   </button>
+                 ))}
+               </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }
+
 

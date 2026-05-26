@@ -21,11 +21,11 @@ export default async function RevenuePage() {
     supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('plan', 'business').eq('active', true),
   ])
 
-  const totalRevenue = payments?.filter(p => p.status === 'success').reduce((acc, p) => acc + p.amount, 0) || 0
+  const totalRevenue = payments?.filter(p => p.status === 'success').reduce((acc, p) => acc + (p.amount || 0), 0) || 0
   
   const now = new Date()
   const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-  const thisMonthRevenue = payments?.filter(p => p.status === 'success' && p.created_at >= thisMonthStart).reduce((acc, p) => acc + p.amount, 0) || 0
+  const thisMonthRevenue = payments?.filter(p => p.status === 'success' && p.created_at >= thisMonthStart).reduce((acc, p) => acc + (p.amount || 0), 0) || 0
 
   // Real data aggregation for Monthly Revenue (Last 6 months)
   const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -44,11 +44,12 @@ export default async function RevenuePage() {
     const d = new Date(p.created_at)
     const monthIndex = last6Months.findIndex(m => m.month === d.getMonth() && m.year === d.getFullYear())
     if (monthIndex !== -1) {
-      last6Months[monthIndex].amount += (p.amount / 100)
+      last6Months[monthIndex].amount += ((p.amount || 0) / 100)
     }
   })
 
   // Real data aggregation for University Revenue
+  // We initialize with known universities from UNIVERSITIES constant or common list
   const uniRevenueMap: Record<string, number> = { 'UniPort': 0, 'RSU': 0, 'IAUE': 0, 'KenPoly': 0 }
   
   // Fetch successful payments with their listing or landlord info
@@ -73,8 +74,12 @@ export default async function RevenuePage() {
 
   allSuccessfulPayments?.forEach((p: any) => {
     const university = p.listing?.university || landlordUniMap[p.landlord_id]
-    if (university && uniRevenueMap.hasOwnProperty(university)) {
-      uniRevenueMap[university] += (p.amount / 100)
+    if (university) {
+      // If the university isn't in our initial map, add it
+      if (!uniRevenueMap.hasOwnProperty(university)) {
+        uniRevenueMap[university] = 0
+      }
+      uniRevenueMap[university] += ((p.amount || 0) / 100)
     }
   })
 

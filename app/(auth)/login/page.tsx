@@ -96,26 +96,35 @@ export default function LoginPage() {
   }
 
   const handlePostLoginRedirect = async (user: any) => {
-    // Check profile exists
-    const { data: profile } = await supabase
+    // 1. Try to fetch existing profile role from DB
+    const { data: profile, error } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single()
 
-    if (!profile) {
-      // Create missing profile
-      await supabase.from('profiles').insert({
-        id: user.id,
-        email: user.email!,
-        full_name: user.user_metadata?.full_name ?? 'User',
-        role: user.user_metadata?.role ?? 'student',
-      })
-      redirectByRole(user.user_metadata?.role ?? 'student')
-      return
+    // 2. Determine which role to use for redirection
+    // We prioritize the database role (profile.role) over auth metadata
+    let targetRole = profile?.role
+
+    // 3. Fallback to metadata role if profile fetch failed or role is missing
+    if (!targetRole) {
+      targetRole = user.user_metadata?.role ?? 'student'
+      
+      // If profile is missing entirely, attempt to create it
+      if (error?.code === 'PGRST116') {
+        console.log("[LOGIN] Profile missing, creating with metadata role:", targetRole)
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata?.full_name ?? 'User',
+          role: targetRole,
+        })
+      }
     }
 
-    redirectByRole(profile.role)
+    console.log(`[LOGIN] Redirecting user ${user.email} with role: ${targetRole}`)
+    redirectByRole(targetRole)
   }
 
   const handleResend = async () => {

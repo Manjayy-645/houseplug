@@ -30,7 +30,11 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    // Only redirect if trying to access protected routes
+    if (request.nextUrl.pathname.startsWith("/landlord") || request.nextUrl.pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/login", request.url))
+    }
+    return response
   }
 
   const { data: profile } = await supabase

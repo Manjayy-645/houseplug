@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X, ShieldCheck, BarChart2, DollarSign, UserCog, Settings, ScrollText, Download, Clock } from "lucide-react"
 
@@ -38,9 +39,7 @@ export function AdminSidebar({ role, pendingCount = 0 }: { role?: string, pendin
       {/* Mobile Top Bar */}
       <div className="md:hidden sticky top-0 z-40 flex items-center justify-between bg-[#1B4332] px-6 py-4 text-white shadow-lg border-b border-white/10">
         <Link href="/admin" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#1B4332]">
-            <span className="font-bold">H</span>
-          </div>
+          <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg bg-white p-0.5" />
           <span className="text-xl font-bold tracking-tight">HousePlug Admin</span>
         </Link>
         <div className="flex items-center gap-3">
@@ -73,9 +72,7 @@ export function AdminSidebar({ role, pendingCount = 0 }: { role?: string, pendin
         <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
           <div className="p-8 flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#1B4332]">
-                <span className="text-xl font-bold">H</span>
-              </div>
+              <Image src="/logo.png" alt="HousePlug Logo" width={40} height={40} className="rounded-xl bg-white p-0.5" />
               <div className="flex flex-col">
                 <span className="text-xl font-bold leading-none">HousePlug</span>
                 <span className="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Admin Panel</span>

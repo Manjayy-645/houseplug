@@ -24,6 +24,8 @@ export default async function AdminSubscriptionsPage({
 
   if (error) {
     console.error("[ADMIN_SUBS] Error fetching subscriptions:", error)
+  } else {
+    console.log(`[ADMIN_SUBS] Successfully fetched ${subscriptions?.length || 0} subscriptions out of ${count || 0} total.`)
   }
 
   const totalPages = Math.ceil((count || 0) / pageSize)

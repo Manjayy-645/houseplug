@@ -57,7 +57,10 @@ export function MarketingCardPreview({
       <div className="transform scale-[0.85] origin-top bg-white rounded-2xl shadow-xl overflow-hidden" id="houseplug-card">
         {/* Header */}
         <div className="bg-[#1B4332] px-6 py-5 flex items-center justify-between">
-          <span className="text-white font-bold text-lg">🏠 HousePlug</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" />
+            <span className="text-white font-bold text-lg">HousePlug</span>
+          </div>
           <span className="text-[#F59E0B] text-xs font-bold">houseplug.ng</span>
         </div>
 

@@ -266,7 +266,10 @@ export default async function LandingPage() {
       <footer className="w-full py-12 px-5 md:px-20 bg-gray-50 border-t border-gray-200">
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 max-w-7xl mx-auto">
           <div className="max-w-xs">
-            <span className="text-lg font-bold text-primary block mb-4">HousePlug</span>
+            <div className="flex items-center gap-2 mb-4">
+              <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
+              <span className="text-lg font-bold text-primary">HousePlug</span>
+            </div>
             <p className="text-sm text-gray-500 mb-6">Student housing, simplified. We connect students with reliable accommodation across Port Harcourt universities.</p>
           </div>
           <div className="grid grid-cols-2 gap-12">

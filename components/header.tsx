@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { LogOut, Menu, X, Search } from "lucide-react"
@@ -35,7 +36,8 @@ export function Header() {
     <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 shadow-sm transition-all duration-200">
       <div className="flex justify-between items-center h-16 px-5 md:px-20 max-w-7xl mx-auto">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-xl font-bold tracking-tight text-primary">
+          <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
+            <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
             HousePlug
           </Link>
           <div className="hidden md:flex gap-6 items-center">
@@ -89,12 +91,21 @@ export function Header() {
             )}
           </div>
           
-          <Link 
-            href="/browse"
-            className="bg-secondary-container text-primary font-label-lg px-6 py-2.5 rounded-lg active:scale-95 transition-all shadow-sm hover:bg-secondary-container/90"
-          >
-            Find a Room
-          </Link>
+            {user ? (
+              <Link 
+                href="/browse"
+                className="bg-secondary-container text-primary font-label-lg px-6 py-2.5 rounded-lg active:scale-95 transition-all shadow-sm hover:bg-secondary-container/90"
+              >
+                Find a Room
+              </Link>
+            ) : (
+              <Link 
+                href="/login"
+                className="bg-primary text-white font-label-lg px-8 py-2.5 rounded-lg active:scale-95 transition-all shadow-lg hover:bg-primary/90"
+              >
+                Login
+              </Link>
+            )}
 
           <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2">
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

@@ -5,9 +5,10 @@ import Link from 'next/link'
 export default function MaintenancePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
-      {/* Logo Placeholder */}
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1B4332] text-white mb-12 shadow-xl shadow-[#1B4332]/20">
-        <span className="text-3xl font-black">H</span>
+      {/* Logo */}
+      <div className="flex items-center gap-3 mb-12">
+        <Image src="/logo.png" alt="HousePlug Logo" width={64} height={64} className="rounded-2xl shadow-xl shadow-[#1B4332]/10" />
+        <span className="text-3xl font-black text-[#1B4332]">HousePlug</span>
       </div>
 
       <div className="max-w-md space-y-6">

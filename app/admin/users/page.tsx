@@ -35,6 +35,29 @@ export default async function AdminUsersPage({
   
   if (error) {
     console.error("[ADMIN_USERS] Error fetching users:", error)
+    return (
+      <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+        <h2 className="text-lg font-bold">Error loading users</h2>
+        <p className="text-sm opacity-90">{error.message}</p>
+        <p className="mt-4 text-xs font-mono bg-white/50 p-2 rounded">Code: {error.code}</p>
+      </div>
+    )
+  }
+
+  if (!users || users.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-[#1B4332]">User Management</h1>
+        </div>
+        <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-gray-500">No users found matching your criteria.</p>
+          <Link href="/admin/users" className="mt-4 inline-block text-primary font-semibold hover:underline">
+            Clear all filters
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   const totalPages = Math.ceil((count || 0) / pageSize)

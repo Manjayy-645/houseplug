@@ -46,10 +46,12 @@ async function getRedirectUrl(supabase: any, userId?: string) {
     .eq('id', userId)
     .single()
 
-  switch (profile?.role) {
+  const role = profile?.role || 'student'
+
+  switch (role) {
     case 'super_admin':
     case 'admin':
-      return '/admin/listings'
+      return '/admin'
     case 'landlord':
       return '/landlord/dashboard'
     default:

@@ -82,3 +82,13 @@ export async function recordWhatsAppClick(listingId: string) {
   const supabase = createClient()
   await supabase.rpc("increment_whatsapp_clicks", { listing_id: listingId })
 }
+
+export async function recordPhoneReveal(listingId: string) {
+  const supabase = createClient()
+  await supabase.rpc("increment_phone_reveals", { listing_id: listingId })
+}
+
+export async function recordListingView(listingId: string) {
+  const supabase = createClient()
+  await supabase.rpc("increment_views", { listing_id: listingId })
+}
