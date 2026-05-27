@@ -166,10 +166,10 @@ export function Header() {
         </div>
 
         {/* Right: auth button + mobile hamburger */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
 
-          {/* Desktop auth control */}
-          <div className="hidden md:flex items-center">
+          {/* Auth control (always visible) */}
+          <div className="flex items-center">
             {loading ? (
               <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse" />
             ) : !user ? (
