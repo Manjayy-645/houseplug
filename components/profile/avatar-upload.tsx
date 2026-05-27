@@ -40,17 +40,28 @@ export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadCompl
     try {
       const supabase = createClient()
       const ext = file.name.split(".").pop() ?? "jpg"
-      const filePath = `avatars/${userId}/avatar.${ext}`
+      const filePath = `${userId}/avatar.${ext}` // Removed "avatars/" prefix as it's implied by .from("avatars")
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true })
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError)
+        throw new Error(uploadError.message)
+      }
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(filePath)
 
-      await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", userId)
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: data.publicUrl })
+        .eq("id", userId)
+
+      if (profileError) {
+        console.error("Profile update error:", profileError)
+        throw new Error(profileError.message)
+      }
 
       // Trigger onAuthStateChange in header so it re-fetches profile
       await supabase.auth.refreshSession()
@@ -61,9 +72,9 @@ export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadCompl
       onUploadComplete(cacheBustedUrl)
 
       setTimeout(() => setUploadState("idle"), 2000)
-    } catch {
+    } catch (err: any) {
       setUploadState("error")
-      setErrorMsg("Upload failed. Please try again.")
+      setErrorMsg(err.message || "Upload failed. Please try again.")
       setTimeout(() => setUploadState("idle"), 3000)
     }
 
