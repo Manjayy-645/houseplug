@@ -368,22 +368,22 @@ export function Header() {
                   </button>
                 </>
               ) : (
-                <>
+                <div className="flex flex-col gap-3">
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl border-2 border-gray-100 px-4 py-3 text-center"
+                    className="rounded-xl border border-primary text-primary px-4 py-3 text-center font-bold"
                   >
                     Login
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl bg-primary px-4 py-3 text-center text-white shadow-lg"
+                    className="rounded-xl bg-[#F59E0B] px-4 py-3 text-center text-white font-bold shadow-md"
                   >
-                    Sign Up
+                    Get Started
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </nav>
