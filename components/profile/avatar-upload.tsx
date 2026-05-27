@@ -1,0 +1,130 @@
+"use client"
+
+import { useState, useRef } from "react"
+import { Camera, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { getInitials } from "@/lib/utils"
+
+type UploadState = "idle" | "uploading" | "success" | "error"
+
+type Props = {
+  currentAvatarUrl?: string
+  userId: string
+  fullName: string
+  onUploadComplete: (url: string) => void
+}
+
+export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadComplete }: Props) {
+  const [preview, setPreview] = useState<string | null>(currentAvatarUrl ?? null)
+  const [uploadState, setUploadState] = useState<UploadState>("idle")
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"]
+    if (!allowed.includes(file.type)) {
+      setErrorMsg("Please upload a JPG or PNG under 2MB.")
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMsg("Please upload a JPG or PNG under 2MB.")
+      return
+    }
+
+    setErrorMsg(null)
+    setUploadState("uploading")
+
+    try {
+      const supabase = createClient()
+      const ext = file.name.split(".").pop() ?? "jpg"
+      const filePath = `avatars/${userId}/avatar.${ext}`
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath)
+
+      await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", userId)
+
+      // Trigger onAuthStateChange in header so it re-fetches profile
+      await supabase.auth.refreshSession()
+
+      const cacheBustedUrl = `${data.publicUrl}?t=${Date.now()}`
+      setPreview(cacheBustedUrl)
+      setUploadState("success")
+      onUploadComplete(cacheBustedUrl)
+
+      setTimeout(() => setUploadState("idle"), 2000)
+    } catch {
+      setUploadState("error")
+      setErrorMsg("Upload failed. Please try again.")
+      setTimeout(() => setUploadState("idle"), 3000)
+    }
+
+    e.target.value = ""
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div
+        className="relative cursor-pointer"
+        style={{ width: 96, height: 96 }}
+        onClick={() => fileInputRef.current?.click()}
+        title="Change photo"
+      >
+        {/* Avatar circle */}
+        {preview ? (
+          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/20">
+            <img src={preview} alt={fullName} className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-[#1B4332] flex items-center justify-center text-white font-bold text-2xl select-none">
+            {getInitials(fullName)}
+          </div>
+        )}
+
+        {/* State overlays */}
+        {uploadState === "uploading" && (
+          <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 text-white animate-spin" />
+          </div>
+        )}
+        {uploadState === "success" && (
+          <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
+            <CheckCircle2 className="h-8 w-8 text-green-400" />
+          </div>
+        )}
+        {uploadState === "error" && (
+          <div className="absolute inset-0 rounded-full bg-black/30 flex items-center justify-center">
+            <XCircle className="h-8 w-8 text-red-400" />
+          </div>
+        )}
+
+        {/* Camera badge — always visible when idle */}
+        {uploadState === "idle" && (
+          <div className="absolute bottom-0 right-0 w-7 h-7 bg-[#F59E0B] rounded-full flex items-center justify-center shadow-md pointer-events-none">
+            <Camera className="h-3.5 w-3.5 text-white" />
+          </div>
+        )}
+      </div>
+
+      {errorMsg && (
+        <p className="text-xs text-red-500 text-center max-w-[200px]">{errorMsg}</p>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </div>
+  )
+}

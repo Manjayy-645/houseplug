@@ -78,7 +78,11 @@ export function Header() {
         .select("full_name, role, avatar_url, username")
         .eq("id", userId)
         .single()
-      setProfile(data)
+      if (data?.avatar_url) {
+        setProfile({ ...data, avatar_url: `${data.avatar_url.split("?")[0]}?t=${Date.now()}` })
+      } else {
+        setProfile(data)
+      }
     }
 
     const getUser = async () => {

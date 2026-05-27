@@ -90,9 +90,17 @@ export default function ReviewsSection({ reviews, averageRating }: ReviewsSectio
               <div key={review.id} className="rounded-xl border border-gray-100 bg-white p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1B4332] text-sm font-semibold text-white">
-                      {getInitials(review.student?.full_name ?? "Tenant")}
-                    </div>
+                    {review.student?.avatar_url ? (
+                      <img
+                        src={review.student.avatar_url}
+                        alt={review.student.full_name ?? "Student"}
+                        className="h-10 w-10 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1B4332] text-xs font-semibold text-white">
+                        {getInitials(review.student?.full_name ?? "Tenant")}
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{shortName(review.student)}</p>
                       <p className="text-xs text-gray-500">{formatReviewDate(review.created_at)}</p>

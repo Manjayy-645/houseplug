@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Copy, Download, MessageCircle, Star, ShieldCheck } from "lucide-react"
+import { getInitials } from "@/lib/utils"
 
 type MarketingCardPreviewProps = {
   profile: any
@@ -49,7 +50,7 @@ export function MarketingCardPreview({
     link.click()
   }
 
-  const initials = profile.full_name?.substring(0, 2).toUpperCase() || "LL"
+  const initials = profile.full_name ? getInitials(profile.full_name) : "LL"
 
   return (
     <div className="space-y-6 max-w-sm mx-auto">
