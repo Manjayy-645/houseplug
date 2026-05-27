@@ -43,13 +43,13 @@ function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; si
             onError={(e) => {
               // Fallback to initials if image fails to load
               e.currentTarget.style.display = "none"
-              e.currentTarget.nextElementSibling?.removeAttribute("hidden")
+              const fallback = e.currentTarget.nextElementSibling as HTMLElement
+              if (fallback) fallback.style.display = "flex"
             }}
           />
           <div
-            hidden
-            className="rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
-            style={{ width: size, height: size, fontSize: size * 0.33 }}
+            className="initials-fallback rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
+            style={{ width: size, height: size, fontSize: size * 0.33, display: "none" }}
           >
             {initials}
           </div>
