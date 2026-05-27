@@ -29,27 +29,39 @@ function RoleBadge({ role }: { role: UserRole }) {
 }
 
 function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; size?: number }) {
-  if (profile?.avatar_url) {
-    return (
-      <div
-        className="relative rounded-full overflow-hidden border-2 border-primary/20 shrink-0"
-        style={{ width: size, height: size }}
-      >
-        <Image
-          src={profile.avatar_url}
-          alt={profile.full_name ?? "User"}
-          fill
-          className="object-cover"
-        />
-      </div>
-    )
-  }
+  const initials = profile?.full_name ? getInitials(profile.full_name) : "U"
+
   return (
-    <div
-      className="rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.33 }}
-    >
-      {profile?.full_name ? getInitials(profile.full_name) : "?"}
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      {profile?.avatar_url ? (
+        <>
+          <img
+            src={profile.avatar_url}
+            alt={profile?.full_name ?? "User"}
+            className="rounded-full object-cover border-2 border-[#F59E0B] cursor-pointer"
+            style={{ width: size, height: size }}
+            onError={(e) => {
+              // Fallback to initials if image fails to load
+              e.currentTarget.style.display = "none"
+              e.currentTarget.nextElementSibling?.removeAttribute("hidden")
+            }}
+          />
+          <div
+            hidden
+            className="rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
+            style={{ width: size, height: size, fontSize: size * 0.33 }}
+          >
+            {initials}
+          </div>
+        </>
+      ) : (
+        <div
+          className="rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
+          style={{ width: size, height: size, fontSize: size * 0.33 }}
+        >
+          {initials}
+        </div>
+      )}
     </div>
   )
 }
@@ -73,16 +85,13 @@ export function Header() {
     const supabase = createClient()
 
     const fetchProfile = async (userId: string) => {
-      const { data } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("full_name, role, avatar_url, username")
+        .select("id, full_name, role, avatar_url, username")
         .eq("id", userId)
         .single()
-      if (data?.avatar_url) {
-        setProfile({ ...data, avatar_url: `${data.avatar_url.split("?")[0]}?t=${Date.now()}` })
-      } else {
-        setProfile(data)
-      }
+      
+      if (profile) setProfile(profile)
     }
 
     const getUser = async () => {
@@ -96,10 +105,10 @@ export function Header() {
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser(session.user)
-        fetchProfile(session.user.id)
+        await fetchProfile(session.user.id)
       } else {
         setUser(null)
         setProfile(null)
