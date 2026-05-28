@@ -31,22 +31,27 @@ function RoleBadge({ role }: { role: UserRole }) {
 function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; size?: number }) {
   const [imgError, setImgError] = useState(false)
   const initials = profile?.full_name?.trim() ? getInitials(profile.full_name) : "U"
+  const avatarUrl = profile?.avatar_url
 
   useEffect(() => {
     setImgError(false)
-  }, [profile?.avatar_url])
+  }, [avatarUrl])
 
   return (
-    <div 
-      className="relative shrink-0 rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] overflow-hidden" 
+    <div
+      className="relative shrink-0 rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] overflow-hidden"
       style={{ width: size, height: size, fontSize: size * 0.33 }}
     >
-      {profile?.avatar_url && !imgError ? (
+      {avatarUrl && !imgError ? (
         <img
-          src={profile.avatar_url}
+          src={avatarUrl}
           alt={profile?.full_name ?? "User"}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-          onError={() => setImgError(true)}
+          onError={() => {
+            console.error("[NAVBAR] Avatar image failed:", avatarUrl)
+            setImgError(true)
+          }}
+          onLoad={() => console.log("[NAVBAR] Avatar loaded ok")}
         />
       ) : (
         <span className="select-none">{initials}</span>
@@ -74,12 +79,16 @@ export function Header() {
     const supabase = createClient()
 
     const fetchProfile = async (userId: string) => {
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("id, full_name, role, avatar_url, username")
         .eq("id", userId)
         .single()
-      
+
+      console.log("[NAVBAR] Profile fetch:", profile)
+      console.log("[NAVBAR] Profile error:", error)
+      console.log("[NAVBAR] Avatar URL:", profile?.avatar_url)
+
       if (profile) setProfile(profile)
     }
 
@@ -94,10 +103,17 @@ export function Header() {
 
     getUser()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // NOTE: Never `await` Supabase data calls directly inside the
+    // onAuthStateChange callback — it runs while the auth library holds an
+    // internal lock, and awaiting a query here deadlocks it. The fetch never
+    // resolves, so `profile` stays null and the avatar <img> never mounts.
+    // Defer the fetch out of the callback with setTimeout(0) to release the lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user)
-        await fetchProfile(session.user.id)
+        setTimeout(() => {
+          fetchProfile(session.user.id)
+        }, 0)
       } else {
         setUser(null)
         setProfile(null)
