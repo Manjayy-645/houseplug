@@ -11,7 +11,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "HousePlug | Find Student Housing Near Your Campus",
-  description: "Verified rooms and apartments for students across Port Harcourt universities. Secure your next home with confidence."
+  description: "Verified rooms and apartments for students across Port Harcourt universities. Secure your next home with confidence.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
