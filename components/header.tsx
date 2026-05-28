@@ -29,38 +29,27 @@ function RoleBadge({ role }: { role: UserRole }) {
 }
 
 function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; size?: number }) {
-  const initials = profile?.full_name ? getInitials(profile.full_name) : "U"
+  const [imgError, setImgError] = useState(false)
+  const initials = profile?.full_name?.trim() ? getInitials(profile.full_name) : "U"
+
+  useEffect(() => {
+    setImgError(false)
+  }, [profile?.avatar_url])
 
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      {profile?.avatar_url ? (
-        <>
-          <img
-            src={profile.avatar_url}
-            alt={profile?.full_name ?? "User"}
-            className="rounded-full object-cover border-2 border-[#F59E0B] cursor-pointer"
-            style={{ width: size, height: size }}
-            onError={(e) => {
-              // Fallback to initials if image fails to load
-              e.currentTarget.style.display = "none"
-              const fallback = e.currentTarget.nextElementSibling as HTMLElement
-              if (fallback) fallback.style.display = "flex"
-            }}
-          />
-          <div
-            className="initials-fallback rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
-            style={{ width: size, height: size, fontSize: size * 0.33, display: "none" }}
-          >
-            {initials}
-          </div>
-        </>
+    <div 
+      className="relative shrink-0 rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] overflow-hidden" 
+      style={{ width: size, height: size, fontSize: size * 0.33 }}
+    >
+      {profile?.avatar_url && !imgError ? (
+        <img
+          src={profile.avatar_url}
+          alt={profile?.full_name ?? "User"}
+          className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+          onError={() => setImgError(true)}
+        />
       ) : (
-        <div
-          className="rounded-full flex items-center justify-center bg-[#1B4332] text-white font-bold border-2 border-[#F59E0B] cursor-pointer"
-          style={{ width: size, height: size, fontSize: size * 0.33 }}
-        >
-          {initials}
-        </div>
+        <span className="select-none">{initials}</span>
       )}
     </div>
   )
@@ -288,11 +277,13 @@ export function Header() {
           <nav className="flex flex-col p-6 pb-20 text-base font-semibold text-on-background">
 
             {/* Logged-in user info */}
-            {!loading && user && profile && (
+            {!loading && user && (
               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
                 <UserAvatar profile={profile} size={44} />
                 <div className="min-w-0">
-                  <p className="font-bold text-gray-900 truncate">{profile.full_name}</p>
+                  <p className="font-bold text-gray-900 truncate">
+                    {profile?.full_name || user.email?.split("@")[0] || "User"}
+                  </p>
                   {role && (
                     <div className="mt-1">
                       <RoleBadge role={role} />
