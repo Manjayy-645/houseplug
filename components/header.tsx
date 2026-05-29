@@ -47,11 +47,7 @@ function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; si
           src={avatarUrl}
           alt={profile?.full_name ?? "User"}
           className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-          onError={() => {
-            console.error("[NAVBAR] Avatar image failed:", avatarUrl)
-            setImgError(true)
-          }}
-          onLoad={() => console.log("[NAVBAR] Avatar loaded ok")}
+          onError={() => setImgError(true)}
         />
       ) : (
         <span className="select-none">{initials}</span>
@@ -79,15 +75,11 @@ export function Header() {
     const supabase = createClient()
 
     const fetchProfile = async (userId: string) => {
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
         .select("id, full_name, role, avatar_url, username")
         .eq("id", userId)
         .single()
-
-      console.log("[NAVBAR] Profile fetch:", profile)
-      console.log("[NAVBAR] Profile error:", error)
-      console.log("[NAVBAR] Avatar URL:", profile?.avatar_url)
 
       if (profile) setProfile(profile)
     }
