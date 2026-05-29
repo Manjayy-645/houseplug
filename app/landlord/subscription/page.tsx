@@ -8,6 +8,7 @@ import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } fr
 import { createClient } from "@/lib/supabase/client"
 import { getLandlordSubscription } from "@/lib/billing"
 import { isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
+import { BoostListingSelect } from "@/components/landlord/boost-listing-select"
 
 export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly")
@@ -30,7 +31,7 @@ export default function SubscriptionPage() {
 
       const [subscriptionData, { data: listingsData }, { data: paymentsData }, { data: settingsData }] = await Promise.all([
         getLandlordSubscription(user.id),
-        supabase.from("listings").select("id, title").eq("landlord_id", user.id).eq("status", "active"),
+        supabase.from("listings").select("id, title, room_type, area").eq("landlord_id", user.id).eq("status", "active"),
         supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }),
         supabase.from('platform_settings').select('key, value')
       ])
@@ -371,26 +372,25 @@ export default function SubscriptionPage() {
               <p className="mt-3 text-xs font-medium text-gray-500 leading-relaxed">{boost.desc}</p>
               
               <div className="mt-6 space-y-3">
-                <select 
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-bold outline-none focus:border-[#1B4332]"
-                  value={selectedBoostListings[boost.id] || ""}
-                  onChange={(e) => setSelectedBoostListings(prev => ({ ...prev, [boost.id]: e.target.value }))}
-                >
-                  <option value="">Select a listing...</option>
-                  {listings.map(l => (
-                    <option key={l.id} value={l.id}>{l.title}</option>
-                  ))}
-                </select>
+                <BoostListingSelect
+                  listings={listings as any}
+                  selected={selectedBoostListings[boost.id] || null}
+                  onSelect={(id) => setSelectedBoostListings(prev => ({ ...prev, [boost.id]: id }))}
+                />
                 <button
                   disabled={!selectedBoostListings[boost.id] || actionLoading === boost.id}
-                  onClick={() => handleInitiatePayment({ 
-                    type: 'boost', 
-                    boost_type: boost.id, 
-                    listing_id: selectedBoostListings[boost.id] 
+                  onClick={() => handleInitiatePayment({
+                    type: 'boost',
+                    boost_type: boost.id,
+                    listing_id: selectedBoostListings[boost.id]
                   })}
-                  className="w-full rounded-xl bg-[#F59E0B] py-2.5 text-xs font-black text-gray-900 shadow-md shadow-amber-900/10 transition active:scale-95 disabled:opacity-50 disabled:grayscale"
+                  className="w-full rounded-xl bg-[#1B4332] py-3 text-sm font-black text-white shadow-md transition active:scale-95 hover:brightness-110 disabled:opacity-50 disabled:grayscale"
                 >
-                  {actionLoading === boost.id ? "..." : "Buy Boost"}
+                  {actionLoading === boost.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <RefreshCcw className="h-4 w-4 animate-spin" /> Processing...
+                    </span>
+                  ) : "Buy Boost"}
                 </button>
               </div>
             </div>

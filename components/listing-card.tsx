@@ -41,13 +41,18 @@ export function ListingCard({ listing }: ListingCardProps) {
             <span className="text-sm font-medium">No image available</span>
           </div>
         )}
-        <div className="absolute top-4 left-4 flex gap-2 z-10">
+        <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
           <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-sm text-[10px] font-bold uppercase text-primary">
             {formatRoomType(listing.room_type)}
           </span>
           {isFeatured && (
-            <span className="bg-secondary-container px-3 py-1 rounded-sm text-[10px] font-bold uppercase text-primary">
-              Featured
+            <span className="bg-[#F59E0B] text-white px-2 py-0.5 rounded-full text-xs font-medium">
+              ⭐ Featured
+            </span>
+          )}
+          {listing.is_urgent && (
+            <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+              🔥 Urgent
             </span>
           )}
         </div>

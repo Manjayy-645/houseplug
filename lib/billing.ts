@@ -84,6 +84,8 @@ export async function processSuccessfulPayment(transaction: any) {
         listing_id,
         landlord_id,
         boost_type,
+        amount,
+        active: boost_type !== 'refresh',
         expires_at: days > 0 ? expires_at.toISOString() : null,
         paystack_reference: reference,
       })
