@@ -13,8 +13,8 @@ export default async function LandlordAnalyticsPage() {
       .order("views_count", { ascending: false }),
     supabase
       .from("reviews")
-      .select("*, listing!inner(landlord_id)", { count: "exact", head: true })
-      .eq("listing.landlord_id", user?.id)
+      .select("*, listings!inner(landlord_id)", { count: "exact", head: true })
+      .eq("listings.landlord_id", user?.id)
   ])
 
   const totalViews = listings?.reduce((sum, item) => sum + (item.views_count || 0), 0) || 0
