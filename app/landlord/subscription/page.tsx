@@ -20,9 +20,26 @@ export default function SubscriptionPage() {
   const [prices, setPrices] = useState<any>(null)
   const [selectedBoostListings, setSelectedBoostListings] = useState<Record<string, string>>({})
   const [currentPage, setCurrentPage] = useState(1)
+  const [toast, setToast] = useState<{ msg: string; tone: "success" | "error" | "info" } | null>(null)
   const itemsPerPage = 5
 
   const supabase = createClient()
+
+  // Surface payment/boost outcome passed back from the Paystack callback.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (p.get("boost") === "success") {
+      setToast({ msg: "Boost applied successfully! 🎉", tone: "success" })
+    } else if (p.get("payment") === "success") {
+      setToast({ msg: "Payment successful! 🎉", tone: "success" })
+    } else if (p.get("error") === "payment_failed") {
+      setToast({ msg: "Payment failed. Please try again.", tone: "error" })
+    } else if (p.get("error") === "no_reference") {
+      setToast({ msg: "Payment reference missing. Please try again.", tone: "error" })
+    } else if (p.get("status") === "processing") {
+      setToast({ msg: "Payment received, applying your boost. Refresh in a moment.", tone: "info" })
+    }
+  }, [])
 
   useEffect(() => {
     async function loadData() {
@@ -134,6 +151,28 @@ export default function SubscriptionPage() {
 
   return (
     <div className="space-y-10 p-4 lg:p-8 pb-24">
+      {/* Payment outcome banner */}
+      {toast && (
+        <div
+          className={`flex items-center justify-between gap-4 rounded-xl border p-4 shadow-sm ${
+            toast.tone === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : toast.tone === "error"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-amber-200 bg-amber-50 text-amber-800"
+          }`}
+        >
+          <p className="text-sm font-semibold">{toast.msg}</p>
+          <button
+            onClick={() => setToast(null)}
+            className="shrink-0 rounded-lg p-1 opacity-70 transition hover:opacity-100"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* SECTION 1 — Current Plan Banner */}
       <section>
         {subscription?.plan !== "free" ? (

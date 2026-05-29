@@ -3,16 +3,16 @@ import { verifyPaystackTransaction } from '@/lib/paystack'
 import { processSuccessfulPayment } from '@/lib/billing'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const reference = searchParams.get('reference')
+  const { searchParams, origin } = new URL(request.url)
+  const reference = searchParams.get('reference') || searchParams.get('trxref')
 
   console.log('[CALLBACK] Reference received:', reference)
 
+  const base = process.env.NEXT_PUBLIC_APP_URL || origin
+
   if (!reference) {
     console.error('[CALLBACK] No reference in URL')
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=no_reference`
-    )
+    return NextResponse.redirect(`${base}/landlord/subscription?error=no_reference`)
   }
 
   try {
@@ -23,19 +23,20 @@ export async function GET(request: Request) {
     if (transaction.status === 'success') {
       await processSuccessfulPayment(transaction)
       console.log('[CALLBACK] processSuccessfulPayment completed')
-      return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?success=true`
-      )
+
+      const type = transaction.metadata?.type
+      if (type === 'boost') {
+        return NextResponse.redirect(`${base}/landlord/subscription?boost=success`)
+      }
+      return NextResponse.redirect(`${base}/landlord/subscription?payment=success`)
     }
 
     console.error('[CALLBACK] Payment not successful:', transaction.status)
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=payment_failed`
-    )
+    return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {
     console.error('[CALLBACK] Error:', error)
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/landlord/billing?error=server_error`
-    )
+    // The payment itself may have succeeded (the webhook is the backup that
+    // applies it). Never show a scary server error for a real payment.
+    return NextResponse.redirect(`${base}/landlord/subscription?status=processing`)
   }
 }
