@@ -16,14 +16,46 @@ export async function processSuccessfulPayment(transaction: any) {
 
   const { landlord_id, type, plan, billing_cycle, listing_id, boost_type } = metadata
 
-  // Update payment record to success
-  const { error: paymentError } = await supabase
+  // Idempotency: the initiate route inserts a pending payment row, and BOTH the
+  // callback and the webhook call this function for the same reference. If we've
+  // already marked this reference successful, the side effects ran — bail out so
+  // we don't double-apply boosts or duplicate listing_boosts rows.
+  const { data: existingPayment } = await supabase
     .from('payments')
-    .update({ status: 'success' })
+    .select('id, status')
     .eq('paystack_reference', reference)
+    .maybeSingle()
 
-  if (paymentError) {
-    console.error('[BILLING] Failed to update payment record:', paymentError)
+  if (existingPayment?.status === 'success') {
+    console.log('[BILLING] Payment already processed, skipping:', reference)
+    return
+  }
+
+  if (existingPayment) {
+    // Flip the pending row created at initiate time to success.
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .update({ status: 'success' })
+      .eq('paystack_reference', reference)
+    if (paymentError) {
+      console.error('[BILLING] Failed to update payment record:', paymentError)
+    }
+  } else {
+    // No pending row (e.g. webhook arrived first) — record it now.
+    const { error: insertError } = await supabase.from('payments').insert({
+      landlord_id,
+      type,
+      plan: plan ?? null,
+      billing_cycle: billing_cycle ?? null,
+      listing_id: listing_id ?? null,
+      boost_type: boost_type ?? null,
+      amount,
+      paystack_reference: reference,
+      status: 'success',
+    })
+    if (insertError) {
+      console.error('[BILLING] Failed to insert payment record:', insertError)
+    }
   }
 
   if (type === 'subscription') {
@@ -65,53 +97,64 @@ export async function processSuccessfulPayment(transaction: any) {
   }
 
   if (type === 'boost') {
-    const boostDays: Record<string, number> = {
-      featured_7: 7,
-      featured_30: 30,
-      urgent: 7,
-      refresh: 0,
+    if (!listing_id || !boost_type) {
+      console.error('[BILLING] Boost missing listing_id or boost_type:', metadata)
+      return
     }
 
-    const days = boostDays[boost_type]
-    const expires_at = new Date()
-    expires_at.setDate(expires_at.getDate() + days)
+    const now = new Date()
+    let expiresAt: Date | null = null
+    const updateData: Record<string, any> = {}
 
-    console.log('[BILLING] Processing boost:', { listing_id, boost_type, expires_at })
+    if (boost_type === 'featured_7') {
+      expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      updateData.is_featured = true
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'featured_30') {
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      updateData.is_featured = true
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'urgent') {
+      expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      updateData.is_urgent = true
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'refresh') {
+      // Browse sorts newest by created_at, so bumping it floats the listing up.
+      updateData.created_at = now.toISOString()
+    } else {
+      console.error('[BILLING] Unknown boost_type:', boost_type)
+      return
+    }
 
-    const { error: boostError } = await supabase
-      .from('listing_boosts')
-      .insert({
+    console.log('[BILLING] Processing boost:', { listing_id, boost_type, expiresAt })
+
+    // Apply the boost to the listing FIRST so the badge/placement lands even if
+    // the audit-trail insert below fails. Never throw here.
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update(updateData)
+      .eq('id', listing_id)
+
+    if (updateError) {
+      console.error('[BILLING] Failed to apply boost to listing:', updateError)
+    }
+
+    // Best-effort audit record — must never crash the payment flow.
+    try {
+      const { error: boostError } = await supabase.from('listing_boosts').insert({
         listing_id,
         landlord_id,
         boost_type,
         amount,
         active: boost_type !== 'refresh',
-        expires_at: days > 0 ? expires_at.toISOString() : null,
+        expires_at: expiresAt ? expiresAt.toISOString() : now.toISOString(),
         paystack_reference: reference,
       })
-
-    if (boostError) {
-      console.error('[BILLING] Boost insert error:', boostError)
-      throw new Error(`Boost insert failed: ${boostError.message}`)
-    }
-
-    if (boost_type === 'featured_7' || boost_type === 'featured_30') {
-      await supabase.from('listings').update({
-        is_featured: true,
-        boost_expires_at: expires_at.toISOString(),
-      }).eq('id', listing_id)
-    }
-
-    if (boost_type === 'urgent') {
-      await supabase.from('listings')
-        .update({ is_urgent: true })
-        .eq('id', listing_id)
-    }
-
-    if (boost_type === 'refresh') {
-      await supabase.from('listings')
-        .update({ created_at: new Date().toISOString() })
-        .eq('id', listing_id)
+      if (boostError) {
+        console.error('[BILLING] listing_boosts insert error:', boostError)
+      }
+    } catch (e) {
+      console.error('[BILLING] listing_boosts insert threw:', e)
     }
 
     console.log('[BILLING] Boost applied successfully')
