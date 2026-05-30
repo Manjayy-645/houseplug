@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { BadgeCheck, Heart, MapPin, Star } from "lucide-react"
+import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
 import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
@@ -46,13 +46,13 @@ export function ListingCard({ listing }: ListingCardProps) {
             {formatRoomType(listing.room_type)}
           </span>
           {isFeatured && (
-            <span className="bg-[#F59E0B] text-white px-2 py-0.5 rounded-full text-xs font-medium">
-              ⭐ Featured
+            <span className="inline-flex items-center gap-1 bg-[#F59E0B] text-white px-2 py-0.5 rounded-full text-xs font-medium">
+              <Star className="h-3 w-3 fill-current" /> Featured
             </span>
           )}
           {listing.is_urgent && (
-            <span className="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-              🔥 Urgent
+            <span className="inline-flex items-center gap-1 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+              <Flame className="h-3 w-3" /> Urgent
             </span>
           )}
         </div>
@@ -82,8 +82,8 @@ export function ListingCard({ listing }: ListingCardProps) {
             <MapPin className="h-4 w-4" />
             {formatDistance(listing.distance_from_gate, university?.shortName)}
           </p>
-          <span className="text-xs text-gray-500 ml-5">
-            📚 {university?.shortName ?? 'Near Campus'}
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500 ml-5">
+            <GraduationCap className="h-3.5 w-3.5" /> {university?.shortName ?? 'Near Campus'}
           </span>
         </div>
         

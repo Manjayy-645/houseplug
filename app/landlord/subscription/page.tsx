@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
-import { Check, X, Zap, Flame, Star, RefreshCcw, CreditCard, Download, ShieldCheck, Crown } from "lucide-react"
+import { Check, X, Zap, Flame, Star, RefreshCcw, CreditCard, Download, ShieldCheck, Crown, AlertTriangle } from "lucide-react"
 import { formatNaira, formatDate } from "@/lib/utils"
 import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
@@ -29,9 +29,9 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     if (p.get("boost") === "success") {
-      setToast({ msg: "Boost applied successfully! 🎉", tone: "success" })
+      setToast({ msg: "Boost applied successfully!", tone: "success" })
     } else if (p.get("payment") === "success") {
-      setToast({ msg: "Payment successful! 🎉", tone: "success" })
+      setToast({ msg: "Payment successful!", tone: "success" })
     } else if (p.get("error") === "payment_failed") {
       setToast({ msg: "Payment failed. Please try again.", tone: "error" })
     } else if (p.get("error") === "no_reference") {
@@ -201,7 +201,7 @@ export default function SubscriptionPage() {
                   {subscription?.expired ? (
                      <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Expired</span>
                   ) : expiringSoon ? (
-                     <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">⚠ Warning</span>
+                     <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"><AlertTriangle className="h-3 w-3" /> Warning</span>
                   ) : (
                      <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Active</span>
                   )}
@@ -375,7 +375,7 @@ export default function SubscriptionPage() {
               price: prices.featured_7, 
               icon: Star, 
               color: "text-amber-500 bg-amber-50",
-              desc: "Top placement with ⭐ badge for 7 days"
+              desc: "Top placement with a Featured badge for 7 days"
             },
             { 
               id: "featured_30", 
@@ -391,7 +391,7 @@ export default function SubscriptionPage() {
               price: prices.urgent, 
               icon: Flame, 
               color: "text-red-500 bg-red-50",
-              desc: "Adds 🔥 Urgent badge for immediate fill"
+              desc: "Adds an Urgent badge for immediate fill"
             },
             { 
               id: "refresh", 

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert, X } from "lucide-react"
+import { Lock, Star, ShieldAlert, X, Share2, PartyPopper } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
@@ -73,7 +73,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   return (
     <div className="space-y-6 p-4 lg:p-8">
       <header>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName} 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName}</h1>
         <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
       </header>
 
@@ -135,7 +135,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                <div>
                   <p className="font-bold text-yellow-700">Your account is not verified</p>
                   <p className="text-sm text-yellow-600">
-                    Verified landlords get more student inquiries. Get the ✓ badge on all your listings.
+                    Verified landlords get more student inquiries. Get the verified badge on all your listings.
                   </p>
                </div>
             </div>
@@ -148,8 +148,8 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
         {searchParams?.payment === 'success' && (
           <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-4">
-            <p className="text-sm font-semibold text-emerald-900">
-              🎉 Payment successful! Your plan has been upgraded.
+            <p className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-900">
+              <PartyPopper className="h-4 w-4" /> Payment successful! Your plan has been upgraded.
             </p>
           </div>
         )}
@@ -180,7 +180,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
       {activeListingsCount > 0 && profile?.username && (
         <div className="bg-white border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
           <div>
-            <p className="text-sm text-gray-600 font-bold">📤 Share your listings</p>
+            <p className="inline-flex items-center gap-2 text-sm text-gray-600 font-bold"><Share2 className="h-4 w-4" /> Share your listings</p>
             <p className="text-xs text-[#1B4332] font-medium mt-0.5">houseplug.ng/card/{profile.username}</p>
           </div>
           <Link href="/landlord/profile" className="text-amber-600 font-bold text-sm hover:text-amber-700 transition">
@@ -242,8 +242,8 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                     </span>
                     <p className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px]">{listing.title}</p>
                     {listing.is_featured ? (
-                      <span className="shrink-0 inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
-                        ⭐ Featured
+                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
+                        <Star className="h-3 w-3 fill-current" /> Featured
                       </span>
                     ) : (subscription.plan !== "free" && !subscription.expired) ? (
                       <span className="shrink-0 text-[10px] font-bold text-gray-400 uppercase tracking-tight">Standard Placement</span>

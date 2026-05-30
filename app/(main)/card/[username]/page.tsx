@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ShieldCheck, Star } from "lucide-react"
+import { ShieldCheck, Star, MapPin, Home, GraduationCap, MessageCircle } from "lucide-react"
 import { ClientDownloadButton } from "@/components/landlord/client-download-button"
 
 export async function generateMetadata({ params }: { params: { username: string } }) {
@@ -125,17 +125,17 @@ export default async function MarketingCardPage({ params }: { params: { username
 
           {/* Info List */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm text-[#374151]">📍 {primaryArea}{primaryArea !== 'Port Harcourt' ? ', Port Harcourt' : ''}</span>
-            <span className="text-sm text-[#374151]">
-              🏠 {activeCount || 0} Active Listing{activeCount !== 1 ? 's' : ''}
+            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><MapPin className="h-4 w-4 text-[#374151]" /> {primaryArea}{primaryArea !== 'Port Harcourt' ? ', Port Harcourt' : ''}</span>
+            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+              <Home className="h-4 w-4 text-[#374151]" /> {activeCount || 0} Active Listing{activeCount !== 1 ? 's' : ''}
             </span>
             {(activeCount || 0) > 0 && universities.length > 0 && (
-              <span className="text-sm text-[#374151]">
-                🎓 Near {universities.join(' & ')}
+              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+                <GraduationCap className="h-4 w-4 text-[#374151]" /> Near {universities.join(' & ')}
               </span>
             )}
             {(activeCount || 0) > 0 && universities.length === 0 && (
-              <span className="text-sm text-[#374151]">🎓 Near Port Harcourt Campus</span>
+              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><GraduationCap className="h-4 w-4 text-[#374151]" /> Near Port Harcourt Campus</span>
             )}
           </div>
 
@@ -172,17 +172,17 @@ export default async function MarketingCardPage({ params }: { params: { username
       <div className="mt-6 w-full max-w-[400px] mx-auto space-y-3">
         <a
           href={`/landlord/${profile.username}`}
-          className="flex items-center justify-center w-full bg-[#1B4332] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
+          className="flex items-center justify-center gap-2 w-full bg-[#1B4332] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
         >
-          🏠 View All Listings
+          <Home className="h-4 w-4" /> View All Listings
         </a>
         <a
           href={`https://wa.me/${profile.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${profile.full_name}, I saw your card on HousePlug. Are your rooms still available?`)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-full bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
+          className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
         >
-          💬 Contact on WhatsApp
+          <MessageCircle className="h-4 w-4" /> Contact on WhatsApp
         </a>
         <ClientDownloadButton username={profile.username || 'user'} />
       </div>

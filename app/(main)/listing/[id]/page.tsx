@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Star } from "lucide-react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -196,8 +197,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   {formatRoomType(listing.room_type)}
                 </span>
                 {listing.is_featured && (
-                  <span className="rounded-md bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
-                    ⭐ Featured
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
+                    <Star className="h-3 w-3 fill-current" /> Featured
                   </span>
                 )}
               </div>

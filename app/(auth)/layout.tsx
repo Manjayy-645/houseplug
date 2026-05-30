@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Plug } from "lucide-react"
 import type { ReactNode } from "react"
 
 type AuthLayoutProps = {
@@ -16,7 +17,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               <Image src="/logo.png" alt="HousePlug Logo" width={48} height={48} className="rounded-xl" />
               <h1 className="text-3xl font-bold text-[#1B4332]">HousePlug</h1>
             </Link>
-            <p className="mt-2 text-sm text-gray-600">Your trusted housing plug 🔌</p>
+            <p className="mt-2 inline-flex items-center justify-center gap-1.5 text-sm text-gray-600">Your trusted housing plug <Plug className="h-4 w-4 text-[#1B4332]" /></p>
           </div>
           {children}
         </div>

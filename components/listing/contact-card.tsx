@@ -126,7 +126,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
       </div>
 
       <div className="lg:hidden">
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-100 bg-white/95 px-5 py-4 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white/95 px-5 py-4 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] backdrop-blur-md">
           <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Price</p>
