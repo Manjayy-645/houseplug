@@ -180,7 +180,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   }
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB] pb-24 lg:pb-12">
+    <main className="min-h-screen bg-[#F9FAFB] pt-20 pb-24 lg:pt-24 lg:pb-12">
       <ViewTracker listingId={listing.id} />
       {listing.status !== "active" && (
         <div className="bg-[#1B4332] text-white px-4 py-3 text-center text-sm font-bold flex items-center justify-center gap-2">
@@ -243,6 +243,16 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-[1fr,360px] lg:px-8">
           <div className="space-y-6">
             <ListingDetailsGrid listing={listing} />
+
+            {listing.description && (
+              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h2 className="text-base font-bold text-gray-900">About this place</h2>
+                <p className="mt-3 text-sm leading-relaxed text-gray-600 whitespace-pre-line">
+                  {listing.description}
+                </p>
+              </section>
+            )}
+
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />
             
@@ -277,6 +287,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 landlord={landlordRowData as any}
                 rating={averageRating}
                 reviewCount={reviewCount}
+                verificationStatus={(listingRowData as any)?.landlord?.verification_status}
               />
             ) : null}
           </div>

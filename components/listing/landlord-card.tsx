@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Check } from "lucide-react"
+import { Star, Check, Clock } from "lucide-react"
 import type { Profile } from "@/types"
 import { getInitials } from "@/lib/utils"
 
@@ -7,9 +7,10 @@ type LandlordCardProps = {
   landlord: Profile
   rating: number
   reviewCount: number
+  verificationStatus?: string
 }
 
-export default function LandlordCard({ landlord, rating, reviewCount }: LandlordCardProps) {
+export default function LandlordCard({ landlord, rating, reviewCount, verificationStatus }: LandlordCardProps) {
   const memberSinceYear = landlord.created_at ? new Date(landlord.created_at).getFullYear() : new Date().getFullYear()
 
   return (
@@ -41,10 +42,17 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
         </div>
       </div>
 
-      <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
-        <Check className="h-4 w-4" />
-        ID Verified
-      </div>
+      {verificationStatus === "verified" ? (
+        <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+          <Check className="h-4 w-4" />
+          ID Verified
+        </div>
+      ) : (
+        <div className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+          <Clock className="h-4 w-4" />
+          Landlord not yet verified
+        </div>
+      )}
 
       <p className="text-sm text-gray-600">Replies within a few hours</p>
 
