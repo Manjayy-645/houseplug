@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star } from "lucide-react"
+import { Star, Flame } from "lucide-react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -199,6 +199,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 {listing.is_featured && (
                   <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
                     <Star className="h-3 w-3 fill-current" /> Featured
+                  </span>
+                )}
+                {listing.is_urgent && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
+                    <Flame className="h-3 w-3" /> Urgent
                   </span>
                 )}
               </div>
