@@ -40,43 +40,43 @@ export async function POST(request: Request) {
     const payload = await request.json()
     const { title, room_type, area, university, amenities, distance_from_gate } = payload
 
-    const prompt = `
-      You are an expert real estate copywriter for HousePlug, a student housing platform in Nigeria.
-      Write a compelling, student-friendly listing description based on the following details:
-      
-      - Title: ${title || "N/A"}
-      - Room Type: ${room_type || "N/A"}
-      - Area: ${area || "N/A"}
-      - University: ${university || "N/A"}
-      - Distance from Gate: ${distance_from_gate || "N/A"}
-      - Amenities: ${Array.isArray(amenities) ? amenities.join(", ") : "N/A"}
+    const systemPrompt = `You are a housing copywriter for 
+HousePlug, a student housing platform in Nigeria. Write 
+short, honest, punchy property descriptions that appeal 
+to Nigerian university students. No fluff, no hype.`
 
-      Guidelines:
-      - Use a professional yet friendly and inviting tone.
-      - Highlight the proximity to the university if it's close.
-      - Mention the specific amenities and why they matter to a student (e.g., constant light for reading, secure environment).
-      - Keep it concise (under 150 words).
-      - Do not use generic filler phrases like "Welcome to your new home".
-      - Focus on value and comfort for a student.
-      - Ensure the currency mentioned is always Naira (₦).
-      
-      Output ONLY the description text. No intro, no outro.
-    `
+    const userPrompt = `Write a property description in 
+exactly 2-3 short paragraphs, max 120 words total.
+
+Property details:
+- Type: ${room_type}
+- Location: ${area}, ${distance_from_gate} from ${university} gate
+- Amenities: ${amenities?.join(', ')}
+${title ? `- Extra context: ${title}` : ''}
+
+Rules:
+- Lead with the strongest selling point
+- Mention campus distance in paragraph 1
+- List 2-3 standout amenities naturally in the text
+- Sound like a trusted friend recommending a place
+- Nigerian English is fine (e.g. "constant light", "no agent fee")
+- Never start with "Welcome" or "Introducing"
+- Output ONLY the description, nothing else`
 
     const completion = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that writes student housing descriptions for the Nigerian market.",
+          content: systemPrompt,
         },
         {
           role: "user",
-          content: prompt,
+          content: userPrompt,
         },
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_tokens: 300,
+      temperature: 0.65,
+      max_tokens: 200,
     })
 
     const description = completion.choices[0]?.message?.content?.trim()
