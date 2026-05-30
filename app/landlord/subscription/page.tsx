@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react"
 import Link from "next/link"
-import { Check, X, Zap, Flame, Star, RefreshCcw, CreditCard, Download, ShieldCheck, Crown, AlertTriangle } from "lucide-react"
+import { Check, X, Zap, Flame, Star, RefreshCcw, CreditCard, Download, ShieldCheck, Crown, AlertTriangle, Sparkles } from "lucide-react"
 import { formatNaira, formatDate } from "@/lib/utils"
 import type { Subscription, Listing, Payment, Plan, BillingCycle, BoostType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { getLandlordSubscription } from "@/lib/billing"
-import { isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
+import { isSubscriptionExpiringSoon, formatExpiryDate, daysUntilExpiry } from "@/lib/billing-utils"
 import { BoostListingSelect } from "@/components/landlord/boost-listing-select"
 
 export default function SubscriptionPage() {
@@ -135,6 +135,8 @@ export default function SubscriptionPage() {
 
   const currentPlanId = subscription?.plan || "free"
   const expiringSoon = subscription?.expires_at ? isSubscriptionExpiringSoon(subscription.expires_at) : false
+  const trialActive = (subscription as any)?.is_trial === true && !(subscription as any)?.expired
+  const trialDaysLeft = subscription?.expires_at ? daysUntilExpiry(subscription.expires_at) : 0
 
   const paginatedPayments = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -170,6 +172,19 @@ export default function SubscriptionPage() {
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {/* Trial status */}
+      {trialActive && (
+        <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 shrink-0 text-emerald-600" />
+            <p className="text-sm text-emerald-800">
+              <span className="font-bold">You&apos;re on a free Pro trial — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left.</span>{" "}
+              Subscribe any time to continue Pro features uninterrupted when your trial ends.
+            </p>
+          </div>
         </div>
       )}
 
