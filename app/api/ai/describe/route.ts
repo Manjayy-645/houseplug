@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       ],
       model: "llama-3.3-70b-versatile",
       temperature: 0.7,
-      max_tokens: 500,
+      max_tokens: 300,
     })
 
     const description = completion.choices[0]?.message?.content?.trim()
