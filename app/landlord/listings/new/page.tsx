@@ -2,6 +2,7 @@ import { ListingForm } from "@/components/landlord/listing-form"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import { Lock } from "lucide-react"
 import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
 
 export default async function NewListingPage() {
@@ -32,7 +33,7 @@ export default async function NewListingPage() {
   if (activeCount >= limit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center px-4">
-        <div className="text-6xl">🔒</div>
+        <Lock className="h-16 w-16 text-gray-400" />
         <h2 className="text-2xl font-bold text-[#111827]">
           Listing limit reached
         </h2>

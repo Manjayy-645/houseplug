@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
-import { X } from "lucide-react"
+import { X, Check } from "lucide-react"
 import type { Profile } from "@/types"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
@@ -170,9 +170,11 @@ export default function StudentProfilePage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full bg-[#1B4332] text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#2D5A47] disabled:opacity-60 transition-colors"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#2D5A47] disabled:opacity-60 transition-colors"
           >
-            {saving ? "Saving…" : saveSuccess ? "✓ Saved!" : "Save Changes"}
+            {saving ? "Saving…" : saveSuccess ? (
+              <><Check className="h-4 w-4" /> Saved!</>
+            ) : "Save Changes"}
           </button>
         </div>
 

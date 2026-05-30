@@ -209,7 +209,7 @@ export default function VerificationPage() {
           <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-500" />
           <h1 className="mt-6 text-2xl font-bold text-gray-900">Identity Verified</h1>
           <p className="mt-4 text-gray-600">
-            ✓ Your identity has been verified by HousePlug. You now have the verified badge on all your listings.
+            Your identity has been verified by HousePlug. You now have the verified badge on all your listings.
           </p>
           <button 
             onClick={() => router.push("/landlord/dashboard")}

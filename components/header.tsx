@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { LogOut, Menu, X, Search, ChevronDown } from "lucide-react"
+import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { getInitials } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types"
@@ -228,7 +228,7 @@ export function Header() {
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                         >
-                          🏠 My Dashboard
+                          <Home className="h-4 w-4 shrink-0" /> My Dashboard
                         </Link>
                       )}
                       {(role === "admin" || role === "super_admin") && (
@@ -237,7 +237,7 @@ export function Header() {
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                         >
-                          ⚙️ Admin Panel
+                          <Settings className="h-4 w-4 shrink-0" /> Admin Panel
                         </Link>
                       )}
                       {role === "landlord" && (
@@ -246,7 +246,7 @@ export function Header() {
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                         >
-                          📤 My Card
+                          <Share2 className="h-4 w-4 shrink-0" /> My Card
                         </Link>
                       )}
                       <Link
@@ -254,7 +254,7 @@ export function Header() {
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                       >
-                        👤 My Profile
+                        <User className="h-4 w-4 shrink-0" /> My Profile
                       </Link>
 
                       <div className="border-t border-gray-100 my-1" />
@@ -263,7 +263,7 @@ export function Header() {
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-red-500"
                       >
-                        🚪 Logout
+                        <LogOut className="h-4 w-4 shrink-0" /> Logout
                       </button>
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export function Header() {
                       onClick={() => setIsOpen(false)}
                       className="rounded-xl bg-primary px-4 py-3 text-center text-white text-sm"
                     >
-                      🏠 My Dashboard
+                      <span className="inline-flex items-center justify-center gap-2"><Home className="h-4 w-4" /> My Dashboard</span>
                     </Link>
                   )}
                   {(role === "admin" || role === "super_admin") && (
@@ -348,7 +348,7 @@ export function Header() {
                       onClick={() => setIsOpen(false)}
                       className="rounded-xl bg-surface-container px-4 py-3 text-center text-sm"
                     >
-                      ⚙️ Admin Panel
+                      <span className="inline-flex items-center justify-center gap-2"><Settings className="h-4 w-4" /> Admin Panel</span>
                     </Link>
                   )}
                   {role === "landlord" && (
@@ -357,7 +357,7 @@ export function Header() {
                       onClick={() => setIsOpen(false)}
                       className="rounded-xl border border-gray-100 px-4 py-3 text-center text-sm"
                     >
-                      📤 My Card
+                      <span className="inline-flex items-center justify-center gap-2"><Share2 className="h-4 w-4" /> My Card</span>
                     </Link>
                   )}
                   <Link
@@ -365,7 +365,7 @@ export function Header() {
                     onClick={() => setIsOpen(false)}
                     className="rounded-xl border border-gray-100 px-4 py-3 text-center text-sm"
                   >
-                    👤 My Profile
+                    <span className="inline-flex items-center justify-center gap-2"><User className="h-4 w-4" /> My Profile</span>
                   </Link>
                   <button
                     onClick={handleLogout}

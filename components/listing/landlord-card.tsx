@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star } from "lucide-react"
+import { Star, Check } from "lucide-react"
 import type { Profile } from "@/types"
 import { getInitials } from "@/lib/utils"
 
@@ -42,7 +42,7 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
       </div>
 
       <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
-        <span className="text-base leading-none">✓</span>
+        <Check className="h-4 w-4" />
         ID Verified
       </div>
 

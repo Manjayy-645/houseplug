@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { PartyPopper, XCircle } from 'lucide-react'
 
 export default function BillingPage() {
   const searchParams = useSearchParams()
@@ -20,7 +21,7 @@ export default function BillingPage() {
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 p-6 text-center">
-        <div className="text-6xl">🎉</div>
+        <PartyPopper className="h-16 w-16 text-[#1B4332]" />
         <h1 className="text-2xl font-bold text-[#1B4332]">Payment Successful!</h1>
         <p className="text-gray-600">Your plan has been upgraded. Your listings are now featured.</p>
         
@@ -37,7 +38,7 @@ export default function BillingPage() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] gap-6 p-6 text-center">
-        <div className="text-6xl">❌</div>
+        <XCircle className="h-16 w-16 text-red-600" />
         <h1 className="text-2xl font-bold text-red-600">Payment Failed</h1>
         <p className="text-gray-600">
           {error === 'no_reference' && 'No payment reference found.'}

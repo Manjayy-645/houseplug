@@ -80,7 +80,7 @@ export function VerificationTable({ landlords, currentStatus }: VerificationTabl
           {currentStatus === 'pending' ? <Check className="h-10 w-10 text-emerald-500" /> : <Users className="h-10 w-10 text-gray-300" />}
         </div>
         <h3 className="text-xl font-bold text-gray-900">
-          {currentStatus === 'pending' ? "No pending verifications 🎉" : 
+          {currentStatus === 'pending' ? "No pending verifications" :
            currentStatus === 'verified' ? "No verified landlords yet" :
            currentStatus === 'rejected' ? "No rejected verifications" : "No landlords found"}
         </h3>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Download, MessageCircle, Star, ShieldCheck } from "lucide-react"
+import { Copy, Download, MessageCircle, Star, ShieldCheck, MapPin, Home, GraduationCap } from "lucide-react"
 import { getInitials } from "@/lib/utils"
 
 type MarketingCardPreviewProps = {
@@ -96,17 +96,17 @@ export function MarketingCardPreview({
 
           {/* Info List */}
           <div className="flex flex-col gap-2">
-            <span className="text-sm text-[#374151]">📍 {primaryArea || 'Port Harcourt'}</span>
-            <span className="text-sm text-[#374151]">
-              🏠 {activeListingsCount} Active Listing{activeListingsCount !== 1 ? 's' : ''}
+            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><MapPin className="h-4 w-4 text-[#374151]" /> {primaryArea || 'Port Harcourt'}</span>
+            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+              <Home className="h-4 w-4 text-[#374151]" /> {activeListingsCount} Active Listing{activeListingsCount !== 1 ? 's' : ''}
             </span>
             {activeListingsCount > 0 && universities.length > 0 && (
-              <span className="text-sm text-[#374151]">
-                🎓 Near {universities.join(' & ')}
+              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+                <GraduationCap className="h-4 w-4 text-[#374151]" /> Near {universities.join(' & ')}
               </span>
             )}
             {activeListingsCount > 0 && universities.length === 0 && (
-              <span className="text-sm text-[#374151]">🎓 Near Port Harcourt Campus</span>
+              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><GraduationCap className="h-4 w-4 text-[#374151]" /> Near Port Harcourt Campus</span>
             )}
           </div>
 
