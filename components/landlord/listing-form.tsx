@@ -8,6 +8,7 @@ import { z } from "zod"
 import { GripVertical, Upload, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { UNIVERSITIES } from "@/lib/constants"
+import { AiDescribeButton } from "@/components/listing/ai-describe-button"
 import type { Listing } from "@/types"
 
 const amenityOptions = [
@@ -538,8 +539,26 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Description</label>
-            <textarea 
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-sm font-medium">Description</label>
+              <AiDescribeButton
+                isPro={isPro}
+                getPayload={() => {
+                  const v = getValues()
+                  return {
+                    title: v.title,
+                    room_type: v.room_type,
+                    area: v.area,
+                    university: v.university,
+                    amenities: v.amenities,
+                    distance_from_gate: v.distance_from_gate,
+                    description: v.description,
+                  }
+                }}
+                onApply={(text) => setValue("description", text, { shouldValidate: true })}
+              />
+            </div>
+            <textarea
               {...register("description")} 
               rows={4} 
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:rows-6" 
