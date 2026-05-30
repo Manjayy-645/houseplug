@@ -107,7 +107,8 @@ export type Subscription = {
   id: string
   landlord_id: string
   plan: Plan
-  billing_cycle: BillingCycle | null
+  billing_cycle: BillingCycle | 'trial' | null
+  is_trial?: boolean
   active: boolean
   expired?: boolean
   amount_paid?: number

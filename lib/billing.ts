@@ -71,6 +71,7 @@ export async function processSuccessfulPayment(transaction: any) {
         landlord_id,
         plan,
         billing_cycle,
+        is_trial: false,
         active: true,
         amount_paid: amount,
         paystack_reference: reference,
@@ -207,6 +208,12 @@ export async function getLandlordSubscription(landlord_id: string) {
     ...subscription, 
     expired: isExpired 
   }
+}
+
+// True for an active paid OR trial Pro/Business subscription that hasn't expired.
+export async function hasProAccess(landlord_id: string): Promise<boolean> {
+  const sub = await getLandlordSubscription(landlord_id)
+  return !sub.expired && ['pro', 'business'].includes(sub.plan)
 }
 
 export async function getListingLimit(plan: string): Promise<number> {

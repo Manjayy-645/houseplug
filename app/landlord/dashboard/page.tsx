@@ -1,11 +1,11 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert, X, Share2, PartyPopper } from "lucide-react"
+import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
 import type { Listing, Review } from "@/types"
 import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
-import { isSubscriptionExpiringSoon, formatExpiryDate } from "@/lib/billing-utils"
+import { isSubscriptionExpiringSoon, formatExpiryDate, daysUntilExpiry } from "@/lib/billing-utils"
 
 export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string } }) {
   const supabase = createClient()
@@ -53,9 +53,11 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   const effectivePlan = subscription.expired ? 'free' : subscription.plan
   const listingLimit = isAdmin ? Infinity : await getListingLimit(effectivePlan)
   const canAddListing = activeListingsCount < listingLimit
-  const expiringSoon = subscription.expires_at 
-    ? isSubscriptionExpiringSoon(subscription.expires_at) 
+  const expiringSoon = subscription.expires_at
+    ? isSubscriptionExpiringSoon(subscription.expires_at)
     : false
+  const isTrial = (subscription as any).is_trial === true
+  const trialDaysLeft = subscription.expires_at ? daysUntilExpiry(subscription.expires_at) : 0
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "Landlord"
   const verificationStatus = isAdmin ? "verified" : ((profile as any)?.verification_status || 'unverified')
@@ -82,20 +84,50 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
         {subscription.expired && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div>
-              <p className="font-bold text-red-700">Your {subscription.plan} plan has expired</p>
+              <p className="font-bold text-red-700">
+                {isTrial ? "Your Pro trial has ended" : `Your ${subscription.plan} plan has expired`}
+              </p>
               <p className="text-sm text-red-600">
-                Your listings are still visible but no longer featured. 
-                You cannot add new listings until you upgrade.
+                Your listings are still live but no longer featured.
+                {isTrial ? " Upgrade to Pro to restore premium placement." : " You cannot add new listings until you upgrade."}
               </p>
             </div>
-            <Link href="/landlord/subscription" 
+            <Link href="/landlord/subscription"
                className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-red-700 transition">
-              Renew Now
+              {isTrial ? "Upgrade to Pro" : "Renew Now"}
             </Link>
           </div>
         )}
 
-        {!subscription.expired && expiringSoon && subscription.expires_at && (
+        {/* Trial: comfortably active */}
+        {isTrial && !subscription.expired && trialDaysLeft > 7 && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+            <Sparkles className="h-5 w-5 shrink-0 text-emerald-600" />
+            <p className="text-sm text-emerald-800">
+              <span className="font-bold">You&apos;re on a 30-day Pro trial — {trialDaysLeft} days left.</span>{" "}
+              Enjoy featured listings and full analytics.
+            </p>
+          </div>
+        )}
+
+        {/* Trial: ending soon */}
+        {isTrial && !subscription.expired && trialDaysLeft <= 7 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 shrink-0 text-amber-600" />
+              <p className="text-sm text-amber-800">
+                <span className="font-bold">Your Pro trial ends in {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"}.</span>{" "}
+                Subscribe to keep your featured listings and analytics.
+              </p>
+            </div>
+            <Link href="/landlord/subscription"
+               className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-amber-700 transition">
+              Subscribe Now
+            </Link>
+          </div>
+        )}
+
+        {!subscription.expired && !isTrial && expiringSoon && subscription.expires_at && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div>
               <p className="font-bold text-amber-700">
