@@ -333,7 +333,7 @@ export default function SubscriptionPage() {
               }`}
             >
               Annual
-              <span className="absolute -top-3 -right-2 rounded-full bg-accent px-2 py-0.5 text-[10px] font-black text-white ring-2 ring-white">
+              <span className="absolute -top-3 -right-2 rounded-full bg-[#F59E0B] px-2 py-0.5 text-[10px] font-black text-white ring-2 ring-white">
                 SAVE 25%+
               </span>
             </button>
