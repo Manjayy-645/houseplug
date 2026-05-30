@@ -46,8 +46,16 @@ export default function SubscriptionPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const [subscriptionData, { data: listingsData }, { data: paymentsData }, { data: settingsData }] = await Promise.all([
-        getLandlordSubscription(user.id),
+      const [{ data: subscriptionData }, { data: listingsData }, { data: paymentsData }, { data: settingsData }] = await Promise.all([
+        supabase
+          .from('subscriptions')
+          .select('plan, active, expires_at, is_trial, landlord_id, cancelled_at, billing_cycle')
+          .eq('landlord_id', user.id)
+          .eq('active', true)
+          .gte('expires_at', new Date().toISOString())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
         supabase.from("listings").select("id, title, room_type, area").eq("landlord_id", user.id).eq("status", "active"),
         supabase.from("payments").select("*").eq("landlord_id", user.id).order("created_at", { ascending: false }),
         supabase.from('platform_settings').select('key, value')
@@ -67,11 +75,20 @@ export default function SubscriptionPage() {
         featured_30: Number(settings.boost_featured_30 ?? 400000),
         urgent: Number(settings.boost_urgent ?? 50000),
         refresh: Number(settings.boost_refresh ?? 30000),
-        max_free: Number(settings.max_free_listings ?? 1),
-        max_pro: Number(settings.max_pro_listings ?? 5),
       })
 
-      setSubscription(subscriptionData as Subscription)
+      const sub = subscriptionData ? {
+        ...subscriptionData,
+        expired: false // Query already filters for active/not expired
+      } : {
+        plan: 'free',
+        active: true,
+        expired: false,
+        billing_cycle: null,
+        expires_at: null,
+      }
+
+      setSubscription(sub as any)
       setListings(listingsData as Listing[])
       setPayments(paymentsData as Payment[])
       setLoading(false)
@@ -134,9 +151,49 @@ export default function SubscriptionPage() {
   }
 
   const currentPlanId = subscription?.plan || "free"
-  const expiringSoon = subscription?.expires_at ? isSubscriptionExpiringSoon(subscription.expires_at) : false
-  const trialActive = (subscription as any)?.is_trial === true && !(subscription as any)?.expired
+  const trialActive = (subscription as any)?.is_trial === true
   const trialDaysLeft = subscription?.expires_at ? daysUntilExpiry(subscription.expires_at) : 0
+
+  const planDisplay: Record<string, string> = {
+    free: 'Free Plan',
+    pro: 'Pro Plan',
+    business: 'Business Plan',
+  }
+
+  const tierRank: Record<string, number> = {
+    free: 0,
+    pro: 1,
+    business: 2,
+  }
+
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+  function getPlanButton(cardPlan: string, currentPlan: string) {
+    const current = tierRank[currentPlan] ?? 0
+    const card = tierRank[cardPlan] ?? 0
+
+    if (cardPlan === currentPlan) {
+      return { 
+        label: trialActive && cardPlan === 'pro' 
+          ? 'Subscribe to Pro' 
+          : 'Current Plan',
+        disabled: !trialActive,
+        variant: trialActive ? 'primary' : 'disabled'
+      }
+    }
+    if (card > current) {
+      return { 
+        label: `Upgrade to ${capitalize(cardPlan)}`, 
+        disabled: false, 
+        variant: 'primary' 
+      }
+    }
+    return { 
+      label: `Downgrade to ${capitalize(cardPlan)}`, 
+      disabled: false, 
+      variant: 'outline' 
+    }
+  }
 
   const paginatedPayments = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -175,102 +232,87 @@ export default function SubscriptionPage() {
         </div>
       )}
 
-      {/* Trial status */}
-      {trialActive && (
-        <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 shrink-0 text-emerald-600" />
-            <p className="text-sm text-emerald-800">
-              <span className="font-bold">You&apos;re on a free Pro trial — {trialDaysLeft} {trialDaysLeft === 1 ? "day" : "days"} left.</span>{" "}
-              Subscribe any time to continue Pro features uninterrupted when your trial ends.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* SECTION 1 — Current Plan Banner */}
+      {/* SECTION 1 — Status Banner */}
       <section>
-        {subscription?.plan !== "free" ? (
-          <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl p-6 md:p-8 text-white shadow-xl ${
-            subscription?.expired ? 'bg-red-900 shadow-red-900/20' : 
-            expiringSoon ? 'bg-amber-700 shadow-amber-900/20' : 
-            'bg-emerald-900 shadow-emerald-900/20'
-          }`}>
-            <div className="flex items-center gap-4">
-              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                subscription?.expired ? 'bg-red-800 text-red-400' :
-                expiringSoon ? 'bg-amber-600 text-amber-300' :
-                'bg-emerald-800 text-emerald-400'
-              }`}>
-                {subscription?.expired ? <X className="h-8 w-8" /> : <Crown className="h-8 w-8" />}
-              </div>
+        {trialActive ? (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-6 w-6 shrink-0 text-amber-600" />
               <div>
-                <div className="flex items-center gap-3">
-                  <p className={`text-sm font-bold uppercase tracking-widest ${
-                    subscription?.expired ? 'text-red-400' :
-                    expiringSoon ? 'text-amber-300' :
-                    'text-emerald-400'
-                  }`}>
-                    {subscription?.expired ? 'Expired Plan' : expiringSoon ? 'Expiring Soon' : 'Active Plan'}
-                  </p>
-                  {subscription?.expired ? (
-                     <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Expired</span>
-                  ) : expiringSoon ? (
-                     <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider"><AlertTriangle className="h-3 w-3" /> Warning</span>
-                  ) : (
-                     <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">● Active</span>
-                  )}
-                </div>
-                <h2 className="text-3xl font-black capitalize">{subscription?.plan} Plan</h2>
-                <p className="mt-1 opacity-80 font-medium">
-                  {subscription?.expired 
-                    ? `Expired on ${formatExpiryDate(subscription.expires_at)} — Listings no longer featured.` 
-                    : subscription?.cancelled_at 
-                    ? `Ending on ${formatExpiryDate(subscription.expires_at)}` 
-                    : `Renews on ${formatExpiryDate(subscription?.expires_at || null)}`
-                  }
-                  {" "}&middot; {subscription?.billing_cycle === 'monthly' ? 'Monthly' : 'Annual'} billing
+                <p className="text-sm text-amber-900 font-bold">
+                  🎉 You&apos;re on a 30-day Pro trial — {trialDaysLeft} days left.
+                </p>
+                <p className="text-xs text-amber-800 mt-1">
+                  Subscribe before it ends to keep featured placement and AI descriptions.
                 </p>
               </div>
             </div>
-            {!subscription?.cancelled_at && !subscription?.expired && (
-              <button 
-                onClick={handleCancelSubscription}
-                disabled={actionLoading === 'cancel'}
-                className="text-sm font-bold text-emerald-300 hover:text-white transition underline underline-offset-4"
-              >
-                {actionLoading === 'cancel' ? 'Cancelling...' : 'Cancel subscription'}
-              </button>
-            )}
-            {subscription?.expired && (
-              <button 
-                onClick={() => handleInitiatePayment({ type: 'subscription', plan: subscription.plan, billing_cycle: subscription.billing_cycle || 'monthly' })}
-                className="bg-white text-red-900 px-6 py-2.5 rounded-xl font-black text-sm hover:bg-red-50 transition shadow-lg"
-              >
-                Renew Now
-              </button>
+            <button
+              onClick={() => document.getElementById('plan-cards')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-amber-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-amber-700 transition"
+            >
+              Subscribe to Pro
+            </button>
+          </div>
+        ) : currentPlanId === 'free' ? (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-6 w-6 shrink-0 text-gray-500" />
+              <div>
+                <p className="text-sm text-gray-900 font-bold">
+                  You&apos;re on the Free plan.
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Upgrade to Pro to get featured placement, AI descriptions, and full analytics.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => document.getElementById('plan-cards')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-[#1B4332] text-white px-6 py-2 rounded-xl font-bold text-sm hover:brightness-110 transition"
+            >
+              Upgrade to Pro
+            </button>
+          </div>
+        ) : currentPlanId === 'pro' ? (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Check className="h-6 w-6 shrink-0 text-emerald-600" />
+              <div>
+                <p className="text-sm text-emerald-900 font-bold">
+                  ✓ You&apos;re on Pro.
+                </p>
+                <p className="text-xs text-emerald-800 mt-1">
+                  Your listings are featured in search.
+                </p>
+              </div>
+            </div>
+            {subscription?.expires_at && (
+               <p className="text-xs font-medium text-emerald-700">Renews on {formatExpiryDate(subscription.expires_at)}</p>
             )}
           </div>
         ) : (
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-amber-50 border-2 border-amber-200 p-6 md:p-8 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-                <ShieldCheck className="h-8 w-8" />
-              </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Check className="h-6 w-6 shrink-0 text-emerald-600" />
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-amber-600/80">Current Status</p>
-                <h2 className="text-3xl font-black text-amber-900">Free Plan</h2>
-                <p className="mt-1 text-amber-800/70 font-medium">
-                  You are currently limited to 1 active listing and standard search placement.
+                <p className="text-sm text-emerald-900 font-bold">
+                  ✓ You&apos;re on Business.
+                </p>
+                <p className="text-xs text-emerald-800 mt-1">
+                  Your listings always appear first.
                 </p>
               </div>
             </div>
+            {subscription?.expires_at && (
+               <p className="text-xs font-medium text-emerald-700">Renews on {formatExpiryDate(subscription.expires_at)}</p>
+            )}
           </div>
         )}
       </section>
 
       {/* SECTION 2 — Plan Cards */}
-      <section className="space-y-8 text-center">
+      <section id="plan-cards" className="space-y-8 text-center scroll-mt-20">
         <div>
           <h2 className="text-3xl font-black text-gray-900">Choose a Plan</h2>
           <p className="mt-2 text-gray-600 font-medium">Scale your property business with premium features</p>
@@ -304,74 +346,96 @@ export default function SubscriptionPage() {
               id: "free",
               name: "Free",
               price: "₦0",
-              features: [`${prices.max_free} active listing${prices.max_free !== 1 ? 's' : ''}`, "Standard placement", "Basic analytics", "WhatsApp inquiries"],
+              features: ["Unlimited listings", "Standard placement", "WhatsApp inquiries", "Basic analytics (views count only)", "Community support"],
               color: "border-gray-200",
-              btnText: "Current Plan",
-              active: currentPlanId === "free" && !subscription?.expired
             },
             {
               id: "pro",
               name: "Pro",
               price: billingCycle === "monthly" ? formatNaira(prices.pro_monthly / 100) : formatNaira(prices.pro_annual / 100),
-              subtext: billingCycle === "annual" ? `${formatNaira(Math.round(prices.pro_annual / 12 / 100))} /mo billed yearly` : "billed monthly",
-              features: [`${prices.max_pro} active listings`, "Featured badge", "Priority placement", "Full analytics dashboard", "Priority support"],
-              color: "border-emerald-200 bg-emerald-50/30",
+              subtext: billingCycle === "annual" ? "billed annually" : "billed monthly",
+              features: ["Everything in Free, plus:", "Featured badge + priority placement", "AI listing descriptions", "Full analytics dashboard", "Priority support"],
+              color: "border-[#F59E0B] border-2",
               recommended: true,
-              btnText: (currentPlanId === "pro" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "pro" ? "Renew Pro" : currentPlanId === "business" ? "Downgrade to Pro" : "Upgrade to Pro",
-              active: currentPlanId === "pro" && !subscription?.expired
             },
             {
               id: "business",
               name: "Business",
               price: billingCycle === "monthly" ? formatNaira(prices.business_monthly / 100) : formatNaira(prices.business_annual / 100),
-              subtext: billingCycle === "annual" ? `${formatNaira(Math.round(prices.business_annual / 12 / 100))} /mo billed yearly` : "billed monthly",
-              features: ["Unlimited listings", "Always top of search", "Featured + Verified badges", "Dedicated account manager", "Bulk CSV upload"],
+              subtext: billingCycle === "annual" ? "billed annually" : "billed monthly",
+              features: ["Everything in Pro, plus:", "Always top of search", "Full analytics + CSV export", "Dedicated account manager", "Bulk listing upload"],
               color: "border-gray-900",
-              btnText: (currentPlanId === "business" && !subscription?.expired) ? "Current Plan" : subscription?.expired && currentPlanId === "business" ? "Renew Business" : "Upgrade to Business",
-              active: currentPlanId === "business" && !subscription?.expired
             }
-          ].map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative flex flex-col rounded-3xl border-2 p-8 transition hover:shadow-xl ${plan.color} ${
-                plan.recommended ? "shadow-lg shadow-emerald-900/5" : "bg-white"
-              }`}
-            >
-              {plan.recommended && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[#1B4332] px-4 py-1.5 text-xs font-black uppercase tracking-widest text-white shadow-lg">
-                  Most Popular
-                </div>
-              )}
-              <h3 className="text-xl font-black text-gray-900">{plan.name}</h3>
-              <div className="mt-4 flex flex-col items-baseline justify-center gap-1">
-                <span className="text-4xl font-black text-gray-900">{plan.price}</span>
-                {plan.subtext && <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">{plan.subtext}</span>}
-              </div>
-
-              <ul className="mt-8 space-y-4 text-left">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm font-semibold text-gray-600">
-                    <Check className="h-5 w-5 shrink-0 text-emerald-500" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                disabled={(plan.active && !subscription?.expired) || actionLoading === plan.id}
-                onClick={() => handleInitiatePayment({ type: 'subscription', plan: plan.id, billing_cycle: billingCycle })}
-                className={`mt-auto w-full rounded-2xl py-4 text-sm font-black transition active:scale-95 ${
-                  plan.active && !subscription?.expired
-                    ? "bg-gray-100 text-gray-400 cursor-default"
-                    : plan.id === 'business'
-                      ? "bg-gray-900 text-white hover:bg-gray-800"
-                      : "bg-[#1B4332] text-white hover:brightness-110"
-                }`}
+          ].map((plan) => {
+            const btn = getPlanButton(plan.id, currentPlanId)
+            return (
+              <div
+                key={plan.id}
+                className={`relative flex flex-col rounded-2xl p-6 transition hover:shadow-xl shadow-sm border bg-white ${plan.color}`}
               >
-                {actionLoading === plan.id ? "Processing..." : plan.btnText}
-              </button>
+                {plan.recommended && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#F59E0B] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                    Most Popular
+                  </div>
+                )}
+                <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                <div className="mt-4 flex flex-col items-baseline justify-center gap-1">
+                  <span className="text-3xl font-bold text-[#111827]">{plan.price}</span>
+                  <div className="flex flex-col items-center w-full">
+                    <span className="text-sm text-gray-500">{plan.id === 'free' ? '' : billingCycle === 'monthly' ? '/month' : '/year'}</span>
+                    {plan.subtext && <span className="text-xs text-gray-400">{plan.subtext}</span>}
+                  </div>
+                </div>
+
+                <div className="my-6 border-t border-gray-100" />
+
+                <ul className="mb-8 space-y-4 text-left">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Check className="h-4 w-4 shrink-0 text-[#10B981] mt-0.5" />
+                      <span className="text-sm text-gray-600">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  disabled={btn.disabled || actionLoading === plan.id}
+                  onClick={() => handleInitiatePayment({ type: 'subscription', plan: plan.id, billing_cycle: billingCycle })}
+                  className={`mt-auto w-full rounded-lg py-3 text-sm font-bold transition active:scale-95 ${
+                    btn.variant === 'disabled'
+                      ? "bg-gray-100 text-gray-400 cursor-default"
+                      : btn.variant === 'outline'
+                        ? "border border-[#1B4332] text-[#1B4332] hover:bg-gray-50"
+                        : "bg-[#1B4332] text-white hover:brightness-110"
+                  }`}
+                >
+                  {actionLoading === plan.id ? "Processing..." : btn.label}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Verification Add-on */}
+        <div className="border rounded-2xl p-6 bg-white mt-6 text-left max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <ShieldCheck className="w-8 h-8 text-[#10B981] shrink-0" />
+            <div>
+              <p className="font-semibold text-lg text-gray-900">Get Verified</p>
+              <p className="text-sm text-gray-500">
+                {formatNaira(prices.verification / 100)} one-time — available on any plan
+              </p>
             </div>
-          ))}
+            <Link href="/landlord/verification" 
+               className="sm:ml-auto bg-[#10B981] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:brightness-110 transition text-center">
+              Get Verified
+            </Link>
+          </div>
+          <p className="text-sm text-gray-500 mt-4 leading-relaxed">
+            Submit your ID and property documents for a verified 
+            badge that builds trust with students. Verified listings receive 
+            3x more inquiries on average.
+          </p>
         </div>
       </section>
 

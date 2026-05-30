@@ -122,7 +122,7 @@ export default async function LandlordAnalyticsPage() {
             <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50">
               <h3 className="text-sm font-bold text-emerald-800">Boost Visibility</h3>
               <p className="mt-1 text-xs text-emerald-700 leading-relaxed">
-                Listings with the "Featured" badge get up to 3x more views. Check your subscription plan to unlock more featured slots.
+                Listings with the "Featured" badge get up to 3x more views. Upgrade your plan to feature all your listings automatically.
               </p>
             </div>
             <div className="p-4 rounded-xl border border-blue-200 bg-blue-50">

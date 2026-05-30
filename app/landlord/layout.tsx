@@ -40,25 +40,18 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
       .in("status", ["active", "pending"])
   ])
 
-  const now = Date.now()
-  let activePlan = (subscription?.active && subscription.expires_at && new Date(subscription.expires_at).getTime() > now) 
+  const now = new Date().toISOString()
+  const activePlan = (subscription?.active && subscription.expires_at && subscription.expires_at > now) 
     ? subscription.plan 
     : "free"
-    
-  // Admins get unlimited listings (Business plan) automatically
-  if (profile.role === "admin") {
-    activePlan = "business"
-  }
 
   const plan: Plan = activePlan as Plan
-  const listingLimit = plan === "business" ? 999 : plan === "pro" ? 5 : 1
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900 lg:flex">
       <LandlordSidebar 
         plan={plan} 
         listingCount={count ?? 0} 
-        listingLimit={listingLimit} 
         verificationStatus={profile.role === "admin" ? "verified" : (profile.verification_status || 'unverified')}
       />
       <main className="flex-1 pb-24 lg:pb-0">{children}</main>

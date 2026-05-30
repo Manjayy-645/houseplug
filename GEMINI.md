@@ -46,8 +46,10 @@ houseplug.ng
 - **admin:** Full access, approve/reject listings.
 
 ## Monetization Model
-- **Free Plan:** 1 active listing.
-- **Pro Plan:** ₦5,000/month via Paystack, up to 5 listings + featured badge.
+- **Free Plan:** Unlimited listings, standard placement.
+- **Pro Plan:** ₦5,000/month or annual via Paystack. Everything in Free + featured badge, priority placement, AI descriptions, and full analytics.
+- **Business Plan:** ₦15,000/month or annual. Everything in Pro + top of search, CSV export, and dedicated account manager.
+- **Verification:** ₦2,000 one-time fee (available on any plan).
 
 ## Workspace Architecture
 - `/app/(main)/` — Public student-facing pages.

@@ -49,10 +49,9 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   const activeListings = listings.filter((l) => l.status === "active")
   const activeListingsCount = activeListings.length
   
-  // Admins get unlimited listings. Expired plans fall back to free limit.
-  const effectivePlan = subscription.expired ? 'free' : subscription.plan
-  const listingLimit = isAdmin ? Infinity : await getListingLimit(effectivePlan)
-  const canAddListing = activeListingsCount < listingLimit
+  // All plans have unlimited listings now.
+  const listingLimit = Infinity
+  const canAddListing = true
   const expiringSoon = subscription.expires_at
     ? isSubscriptionExpiringSoon(subscription.expires_at)
     : false
@@ -72,11 +71,25 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
   const latestReviews = reviews.slice(0, 3)
 
+  const planDisplay: Record<string, string> = {
+    free: 'Free Plan',
+    pro: 'Pro Plan',
+    business: 'Business Plan',
+  }
+
   return (
     <div className="space-y-6 p-4 lg:p-8">
-      <header>
-        <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName}</h1>
-        <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName}</h1>
+          <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
+        </div>
+        <div className="bg-[#1B4332]/5 border border-[#1B4332]/10 px-4 py-2 rounded-xl flex items-center gap-2">
+           <Crown className="h-4 w-4 text-[#1B4332]" />
+           <span className="text-xs font-bold text-[#1B4332]">
+             {isTrial ? `Pro Trial (${trialDaysLeft} days)` : planDisplay[subscription.plan] || 'Free Plan'}
+           </span>
+        </div>
       </header>
 
       {/* PRIORITY BANNERS */}
@@ -89,7 +102,6 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
               </p>
               <p className="text-sm text-red-600">
                 Your listings are still live but no longer featured.
-                {isTrial ? " Upgrade to Pro to restore premium placement." : " You cannot add new listings until you upgrade."}
               </p>
             </div>
             <Link href="/landlord/subscription"
@@ -144,22 +156,6 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           </div>
         )}
 
-        {subscription.plan === 'free' && !subscription.expired && activeListingsCount >= listingLimit && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="font-bold text-amber-700">Free plan limit reached</p>
-              <p className="text-sm text-amber-600">
-                You have used your 1 free listing slot. 
-                Upgrade to Pro to add up to 5 listings.
-              </p>
-            </div>
-            <Link href="/landlord/subscription"
-               className="bg-[#F59E0B] text-white px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap hover:brightness-105 transition">
-              Upgrade to Pro
-            </Link>
-          </div>
-        )}
-
         {verificationStatus === 'unverified' && !subscription.expired && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
@@ -193,11 +189,8 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           { label: "WhatsApp Clicks", value: totalClicks.toLocaleString("en-NG"), sub: "Total contacts" },
           { 
             label: "Active Listings", 
-            value: `${activeListingsCount} / ${listingLimit === Infinity ? '∞' : listingLimit}`, 
-            sub: subscription.expired ? "Plan expired — renew to add more" :
-                 activeListingsCount >= listingLimit ? "Limit reached — upgrade to add more" : 
-                 listingLimit === Infinity ? "Unlimited listings available" :
-                 `${listingLimit - activeListingsCount} slots remaining`
+            value: `${activeListingsCount} listings`, 
+            sub: "No limit on any plan"
           },
           { label: "Avg Rating", value: avgRating ? avgRating.toFixed(1) : "0.0", sub: `${reviews.length} reviews` }
         ].map((stat) => (
@@ -224,27 +217,12 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
       <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>
-          <div className="relative group">
-            <Link
-              href={!canAddListing ? "#" : "/landlord/listings/new"}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition ${
-                !canAddListing
-                  ? "cursor-not-allowed bg-gray-200 text-gray-400"
-                  : "bg-[#1B4332] text-white hover:brightness-110"
-              }`}
-            >
-              + Add New Listing
-            </Link>
-            {!canAddListing && (
-              <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-48 rounded-lg bg-gray-900 p-2 text-[10px] font-bold text-white text-center">
-                {subscription.expired 
-                  ? "Renew your plan to add more listings"
-                  : subscription.plan === 'free'
-                  ? "Upgrade to Pro to add more listings"
-                  : "You've reached your plan limit"}
-              </div>
-            )}
-          </div>
+          <Link
+            href="/landlord/listings/new"
+            className="rounded-lg bg-[#1B4332] text-white px-4 py-2 text-sm font-bold transition hover:brightness-110"
+          >
+            + Add New Listing
+          </Link>
         </div>
 
         <div className="space-y-3">
@@ -296,15 +274,6 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
               <ListingRowActions listingId={listing.id} status={listing.status} />
             </article>
           ))}
-
-          {!canAddListing && (
-            <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-              <Lock className="mx-auto h-5 w-5 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600 uppercase tracking-wider font-bold">
-                {subscription.expired ? "Renew your plan" : "Upgrade your plan"} to unlock more listing slots.
-              </p>
-            </div>
-          )}
         </div>
       </section>
 

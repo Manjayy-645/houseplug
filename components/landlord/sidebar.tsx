@@ -23,7 +23,6 @@ import type { Plan, Profile } from "@/types"
 type SidebarProps = {
   plan: Plan
   listingCount: number
-  listingLimit: number
   verificationStatus?: Profile["verification_status"]
 }
 
@@ -37,7 +36,13 @@ const navItems = [
   { href: "/landlord/profile", label: "Profile", icon: User }
 ]
 
-export function LandlordSidebar({ plan, listingCount, listingLimit, verificationStatus }: SidebarProps) {
+const planDisplay: Record<string, string> = {
+  free: 'Free Plan',
+  pro: 'Pro Plan',
+  business: 'Business Plan',
+}
+
+export function LandlordSidebar({ plan, listingCount, verificationStatus }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -93,9 +98,9 @@ export function LandlordSidebar({ plan, listingCount, listingLimit, verification
 
         <div className="space-y-3 border-t border-white/15 p-3">
           <div className="rounded-md bg-white/10 p-3 text-xs">
-            <p className="font-semibold uppercase tracking-wide text-white/80">{plan} plan</p>
+            <p className="font-semibold uppercase tracking-wide text-white/80">{planDisplay[plan] || 'Free Plan'}</p>
             <p className="mt-1 text-white/90">
-              {listingCount}/{listingLimit} listings
+              {listingCount} {listingCount === 1 ? 'Room' : 'Rooms'}
             </p>
             {plan === "free" ? (
               <Link href="/landlord/subscription" className="mt-2 inline-block font-semibold text-[#F59E0B] hover:underline">
@@ -133,8 +138,8 @@ export function LandlordSidebar({ plan, listingCount, listingLimit, verification
              <div className="rounded-xl bg-[#1B4332]/5 p-4 mb-2 border border-[#1B4332]/10">
                <p className="text-xs font-bold text-[#1B4332] uppercase tracking-widest">Active Plan</p>
                <div className="flex items-center justify-between mt-1">
-                 <p className="text-lg font-black text-[#1B4332] capitalize">{plan}</p>
-                 <span className="text-sm font-bold text-gray-500">{listingCount} / {listingLimit} Rooms</span>
+                 <p className="text-lg font-black text-[#1B4332] capitalize">{planDisplay[plan] || 'Free Plan'}</p>
+                 <span className="text-sm font-bold text-gray-500">{listingCount} {listingCount === 1 ? 'Room' : 'Rooms'}</span>
                </div>
                {plan === 'free' && (
                  <Link 
