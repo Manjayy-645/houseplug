@@ -3,12 +3,14 @@ import { createClient } from "@/lib/supabase/server"
 import { hasProAccess } from "@/lib/billing"
 import OpenAI from "openai"
 
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-})
+export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
+  const groq = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+  })
+
   const supabase = createClient()
   const {
     data: { user },
