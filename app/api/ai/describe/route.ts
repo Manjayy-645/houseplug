@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { hasProAccess } from "@/lib/billing"
+import OpenAI from "openai"
+
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+})
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -21,17 +27,68 @@ export async function POST(request: Request) {
     )
   }
 
-  // Listing context the future prompt will use (title, area, room_type, amenities, …).
-  const payload = await request.json().catch(() => ({}))
-  void payload
+  if (!process.env.GROQ_API_KEY) {
+    return NextResponse.json(
+      { error: "not_configured", message: "AI service is not configured. Please contact support." },
+      { status: 500 }
+    )
+  }
 
-  // --- UI SHELL ---
-  // Generation is intentionally stubbed: no live LLM call is made yet. To make
-  // this real, pick a provider (Anthropic/OpenAI), add its API key as an env
-  // var, build a prompt from `payload`, call the model, and return
-  // `{ description }`. The gating + client flow above/around this are complete.
-  return NextResponse.json(
-    { error: "not_configured", message: "AI descriptions are coming soon for Pro members." },
-    { status: 503 }
-  )
+  try {
+    const payload = await request.json()
+    const { title, room_type, area, university, amenities, distance_from_gate } = payload
+
+    const prompt = `
+      You are an expert real estate copywriter for HousePlug, a student housing platform in Nigeria.
+      Write a compelling, student-friendly listing description based on the following details:
+      
+      - Title: ${title || "N/A"}
+      - Room Type: ${room_type || "N/A"}
+      - Area: ${area || "N/A"}
+      - University: ${university || "N/A"}
+      - Distance from Gate: ${distance_from_gate || "N/A"}
+      - Amenities: ${Array.isArray(amenities) ? amenities.join(", ") : "N/A"}
+
+      Guidelines:
+      - Use a professional yet friendly and inviting tone.
+      - Highlight the proximity to the university if it's close.
+      - Mention the specific amenities and why they matter to a student (e.g., constant light for reading, secure environment).
+      - Keep it concise (under 150 words).
+      - Do not use generic filler phrases like "Welcome to your new home".
+      - Focus on value and comfort for a student.
+      - Ensure the currency mentioned is always Naira (₦).
+      
+      Output ONLY the description text. No intro, no outro.
+    `
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant that writes student housing descriptions for the Nigerian market.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.7,
+      max_tokens: 500,
+    })
+
+    const description = completion.choices[0]?.message?.content?.trim()
+
+    if (!description) {
+      throw new Error("No description generated")
+    }
+
+    return NextResponse.json({ description })
+  } catch (error: any) {
+    console.error("AI Generation Error:", error)
+    return NextResponse.json(
+      { error: "generation_failed", message: "Failed to generate description. Please try again later." },
+      { status: 500 }
+    )
+  }
 }
