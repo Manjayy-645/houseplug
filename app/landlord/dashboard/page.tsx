@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock } from "lucide-react"
+import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"

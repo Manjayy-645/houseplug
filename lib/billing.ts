@@ -216,11 +216,11 @@ export async function hasProAccess(landlord_id: string): Promise<boolean> {
   return !sub.expired && ['pro', 'business'].includes(sub.plan)
 }
 
-export function getListingLimit(plan: string): number {
+export async function getListingLimit(plan: string): Promise<number> {
   return Infinity
 }
 
-export function formatListingLimit(plan: string): string {
+export async function formatListingLimit(plan: string): Promise<string> {
   return 'Unlimited'
 }
 
