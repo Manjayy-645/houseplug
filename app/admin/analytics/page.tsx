@@ -15,14 +15,16 @@ export default async function AnalyticsPage() {
     { count: activeListingsCount },
     { data: mostViewed },
     { data: allProfiles },
-    { data: allListings }
+    { data: allListings },
+    { data: allRoomTypeListings }
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'landlord'),
     supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('listings').select('title, university, views_count, landlord:profiles(full_name)').order('views_count', { ascending: false }).limit(5),
     supabase.from('profiles').select('created_at, role'),
-    supabase.from('listings').select('university, room_type').eq('status', 'active')
+    supabase.from('listings').select('university, room_type').eq('status', 'active'),
+    supabase.from('listings').select('room_type')
   ])
 
   // Real data aggregation for Weekly Growth (Last 8 weeks)
@@ -61,17 +63,21 @@ export default async function AnalyticsPage() {
   })
   const uniData = Object.entries(uniCountMap).map(([name, value]) => ({ name, value }))
 
-  // Real data aggregation for Listings by Room Type
-  const roomTypeMap: Record<string, number> = { 'self_con': 0, '1_bedroom': 0, '2_bedroom': 0, 'shared': 0 }
-  allListings?.forEach(l => {
-    roomTypeMap[l.room_type] = (roomTypeMap[l.room_type] || 0) + 1
-  })
-  const roomTypeData = [
-    { label: 'Self-con', count: roomTypeMap['self_con'] || 0, color: 'bg-emerald-500' },
-    { label: '1-Bedroom', count: roomTypeMap['1_bedroom'] || 0, color: 'bg-blue-500' },
-    { label: '2-Bedroom', count: roomTypeMap['2_bedroom'] || 0, color: 'bg-purple-500' },
-    { label: 'Shared', count: roomTypeMap['shared'] || 0, color: 'bg-amber-500' }
+  // Real data aggregation for Listings by Room Type.
+  // Keys MUST match the snake_case values stored in the DB. "shared" is not used
+  // by any listing, so it is intentionally excluded. Counts cover all listings
+  // regardless of status.
+  const ROOM_TYPE_META: Array<{ dbValue: string; label: string; color: string }> = [
+    { dbValue: 'self_con', label: 'Self-con', color: 'bg-emerald-500' },
+    { dbValue: 'one_bedroom', label: '1-Bedroom', color: 'bg-blue-500' },
+    { dbValue: 'two_bedroom', label: '2-Bedroom', color: 'bg-purple-500' }
   ]
+  const roomTypeData = ROOM_TYPE_META.map(({ dbValue, label, color }) => ({
+    label,
+    color,
+    count: allRoomTypeListings?.filter(l => l.room_type === dbValue).length ?? 0
+  }))
+  const roomTypeTotal = roomTypeData.reduce((sum, item) => sum + item.count, 0)
 
   return (
     <div className="space-y-8">
@@ -142,7 +148,7 @@ export default async function AnalyticsPage() {
                        <span className="text-gray-900">{item.count}</span>
                     </div>
                     <div className="h-4 bg-gray-50 rounded-full overflow-hidden p-1">
-                       <div className={`h-full rounded-full ${item.color}`} style={{ width: `${(activeListingsCount || 0) > 0 ? (item.count / (activeListingsCount as number)) * 100 : 0}%` }}></div>
+                       <div className={`h-full rounded-full ${item.color}`} style={{ width: `${roomTypeTotal > 0 ? (item.count / roomTypeTotal) * 100 : 0}%` }}></div>
                     </div>
                  </div>
                ))}
