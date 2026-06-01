@@ -243,6 +243,18 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-[1fr,360px] lg:px-8">
           <div className="space-y-6">
             <ListingDetailsGrid listing={listing} />
+
+            {listing.description && (
+              <div className="rounded-2xl border bg-white p-6">
+                <h2 className="font-semibold text-lg text-gray-900 mb-3">
+                  About this property
+                </h2>
+                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                  {listing.description}
+                </p>
+              </div>
+            )}
+
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />
             
