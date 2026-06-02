@@ -6,9 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
-import { OTPInput } from "@/components/auth/otp-input"
-import { Mail, ArrowLeft, CheckCircle2, Loader2, ShieldCheck, RefreshCw } from "lucide-react"
-import { redirectByRole } from "@/lib/auth"
+import { Mail, ArrowLeft } from "lucide-react"
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -25,10 +23,7 @@ type SignupValues = z.infer<typeof signupSchema>
 export default function SignupPage() {
   const [formState, setFormState] = useState<'form' | 'verify'>('form')
   const [authEmail, setEmail] = useState("")
-  const [otp, setOtp] = useState("")
   const [authError, setAuthError] = useState<string | null>(null)
-  const [otpError, setOtpError] = useState<string | null>(null)
-  const [otpLoading, setOtpLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendStatus, setResendStatus] = useState<string | null>(null)
 
@@ -38,7 +33,6 @@ export default function SignupPage() {
     register,
     handleSubmit,
     setValue,
-    getValues,
     watch,
     formState: { errors, isSubmitting }
   } = useForm<SignupValues>({
@@ -70,8 +64,8 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: values.full_name,
-          role: values.role,
-          phone: values.phone
+          phone: values.phone,
+          role: values.role
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }
@@ -92,72 +86,23 @@ export default function SignupPage() {
     }
   }
 
-  const handleVerifyOtp = async () => {
-    if (otp.length !== 6) return
-    
-    setOtpLoading(true)
-    setOtpError(null)
-
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: authEmail,
-        token: otp,
-        type: 'signup'
-      })
-
-      if (error) throw error
-
-      if (data.user) {
-        // Fallback: Ensure profile exists
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single()
-
-        if (!profile) {
-           const values = getValues()
-           await supabase.from('profiles').insert({
-             id: data.user.id,
-             email: data.user.email!,
-             full_name: values.full_name,
-             role: values.role,
-             phone: values.phone
-           })
-           redirectByRole(values.role)
-        } else {
-           redirectByRole(profile.role)
-        }
-      }
-    } catch (err: any) {
-      setOtpError(err.message || 'Invalid or expired code. Try again.')
-      setOtpLoading(false)
-    }
-  }
-
   const handleResend = async () => {
     if (resendCooldown > 0) return
-    
+
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: authEmail,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
     })
 
     if (error) {
-      setOtpError(error.message)
+      setAuthError(error.message)
     } else {
-      setResendStatus("Email resent!")
+      setResendStatus("Verification email resent!")
       setResendCooldown(60)
       setTimeout(() => setResendStatus(null), 3000)
     }
   }
-
-  // Auto-submit when OTP reaches 6 chars
-  useEffect(() => {
-    if (otp.length === 6) {
-      handleVerifyOtp()
-    }
-  }, [otp])
 
   if (formState === 'verify') {
     return (
@@ -167,42 +112,27 @@ export default function SignupPage() {
             <Mail className="h-10 w-10 text-[#1B4332]" />
           </div>
         </div>
-        
+
         <h2 className="text-2xl font-black text-gray-900 mb-2">Check your email</h2>
-        <p className="text-gray-500 font-medium mb-6">
-          We sent a verification link to:<br/>
-          <span className="text-[#1B4332] font-black">{authEmail}</span>
+        <p className="text-gray-500 font-medium mb-2">
+          We sent a verification link to:
         </p>
-        
+        <p className="text-[#1B4332] font-black mb-6 break-all">{authEmail}</p>
+
         <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mb-8">
-          <p className="text-sm font-bold text-gray-600 mb-4 uppercase tracking-widest">— or enter the OTP code —</p>
-          
-          <OTPInput 
-            value={otp} 
-            onChange={setOtp} 
-            disabled={otpLoading} 
-          />
-
-          {otpError && (
-            <p className="mt-4 text-sm font-bold text-red-600">{otpError}</p>
-          )}
-
-          <button
-            onClick={handleVerifyOtp}
-            disabled={otp.length !== 6 || otpLoading}
-            className="w-full mt-6 rounded-xl bg-[#1B4332] px-4 py-3 text-sm font-black text-white transition hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:grayscale"
-          >
-            {otpLoading ? <RefreshCw className="h-5 w-5 animate-spin mx-auto" /> : "Verify Code"}
-          </button>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Click the link in that email to verify your account. You&apos;ll be
+            signed in and taken to your dashboard automatically.
+          </p>
         </div>
 
         <div className="space-y-4">
           <p className="text-sm text-gray-600 font-medium">
-            Didn't receive the email?{" "}
+            Didn&apos;t receive the email?{" "}
             {resendStatus ? (
               <span className="text-emerald-600 font-bold">{resendStatus}</span>
             ) : (
-              <button 
+              <button
                 onClick={handleResend}
                 disabled={resendCooldown > 0}
                 className="text-[#F59E0B] font-black hover:underline disabled:opacity-50"
@@ -212,7 +142,9 @@ export default function SignupPage() {
             )}
           </p>
 
-          <button 
+          {authError && <p className="text-sm font-bold text-red-600">{authError}</p>}
+
+          <button
             onClick={() => setFormState('form')}
             className="flex items-center justify-center gap-2 mx-auto text-sm font-bold text-gray-400 hover:text-gray-600 transition"
           >

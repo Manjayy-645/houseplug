@@ -16,7 +16,7 @@ export function redirectByRole(role?: string) {
   switch (role) {
     case 'super_admin':
     case 'admin':
-      target = '/admin'
+      target = '/admin/listings'
       break
     case 'landlord':
       target = '/landlord/dashboard'
@@ -25,6 +25,5 @@ export function redirectByRole(role?: string) {
       target = '/browse'
   }
 
-  console.log("[AUTH_DEBUG] Final redirection target:", target)
   window.location.href = target
 }
