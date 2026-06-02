@@ -149,7 +149,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       : Promise.resolve({ data: null })
   ])
 
-  const isAdmin = userProfile?.role === "admin"
+  const isAdmin = userProfile?.role === "admin" || userProfile?.role === "super_admin"
   const isOwner = user && listingRowData && user.id === listingRowData.landlord_id
   const canView = listingRowData?.status === "active" || isAdmin || isOwner
 
