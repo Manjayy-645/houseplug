@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
-import { Mail, ArrowLeft } from "lucide-react"
+import { Mail, ArrowLeft, GraduationCap, Home } from "lucide-react"
+import { GoogleIcon } from "@/components/auth/google-icon"
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -14,14 +15,15 @@ const signupSchema = z.object({
   phone: z
     .string()
     .regex(/^(070|080|081|090)\d{8}$/, "Enter a valid Nigerian phone number"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["student", "landlord"])
+  password: z.string().min(8, "Password must be at least 8 characters")
 })
 
 type SignupValues = z.infer<typeof signupSchema>
+type Role = "student" | "landlord"
 
 export default function SignupPage() {
   const [formState, setFormState] = useState<'form' | 'verify'>('form')
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [authEmail, setEmail] = useState("")
   const [authError, setAuthError] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
@@ -32,8 +34,6 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
     formState: { errors, isSubmitting }
   } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
@@ -41,12 +41,9 @@ export default function SignupPage() {
       full_name: "",
       email: "",
       phone: "",
-      password: "",
-      role: "student"
+      password: ""
     }
   })
-
-  const selectedRole = watch("role")
 
   // Resend cooldown timer
   useEffect(() => {
@@ -56,8 +53,34 @@ export default function SignupPage() {
     }
   }, [resendCooldown])
 
+  async function handleGoogleSignIn() {
+    if (!selectedRole) return
+    setAuthError(null)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?role=${selectedRole}`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
+      }
+    })
+
+    if (error) {
+      console.error('Google sign-in error:', error)
+      setAuthError('Failed to sign in with Google. Try again.')
+    }
+  }
+
   const onSubmit = async (values: SignupValues) => {
     setAuthError(null)
+    if (!selectedRole) {
+      setAuthError("Please select whether you're a student or landlord.")
+      return
+    }
+
     const { data: authData, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -65,7 +88,7 @@ export default function SignupPage() {
         data: {
           full_name: values.full_name,
           phone: values.phone,
-          role: values.role
+          role: selectedRole
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }
@@ -158,6 +181,60 @@ export default function SignupPage() {
   return (
     <div>
       <h2 className="mb-5 text-xl font-semibold text-gray-900">Create your account</h2>
+
+      {/* Role selection — required before Google or email signup */}
+      <p className="mb-2 block text-sm font-medium text-gray-700">I am a:</p>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => setSelectedRole('student')}
+          className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
+            selectedRole === 'student'
+              ? 'border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300'
+          }`}
+        >
+          <GraduationCap className="w-4 h-4" />
+          I&apos;m a Student
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedRole('landlord')}
+          className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
+            selectedRole === 'landlord'
+              ? 'border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]'
+              : 'border-gray-200 text-gray-500 hover:border-gray-300'
+          }`}
+        >
+          <Home className="w-4 h-4" />
+          I&apos;m a Landlord
+        </button>
+      </div>
+
+      <button
+        type="button"
+        disabled={!selectedRole}
+        onClick={handleGoogleSignIn}
+        className={`w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50 ${
+          !selectedRole ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        <GoogleIcon />
+        Continue with Google
+      </button>
+
+      {!selectedRole && (
+        <p className="text-xs text-gray-400 text-center mt-2">
+          Select your role above to continue with Google
+        </p>
+      )}
+
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs text-gray-400 font-medium">or sign up with email</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label htmlFor="full_name" className="mb-1 block text-sm font-medium text-gray-700">
@@ -216,35 +293,6 @@ export default function SignupPage() {
           {errors.password ? (
             <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
           ) : null}
-        </div>
-
-        <div>
-          <p className="mb-2 block text-sm font-medium text-gray-700">I am a:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setValue("role", "student", { shouldValidate: true })}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                selectedRole === "student"
-                  ? "border-[#1B4332] bg-[#1B4332] text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-[#1B4332]"
-              }`}
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue("role", "landlord", { shouldValidate: true })}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                selectedRole === "landlord"
-                  ? "border-[#1B4332] bg-[#1B4332] text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:border-[#1B4332]"
-              }`}
-            >
-              Landlord
-            </button>
-          </div>
-          {errors.role ? <p className="mt-1 text-xs text-red-600">{errors.role.message}</p> : null}
         </div>
 
         {authError ? <p className="text-sm text-red-600">{authError}</p> : null}

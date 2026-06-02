@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown } from "lucide-react"
+import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown, Phone } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
@@ -94,6 +94,23 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
       {/* PRIORITY BANNERS */}
       <div className="space-y-4">
+        {!profile?.phone && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
+            <Phone className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Add your phone number</p>
+              <p className="text-xs text-amber-600">
+                Students need your WhatsApp number to contact you about listings.
+              </p>
+            </div>
+            <Link
+              href="/landlord/profile"
+              className="ml-auto bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
+            >
+              Add Number
+            </Link>
+          </div>
+        )}
         {subscription.expired && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
             <div>

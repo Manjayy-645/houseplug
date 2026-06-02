@@ -8,6 +8,7 @@ import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
 import { AlertCircle } from "lucide-react"
 import { redirectByRole } from "@/lib/auth"
+import { GoogleIcon } from "@/components/auth/google-icon"
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -80,6 +81,20 @@ export default function LoginPage() {
     redirectByRole(role)
   }
 
+  async function handleGoogleLogin() {
+    setAuthError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if (error) {
+      console.error('Google sign-in error:', error)
+      setAuthError('Failed to sign in with Google. Try again.')
+    }
+  }
+
   const handleResend = async () => {
     if (resendCooldown > 0) return
     const email = getValues("email")
@@ -100,6 +115,21 @@ export default function LoginPage() {
   return (
     <div>
       <h2 className="mb-5 text-xl font-semibold text-gray-900">Welcome back</h2>
+
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
+      >
+        <GoogleIcon />
+        Continue with Google
+      </button>
+
+      <div className="flex items-center gap-3 my-6">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs text-gray-400 font-medium">or log in with email</span>
+        <div className="flex-1 h-px bg-gray-200" />
+      </div>
 
       {needsVerification && (
         <div className="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col gap-3">

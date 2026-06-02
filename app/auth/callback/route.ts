@@ -8,6 +8,7 @@ export async function GET(request: Request) {
   const code = searchParams.get("code")
   const token_hash = searchParams.get("token_hash")
   const type = searchParams.get("type")
+  const roleParam = searchParams.get("role") // set by Google OAuth signup
 
   const supabase = createClient()
 
@@ -56,12 +57,15 @@ export async function GET(request: Request) {
   }
 
   const meta = user.user_metadata ?? {}
-  const role = meta.role || "student"
+  // Role precedence: explicit OAuth signup param > sign-up metadata > student.
+  const role = roleParam || meta.role || "student"
+  // Google provides the name as `name` or `full_name`.
+  const fullName = meta.full_name || meta.name || "User"
 
   const { error: insertError } = await serviceClient.from("profiles").insert({
     id: user.id,
     email: user.email,
-    full_name: meta.full_name || "User",
+    full_name: fullName,
     phone: meta.phone || "",
     role,
     created_at: new Date().toISOString(),
