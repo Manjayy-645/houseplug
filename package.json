@@ -32,6 +32,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "latest",
     "recharts": "^3.8.1",
+    "resend": "^6.12.4",
     "shadcn-ui": "latest",
     "tailwind-merge": "latest",
     "tailwindcss": "^3.4.17",

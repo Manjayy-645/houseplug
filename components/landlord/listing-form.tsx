@@ -9,6 +9,7 @@ import { GripVertical, Upload, X } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { UNIVERSITIES } from "@/lib/constants"
 import { AiDescribeButton } from "@/components/listing/ai-describe-button"
+import { notifyAdminsNewListing } from "@/app/actions"
 import type { Listing } from "@/types"
 
 const amenityOptions = [
@@ -269,6 +270,8 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
       } else {
         const { error } = await supabase.from("listings").insert(payload)
         if (error) throw error
+        // Notify admins that a new listing is pending approval (best-effort).
+        void notifyAdminsNewListing(listingId)
       }
 
       window.localStorage.removeItem(draftKey)

@@ -2,6 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendAdminNotification } from "@/lib/email"
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
 
 export async function submitReview(formData: FormData) {
   const supabase = createClient()
@@ -91,4 +94,76 @@ export async function recordPhoneReveal(listingId: string) {
 export async function recordListingView(listingId: string) {
   const supabase = createClient()
   await supabase.rpc("increment_views", { listing_id: listingId })
+}
+
+/**
+ * Notify admins that a landlord submitted a new listing pending approval.
+ * Called by the listing form after a successful insert. Verifies the caller
+ * owns the listing and that it is genuinely pending before emailing. Best
+ * effort — never throws back into the creation flow.
+ */
+export async function notifyAdminsNewListing(listingId: string) {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: listing } = await supabase
+      .from("listings")
+      .select("title, area, status, landlord_id")
+      .eq("id", listingId)
+      .single()
+
+    // Only notify for the owner's own genuinely-pending listing.
+    if (!listing || listing.landlord_id !== user.id || listing.status !== "pending") {
+      return
+    }
+
+    const { data: landlord } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", listing.landlord_id)
+      .single()
+
+    const name = landlord?.full_name || "A landlord"
+
+    await sendAdminNotification(
+      "New Listing Pending Approval",
+      `${name} submitted a listing: "${listing.title}" in ${listing.area}. Review and approve or reject.`,
+      `${APP_URL}/admin/listings`,
+      "Review Listing"
+    )
+  } catch (error) {
+    console.error("[actions] notifyAdminsNewListing failed:", error)
+  }
+}
+
+/**
+ * Notify admins that a landlord submitted verification documents.
+ * Called by the verification form after a successful submission. Uses the
+ * authenticated session to resolve the submitter. Best effort — never throws.
+ */
+export async function notifyAdminsVerificationSubmitted() {
+  try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single()
+
+    const name = profile?.full_name || "A landlord"
+
+    await sendAdminNotification(
+      "New Verification Submission",
+      `${name} submitted documents for verification. Review their ID and property docs.`,
+      `${APP_URL}/admin/verification`,
+      "Review Verification"
+    )
+  } catch (error) {
+    console.error("[actions] notifyAdminsVerificationSubmitted failed:", error)
+  }
 }

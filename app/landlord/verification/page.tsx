@@ -18,6 +18,7 @@ import {
   ChevronLeft
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { notifyAdminsVerificationSubmitted } from "@/app/actions"
 import { formatNaira } from "@/lib/utils"
 
 const verificationSchema = z.object({
@@ -161,6 +162,9 @@ export default function VerificationPage() {
         .eq('id', userId)
 
       if (updateError) throw updateError
+
+      // Notify admins that verification docs were submitted (best-effort).
+      void notifyAdminsVerificationSubmitted()
 
       router.refresh()
       setStep(4) // Success step
