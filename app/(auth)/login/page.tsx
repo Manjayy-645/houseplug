@@ -83,10 +83,13 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setAuthError(null)
+    // Use the signup flow so a brand-new Google user is created directly
+    // (default student role) instead of being rejected. Existing users still
+    // just log in and redirect by their stored role.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?source=login`
+        redirectTo: `${window.location.origin}/auth/callback?source=signup`
       }
     })
     if (error) {
