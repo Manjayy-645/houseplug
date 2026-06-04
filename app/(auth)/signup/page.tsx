@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
-import { Mail, ArrowLeft, GraduationCap, Home } from "lucide-react"
+import { Mail, ArrowLeft, GraduationCap, Home, AlertTriangle } from "lucide-react"
 import { GoogleIcon } from "@/components/auth/google-icon"
 
 const signupSchema = z.object({
@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [authEmail, setEmail] = useState("")
   const [authError, setAuthError] = useState<string | null>(null)
+  const [urlError, setUrlError] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resendStatus, setResendStatus] = useState<string | null>(null)
 
@@ -45,6 +46,14 @@ export default function SignupPage() {
     }
   })
 
+  // Surface an error passed back from the auth callback (e.g. a Google login
+  // attempt with no existing account). Read from the URL without
+  // useSearchParams to avoid a Suspense-boundary requirement at build.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setUrlError(params.get("error"))
+  }, [])
+
   // Resend cooldown timer
   useEffect(() => {
     if (resendCooldown > 0) {
@@ -60,7 +69,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?role=${selectedRole}`,
+        redirectTo: `${window.location.origin}/auth/callback?source=signup&role=${selectedRole}`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
@@ -181,6 +190,15 @@ export default function SignupPage() {
   return (
     <div>
       <h2 className="mb-5 text-xl font-semibold text-gray-900">Create your account</h2>
+
+      {urlError === 'no_account' && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 flex items-start gap-2 mb-4">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>
+            No account found for that Google account. Create one below to get started.
+          </span>
+        </div>
+      )}
 
       {/* Role selection — required before Google or email signup */}
       <p className="mb-2 block text-sm font-medium text-gray-700">I am a:</p>

@@ -8,12 +8,13 @@ export async function GET(request: Request) {
   const code = searchParams.get("code")
   const token_hash = searchParams.get("token_hash")
   const type = searchParams.get("type")
-  const roleParam = searchParams.get("role") // set by Google OAuth signup
+  const source = searchParams.get("source") // 'login' | 'signup' (Google OAuth)
+  const roleParam = searchParams.get("role")
 
   const supabase = createClient()
 
-  // The PKCE email link carries ?code= (default for @supabase/ssr). Older
-  // token-hash templates carry ?token_hash=&type=. Support both.
+  // Establish a session. PKCE links (and OAuth) carry ?code=; legacy email
+  // templates carry ?token_hash=&type=. Support both.
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
@@ -37,59 +38,77 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=session_failed`)
   }
 
-  // Service role to read/write profile + trial tables (RLS-locked).
-  const serviceClient = createServiceClient(
+  // Service role for profile + trial tables (RLS-locked).
+  const service = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  // Only student/landlord may be self-selected at signup — never admin roles.
-  const requestedRole =
-    roleParam === "landlord" ? "landlord" : roleParam === "student" ? "student" : null
-
-  const { data: profile } = await serviceClient
+  const { data: profile } = await service
     .from("profiles")
     .select("id, role")
     .eq("id", user.id)
     .maybeSingle()
 
+  // SCENARIO 1: Google login with no account → reject and send to signup.
+  // (OAuth profiles are only created by this callback — see migration 029 —
+  // so an absent profile here genuinely means "never signed up".)
+  if (source === "login" && !profile) {
+    await supabase.auth.signOut()
+    return NextResponse.redirect(`${origin}/signup?error=no_account`)
+  }
+
+  // SCENARIOS 2 & 3: profile exists (login or signup) → normal login.
   if (profile) {
-    // The handle_new_user trigger pre-creates OAuth profiles as 'student'
-    // (Google sends no role in metadata). When the user explicitly signed up as
-    // a landlord, promote them and grant the trial — email-keyed since Google
-    // provides no phone.
-    if (requestedRole === "landlord" && profile.role === "student") {
-      await serviceClient.from("profiles").update({ role: "landlord" }).eq("id", user.id)
-      await grantTrialToNewUser(serviceClient, user.id, undefined, user.email ?? undefined)
-      return redirectByRole("landlord", origin)
-    }
     return redirectByRole(profile.role, origin)
   }
 
-  // No profile (trigger didn't run) — create it as a fallback.
-  const meta = user.user_metadata ?? {}
-  const role = requestedRole || meta.role || "student"
-  const fullName = meta.full_name || meta.name || "User"
+  // SCENARIO 4: Google signup, new user → create profile (+ trial for landlords).
+  if (source === "signup") {
+    // Only student/landlord may be self-selected; never an admin role.
+    const userRole = roleParam === "landlord" ? "landlord" : "student"
+    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "User"
 
-  const { error: insertError } = await serviceClient.from("profiles").insert({
+    const { error: insertError } = await service.from("profiles").insert({
+      id: user.id,
+      email: user.email,
+      full_name: fullName,
+      phone: "",
+      role: userRole,
+      created_at: new Date().toISOString(),
+    })
+    if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+
+    if (userRole === "landlord") {
+      // Google provides no phone — dedupe the trial by email.
+      await grantTrialToNewUser(service, user.id, undefined, user.email ?? undefined)
+    }
+
+    return redirectByRole(userRole, origin)
+  }
+
+  // FALLBACK: email-verification flow (no source param) where the trigger
+  // didn't create the profile. Provision from sign-up metadata.
+  const meta = user.user_metadata ?? {}
+  const userRole = meta.role || "student"
+  const fullName = meta.full_name || "User"
+
+  const { error: insertError } = await service.from("profiles").insert({
     id: user.id,
     email: user.email,
     full_name: fullName,
     phone: meta.phone || "",
-    role,
+    role: userRole,
     created_at: new Date().toISOString(),
   })
-  if (insertError) {
-    console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+  if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+
+  if (userRole === "landlord") {
+    await grantTrialToNewUser(service, user.id, meta.phone || undefined, user.email ?? undefined)
   }
 
-  if (role === "landlord") {
-    // Prefer phone (email/password fallback path), else email (Google OAuth).
-    await grantTrialToNewUser(serviceClient, user.id, meta.phone || undefined, user.email ?? undefined)
-  }
-
-  return redirectByRole(role, origin)
+  return redirectByRole(userRole, origin)
 }
 
 function redirectByRole(role: string, origin: string) {
