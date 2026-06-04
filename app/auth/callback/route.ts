@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
-import type { SupabaseClient } from "@supabase/supabase-js"
+import { grantTrialToNewUser } from "@/lib/billing"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -37,14 +37,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=session_failed`)
   }
 
-  // Ensure a profile exists, using the service role to bypass RLS. The
-  // handle_new_user trigger normally creates it at sign-up; this is the
-  // fallback if the trigger ever failed silently.
+  // Service role to read/write profile + trial tables (RLS-locked).
   const serviceClient = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
+
+  // Only student/landlord may be self-selected at signup — never admin roles.
+  const requestedRole =
+    roleParam === "landlord" ? "landlord" : roleParam === "student" ? "student" : null
 
   const { data: profile } = await serviceClient
     .from("profiles")
@@ -53,13 +55,21 @@ export async function GET(request: Request) {
     .maybeSingle()
 
   if (profile) {
+    // The handle_new_user trigger pre-creates OAuth profiles as 'student'
+    // (Google sends no role in metadata). When the user explicitly signed up as
+    // a landlord, promote them and grant the trial — email-keyed since Google
+    // provides no phone.
+    if (requestedRole === "landlord" && profile.role === "student") {
+      await serviceClient.from("profiles").update({ role: "landlord" }).eq("id", user.id)
+      await grantTrialToNewUser(serviceClient, user.id, undefined, user.email ?? undefined)
+      return redirectByRole("landlord", origin)
+    }
     return redirectByRole(profile.role, origin)
   }
 
+  // No profile (trigger didn't run) — create it as a fallback.
   const meta = user.user_metadata ?? {}
-  // Role precedence: explicit OAuth signup param > sign-up metadata > student.
-  const role = roleParam || meta.role || "student"
-  // Google provides the name as `name` or `full_name`.
+  const role = requestedRole || meta.role || "student"
   const fullName = meta.full_name || meta.name || "User"
 
   const { error: insertError } = await serviceClient.from("profiles").insert({
@@ -74,46 +84,12 @@ export async function GET(request: Request) {
     console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
   }
 
-  await grantLandlordTrialIfEligible(serviceClient, user.id, role, meta.phone)
+  if (role === "landlord") {
+    // Prefer phone (email/password fallback path), else email (Google OAuth).
+    await grantTrialToNewUser(serviceClient, user.id, meta.phone || undefined, user.email ?? undefined)
+  }
 
   return redirectByRole(role, origin)
-}
-
-// Mirror of the DB trial grant for the fallback path: if the trigger created
-// the profile we never reach here, but when the callback creates it we still
-// want landlords to get their 30-day Pro trial (once per phone number).
-async function grantLandlordTrialIfEligible(
-  serviceClient: SupabaseClient,
-  userId: string,
-  role: string,
-  phone: unknown
-) {
-  if (role !== "landlord") return
-  const normalized = String(phone ?? "").replace(/[^0-9]/g, "")
-  if (!normalized) return
-
-  try {
-    const { data: used } = await serviceClient
-      .from("trial_phone_registry")
-      .select("phone")
-      .eq("phone", normalized)
-      .maybeSingle()
-    if (used) return
-
-    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    await serviceClient.from("subscriptions").insert({
-      landlord_id: userId,
-      plan: "pro",
-      is_trial: true,
-      active: true,
-      billing_cycle: "trial",
-      amount_paid: 0,
-      expires_at: expires,
-    })
-    await serviceClient.from("trial_phone_registry").insert({ phone: normalized })
-  } catch (error) {
-    console.error("[AUTH CALLBACK] Trial grant failed:", error)
-  }
 }
 
 function redirectByRole(role: string, origin: string) {

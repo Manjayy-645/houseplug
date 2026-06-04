@@ -233,3 +233,78 @@ export async function isSubscriptionExpiringSoon(expires_at: string | null): Pro
 export async function formatExpiryDate(expires_at: string | null): Promise<string> {
   return formatExpiryDateUtil(expires_at)
 }
+
+/**
+ * Grant a 30-day Pro trial to a new landlord. Centralised so every signup path
+ * (email + Google OAuth) shares one set of rules. Caller is responsible for the
+ * landlord-role gate; students must never be passed here.
+ *
+ * Abuse prevention: one trial per phone (email/password signups) or per email
+ * (Google OAuth, which has no phone). Existing subscribers are skipped so a
+ * trial is never duplicated. Never throws — failures are logged.
+ *
+ * `supabase` must be a service-role client (these registry/subscription tables
+ * are RLS-locked).
+ */
+export async function grantTrialToNewUser(
+  supabase: any,
+  userId: string,
+  phone?: string,
+  email?: string
+): Promise<void> {
+  try {
+    // Never duplicate an existing subscription.
+    const { data: existing } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('landlord_id', userId)
+      .maybeSingle()
+    if (existing) return
+
+    // Registry check — phone first (email/password signups), then email (OAuth).
+    const normalizedPhone = (phone ?? '').replace(/[^0-9]/g, '')
+    if (normalizedPhone) {
+      const { data: used } = await supabase
+        .from('trial_phone_registry')
+        .select('phone')
+        .eq('phone', normalizedPhone)
+        .maybeSingle()
+      if (used) return
+
+      await supabase
+        .from('trial_phone_registry')
+        .upsert({ phone: normalizedPhone }, { onConflict: 'phone', ignoreDuplicates: true })
+    } else if (email) {
+      const { data: used } = await supabase
+        .from('trial_email_registry')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle()
+      if (used) return
+
+      await supabase
+        .from('trial_email_registry')
+        .upsert({ email }, { onConflict: 'email', ignoreDuplicates: true })
+    } else {
+      return // no identifier to dedupe on
+    }
+
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    await supabase
+      .from('subscriptions')
+      .upsert(
+        {
+          landlord_id: userId,
+          plan: 'pro',
+          is_trial: true,
+          active: true,
+          billing_cycle: 'trial',
+          amount_paid: 0,
+          expires_at: expiresAt,
+        },
+        { onConflict: 'landlord_id', ignoreDuplicates: true }
+      )
+  } catch (error) {
+    console.error('[billing] grantTrialToNewUser failed:', error)
+  }
+}
