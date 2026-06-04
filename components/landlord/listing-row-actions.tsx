@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react"
+import { MoreHorizontal, Pencil, Trash2, Loader2, Eye } from "lucide-react"
 import { RefreshCw } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -80,6 +80,13 @@ export function ListingRowActions({ listingId, status }: ListingRowActionsProps)
 
   return (
     <div className="flex items-center justify-end gap-2">
+      <Link
+        href={`/listing/${listingId}`}
+        className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        aria-label="View listing"
+      >
+        <Eye className="h-4 w-4" />
+      </Link>
       <Link
         href={`/landlord/listings/${listingId}/edit`}
         className="rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"

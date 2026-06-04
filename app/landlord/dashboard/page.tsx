@@ -249,11 +249,11 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
               className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 md:flex-row md:items-center md:justify-between"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <div className="h-14 w-16 shrink-0 overflow-hidden rounded bg-gray-200">
+                <Link href={`/listing/${listing.id}`} className="h-14 w-16 shrink-0 overflow-hidden rounded bg-gray-200">
                   {listing.photos?.[0] ? (
                     <img src={listing.photos[0]} alt={listing.title} className="h-full w-full object-cover" />
                   ) : null}
-                </div>
+                </Link>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
                     <span
@@ -267,7 +267,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                     >
                       {listing.status}
                     </span>
-                    <p className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px]">{listing.title}</p>
+                    <Link href={`/listing/${listing.id}`} className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px] hover:text-[#1B4332] hover:underline">{listing.title}</Link>
                     {listing.is_featured ? (
                       <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
                         <Star className="h-3 w-3 fill-current" /> Featured
