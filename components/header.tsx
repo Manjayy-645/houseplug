@@ -180,10 +180,10 @@ export function Header() {
               <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse" />
             ) : !user ? (
               <a
-                href="/login"
+                href="/signup"
                 className="bg-[#F59E0B] text-white px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity"
               >
-                Login
+                Sign Up
               </a>
             ) : (
               <div className="relative">
