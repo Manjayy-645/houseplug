@@ -1,4 +1,4 @@
-export type UserRole = "student" | "landlord" | "admin" | "super_admin"
+export type UserRole = "student" | "landlord" | "agent" | "admin" | "super_admin"
 
 export type Profile = {
   id: string
@@ -87,6 +87,9 @@ export type Listing = {
   views_count: number
   whatsapp_clicks?: number
   university: string // university id e.g. 'uniport', 'rsu'
+  agent_fee_type?: "none" | "fixed" | "negotiable"
+  agent_fee_amount?: number | null
+  video_url?: string | null
   created_at: string
   landlord?: Profile
   reviews?: Review[]

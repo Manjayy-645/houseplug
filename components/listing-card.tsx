@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap } from "lucide-react"
+import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap, Users } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
 import { UNIVERSITIES } from "@/lib/constants"
 import type { Listing } from "@/types"
@@ -53,6 +53,11 @@ export function ListingCard({ listing }: ListingCardProps) {
           {listing.is_urgent && (
             <span className="inline-flex items-center gap-1 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
               <Flame className="h-3 w-3" /> Urgent
+            </span>
+          )}
+          {listing.landlord?.role === "agent" && (
+            <span className="inline-flex items-center gap-1 bg-blue-500 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded">
+              <Users className="w-2.5 h-2.5" /> Agent
             </span>
           )}
         </div>

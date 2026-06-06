@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { username: string 
 
   return {
     title: `${profile.full_name} — Student Rooms on HousePlug`,
-    description: `${activeCount || 0} verified student rooms available in Port Harcourt. No agent fees. View listings on HousePlug.`,
+    description: `${activeCount || 0} verified student rooms available in Port Harcourt. View listings on HousePlug.`,
     openGraph: {
       title: `${profile.full_name} has rooms on HousePlug`,
       description: `${activeCount || 0} listings available · ${profile.verification_status === 'verified' ? 'Verified landlord' : 'Landlord'} · houseplug.ng`,

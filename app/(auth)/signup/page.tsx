@@ -6,8 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
-import { Mail, ArrowLeft, GraduationCap, Home, AlertTriangle } from "lucide-react"
+import { Mail, ArrowLeft, GraduationCap, Home, AlertTriangle, Users, ChevronLeft } from "lucide-react"
 import { GoogleIcon } from "@/components/auth/google-icon"
+
+const activeRoleClass =
+  "flex flex-col items-center gap-2 rounded-xl border-2 border-[#1B4332] bg-[#1B4332]/5 p-4 text-[#1B4332] transition-all"
+const inactiveRoleClass =
+  "flex flex-col items-center gap-2 rounded-xl border-2 border-gray-200 p-4 text-gray-500 hover:border-gray-300 transition-all"
 
 const signupSchema = z.object({
   full_name: z.string().min(2, "Full name must be at least 2 characters"),
@@ -19,10 +24,12 @@ const signupSchema = z.object({
 })
 
 type SignupValues = z.infer<typeof signupSchema>
-type Role = "student" | "landlord"
+type Role = "student" | "landlord" | "agent"
 
 export default function SignupPage() {
   const [formState, setFormState] = useState<'form' | 'verify'>('form')
+  const [step, setStep] = useState<1 | 2>(1)
+  const [primaryChoice, setPrimaryChoice] = useState<'student' | 'property_owner' | null>(null)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [authEmail, setEmail] = useState("")
   const [authError, setAuthError] = useState<string | null>(null)
@@ -200,34 +207,72 @@ export default function SignupPage() {
         </div>
       )}
 
-      {/* Role selection — required before Google or email signup */}
-      <p className="mb-2 block text-sm font-medium text-gray-700">I am a:</p>
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <button
-          type="button"
-          onClick={() => setSelectedRole('student')}
-          className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
-            selectedRole === 'student'
-              ? 'border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]'
-              : 'border-gray-200 text-gray-500 hover:border-gray-300'
-          }`}
-        >
-          <GraduationCap className="w-4 h-4" />
-          I&apos;m a Student
-        </button>
-        <button
-          type="button"
-          onClick={() => setSelectedRole('landlord')}
-          className={`flex items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
-            selectedRole === 'landlord'
-              ? 'border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]'
-              : 'border-gray-200 text-gray-500 hover:border-gray-300'
-          }`}
-        >
-          <Home className="w-4 h-4" />
-          I&apos;m a Landlord
-        </button>
-      </div>
+      {/* Role selection — 2 steps. Step 1: student vs property owner.
+          Step 2 (owners only): landlord vs agent. */}
+      {step === 1 ? (
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setPrimaryChoice('student')
+              setSelectedRole('student')
+            }}
+            className={selectedRole === 'student' ? activeRoleClass : inactiveRoleClass}
+          >
+            <GraduationCap className="w-5 h-5" />
+            <span className="font-semibold">I&apos;m a Student</span>
+            <span className="text-xs text-gray-500">Looking for housing</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPrimaryChoice('property_owner')
+              setSelectedRole(null)
+              setStep(2)
+            }}
+            className={primaryChoice === 'property_owner' ? activeRoleClass : inactiveRoleClass}
+          >
+            <Home className="w-5 h-5" />
+            <span className="font-semibold">I&apos;m a Property Owner</span>
+            <span className="text-xs text-gray-500">List a property</span>
+          </button>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setStep(1)
+              setSelectedRole(primaryChoice === 'student' ? 'student' : null)
+            }}
+            className="text-sm text-gray-500 mb-3 flex items-center gap-1 hover:text-gray-700"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <p className="text-sm font-semibold text-gray-700 mb-3">Are you a...</p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedRole('landlord')}
+              className={selectedRole === 'landlord' ? activeRoleClass : inactiveRoleClass}
+            >
+              <Home className="w-5 h-5" />
+              <span className="font-semibold">Landlord</span>
+              <span className="text-xs text-gray-500">I own the property</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedRole('agent')}
+              className={selectedRole === 'agent' ? activeRoleClass : inactiveRoleClass}
+            >
+              <Users className="w-5 h-5" />
+              <span className="font-semibold">Agent</span>
+              <span className="text-xs text-gray-500">I manage properties</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <button
         type="button"

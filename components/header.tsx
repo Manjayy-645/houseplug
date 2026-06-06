@@ -15,6 +15,7 @@ type ProfileSnippet = Pick<Profile, "full_name" | "role" | "avatar_url" | "usern
 const roleBadgeConfig: Record<UserRole, { label: string; className: string }> = {
   student:     { label: "Student",    className: "bg-gray-100 text-gray-600"    },
   landlord:    { label: "Landlord",   className: "bg-green-100 text-green-700"  },
+  agent:       { label: "Agent",      className: "bg-blue-100 text-blue-700"    },
   admin:       { label: "Admin",      className: "bg-blue-100 text-blue-700"    },
   super_admin: { label: "Super Admin",className: "bg-purple-100 text-purple-700"},
 }

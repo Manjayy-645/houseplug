@@ -19,6 +19,7 @@ export function redirectByRole(role?: string) {
       target = '/admin/listings'
       break
     case 'landlord':
+    case 'agent':
       target = '/landlord/dashboard'
       break
     default:

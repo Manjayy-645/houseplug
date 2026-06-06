@@ -63,7 +63,7 @@ export default async function NewListingPage() {
   return (
     <div className="p-4 lg:p-8">
       <h1 className="mb-4 text-2xl font-bold text-gray-900">Add New Listing</h1>
-      <ListingForm mode="create" landlordId={user.id} isPro={isAdmin || (subscription.plan !== "free" && !subscription.expired)} />
+      <ListingForm mode="create" landlordId={user.id} isPro={isAdmin || (subscription.plan !== "free" && !subscription.expired)} isAgent={profile?.role === "agent"} />
     </div>
   )
 }

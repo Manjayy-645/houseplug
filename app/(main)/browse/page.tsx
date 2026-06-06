@@ -43,7 +43,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     .from("listings")
     .select(`
       *,
-      landlord:profiles(full_name, verification_status),
+      landlord:profiles(full_name, verification_status, role),
       reviews(rating)
     `, { count: "exact" })
     .eq("status", "active")

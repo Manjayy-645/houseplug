@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { GripVertical, Upload, X } from "lucide-react"
+import { GripVertical, Upload, X, Video, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { UNIVERSITIES } from "@/lib/constants"
 import { AiDescribeButton } from "@/components/listing/ai-describe-button"
 import { notifyAdminsNewListing } from "@/app/actions"
+import { uploadVideo } from "@/lib/cloudinary"
 import type { Listing } from "@/types"
+
+type AgentFeeType = "none" | "fixed" | "negotiable"
 
 const amenityOptions = [
   "water",
@@ -62,6 +65,7 @@ type ListingFormProps = {
   listing?: Listing
   landlordId: string
   isPro: boolean
+  isAgent: boolean
 }
 
 const stepFields: Array<Array<keyof ListingFormValues>> = [
@@ -71,7 +75,7 @@ const stepFields: Array<Array<keyof ListingFormValues>> = [
   []
 ]
 
-export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormProps) {
+export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: ListingFormProps) {
   const router = useRouter()
   const supabase = createClient()
   const draftKey = mode === "create" ? "houseplug-listing-draft-new" : `houseplug-listing-draft-${listing?.id}`
@@ -79,6 +83,12 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
   const [currentStep, setCurrentStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [agentFeeType, setAgentFeeType] = useState<AgentFeeType>(listing?.agent_fee_type ?? "none")
+  const [agentFeeAmount, setAgentFeeAmount] = useState<string>(
+    listing?.agent_fee_amount != null ? String(listing.agent_fee_amount) : ""
+  )
+  const [videoUrl, setVideoUrl] = useState<string | null>(listing?.video_url ?? null)
+  const [videoUploading, setVideoUploading] = useState(false)
   const [photoItems, setPhotoItems] = useState<PhotoItem[]>(
     (listing?.photos ?? []).map((url, index) => ({
       id: `existing-${index}`,
@@ -261,7 +271,11 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
         available_from: values.available_from,
         occupancy: values.occupancy,
         furnishing: values.furnishing,
-        floor: values.floor
+        floor: values.floor,
+        agent_fee_type: isAgent ? agentFeeType : null,
+        agent_fee_amount:
+          isAgent && agentFeeType !== "none" && agentFeeAmount ? Number(agentFeeAmount) : null,
+        video_url: videoUrl
       }
 
       if (mode === "edit" && listing?.id) {
@@ -541,6 +555,42 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
             </div>
           </div>
 
+          {isAgent ? (
+            <div className="space-y-3 rounded-lg border border-gray-200 p-3">
+              <label className="text-sm font-semibold text-gray-700">Agent Fee</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["none", "fixed", "negotiable"] as AgentFeeType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setAgentFeeType(type)}
+                    className={`rounded-lg border-2 py-2 text-sm capitalize ${
+                      agentFeeType === type
+                        ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332] font-semibold"
+                        : "border-gray-200 text-gray-500"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              {(agentFeeType === "fixed" || agentFeeType === "negotiable") && (
+                <div>
+                  <label className="text-xs text-gray-500 mb-1 block">
+                    {agentFeeType === "fixed" ? "Fee amount (₦)" : "Starting amount (₦)"}
+                  </label>
+                  <input
+                    type="number"
+                    value={agentFeeAmount}
+                    onChange={(e) => setAgentFeeAmount(e.target.value)}
+                    placeholder="e.g. 20000"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]"
+                  />
+                </div>
+              )}
+            </div>
+          ) : null}
+
           <div>
             <div className="mb-1 flex items-center justify-between gap-2">
               <label className="block text-sm font-medium">Description</label>
@@ -620,6 +670,62 @@ export function ListingForm({ mode, listing, landlordId, isPro }: ListingFormPro
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-gray-700">Property Video (Optional)</label>
+            <p className="text-xs text-gray-500">Upload a short video tour. Max 100MB. MP4, MOV.</p>
+
+            {!videoUrl && !videoUploading && (
+              <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:border-[#1B4332]">
+                <Video className="w-6 h-6 text-gray-400" />
+                <span className="text-sm font-medium text-gray-600">Click to upload video</span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    if (file.size > 100 * 1024 * 1024) {
+                      setMessage("Video must be under 100MB")
+                      return
+                    }
+                    setMessage(null)
+                    setVideoUploading(true)
+                    try {
+                      const url = await uploadVideo(file)
+                      setVideoUrl(url)
+                    } catch {
+                      setMessage("Video upload failed. Please try again.")
+                    } finally {
+                      setVideoUploading(false)
+                    }
+                  }}
+                />
+              </label>
+            )}
+
+            {videoUploading && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Uploading video...
+              </div>
+            )}
+
+            {videoUrl && (
+              <div className="relative rounded-xl overflow-hidden border">
+                <video src={videoUrl} controls className="w-full max-h-64 object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setVideoUrl(null)}
+                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600"
+                  aria-label="Remove video"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </section>
       ) : null}

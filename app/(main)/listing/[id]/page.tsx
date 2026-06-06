@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Flame } from "lucide-react"
+import { Star, Flame, Users } from "lucide-react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -139,7 +139,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   // Fetch real landlord profile and user profile if needed if not already set by fallback
   const [{ data: dbLandlordRow }, { data: userProfile }, { data: existingReview }] = await Promise.all([
     !landlordRowData && listingRowData
-      ? supabase.from("profiles").select("id, full_name, phone, avatar_url, created_at").eq("id", listingRowData.landlord_id).single()
+      ? supabase.from("profiles").select("id, full_name, phone, avatar_url, role, created_at").eq("id", listingRowData.landlord_id).single()
       : Promise.resolve({ data: null }),
     user 
       ? supabase.from("profiles").select("id, role").eq("id", user.id).single() 
@@ -206,6 +206,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     <Flame className="h-3 w-3" /> Urgent
                   </span>
                 )}
+                {listing.landlord?.role === "agent" && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 border border-blue-100">
+                    <Users className="h-3 w-3" /> Agent Listed
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
                 {listing.title}
@@ -235,6 +240,14 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             </div>
           </div>
         </header>
+
+        {listing.video_url && (
+          <div className="px-0 sm:px-4 lg:px-0">
+            <div className="bg-black rounded-2xl overflow-hidden">
+              <video src={listing.video_url} controls className="w-full max-h-[480px] object-contain" />
+            </div>
+          </div>
+        )}
 
         <div className="px-0 sm:px-4 lg:px-0">
           <PhotoGallery photos={listing.photos} />

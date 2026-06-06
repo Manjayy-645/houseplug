@@ -87,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     request.nextUrl.pathname.startsWith("/landlord") &&
-    !["landlord", "admin", "super_admin"].includes(profile?.role ?? "")
+    !["landlord", "agent", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
     return NextResponse.redirect(new URL("/", request.url))
   }

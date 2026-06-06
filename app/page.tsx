@@ -40,7 +40,7 @@ export default async function LandingPage() {
     .from("listings")
     .select(`
       *,
-      landlord:profiles(full_name, verification_status)
+      landlord:profiles(full_name, verification_status, role)
     `)
     .eq("status", "active")
     .eq("show_on_home", true)
@@ -55,7 +55,7 @@ export default async function LandingPage() {
       .from("listings")
       .select(`
         *,
-        landlord:profiles(full_name, verification_status)
+        landlord:profiles(full_name, verification_status, role)
       `)
       .eq("status", "active")
       .eq("show_on_home", false) // Don't duplicate if already picked
@@ -227,7 +227,7 @@ export default async function LandingPage() {
                   <MessageCircle className="h-8 w-8" />
                 </div>
                 <h3 className="font-title-lg text-primary mb-3">2. Contact</h3>
-                <p className="text-gray-500 font-body-md text-sm">Connect directly with landlords via WhatsApp or phone. No agents, no hidden commissions.</p>
+                <p className="text-gray-500 font-body-md text-sm">Connect directly with landlords and agents via WhatsApp or phone. No hidden platform commissions.</p>
               </div>
               <div className="bg-white p-8 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-primary-fixed rounded-2xl flex items-center justify-center mb-6 text-primary">

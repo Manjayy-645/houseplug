@@ -81,6 +81,9 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
     <div className="space-y-6 p-4 lg:p-8">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">
+            {profile?.role === "agent" ? "Agent" : "Landlord"} Dashboard
+          </p>
           <h1 className="text-2xl font-bold text-gray-900">Welcome, {firstName}</h1>
           <p className="mt-1 text-sm text-gray-600">Manage listings, views, and tenant feedback.</p>
         </div>

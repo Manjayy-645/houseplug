@@ -22,7 +22,7 @@ export default async function LandlordLayout({ children }: LandlordLayoutProps) 
     .eq("id", user.id)
     .single()
 
-  if (!profile || (profile.role !== "landlord" && profile.role !== "admin")) redirect("/")
+  if (!profile || !["landlord", "agent", "admin"].includes(profile.role)) redirect("/")
 
   const [{ data: subscription }, { count }] = await Promise.all([
     supabase

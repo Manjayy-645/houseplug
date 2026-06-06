@@ -64,10 +64,11 @@ export async function GET(request: Request) {
     return redirectByRole(profile.role, origin)
   }
 
-  // SCENARIO 4: Google signup, new user → create profile (+ trial for landlords).
+  // SCENARIO 4: Google signup, new user → create profile (+ trial for landlords/agents).
   if (source === "signup") {
-    // Only student/landlord may be self-selected; never an admin role.
-    const userRole = roleParam === "landlord" ? "landlord" : "student"
+    // Only student/landlord/agent may be self-selected; never an admin role.
+    const userRole =
+      roleParam === "landlord" || roleParam === "agent" ? roleParam : "student"
     const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "User"
 
     const { error: insertError } = await service.from("profiles").insert({
@@ -80,7 +81,7 @@ export async function GET(request: Request) {
     })
     if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
 
-    if (userRole === "landlord") {
+    if (userRole === "landlord" || userRole === "agent") {
       // Google provides no phone — dedupe the trial by email.
       await grantTrialToNewUser(service, user.id, undefined, user.email ?? undefined)
     }
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
   })
   if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
 
-  if (userRole === "landlord") {
+  if (userRole === "landlord" || userRole === "agent") {
     await grantTrialToNewUser(service, user.id, meta.phone || undefined, user.email ?? undefined)
   }
 
@@ -114,6 +115,7 @@ export async function GET(request: Request) {
 function redirectByRole(role: string, origin: string) {
   switch (role) {
     case "landlord":
+    case "agent":
       return NextResponse.redirect(`${origin}/landlord/dashboard`)
     case "admin":
     case "super_admin":

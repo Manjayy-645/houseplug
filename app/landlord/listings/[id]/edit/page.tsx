@@ -15,7 +15,7 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
 
   if (!user) notFound()
 
-  const [{ data: listingData }, { data: subscription }] = await Promise.all([
+  const [{ data: listingData }, { data: subscription }, { data: profile }] = await Promise.all([
     supabase
       .from("listings")
       .select("*")
@@ -29,7 +29,8 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
       .eq("active", true)
       .order("created_at", { ascending: false })
       .limit(1)
-      .maybeSingle()
+      .maybeSingle(),
+    supabase.from("profiles").select("role").eq("id", user.id).single()
   ])
 
   if (!listingData) notFound()
@@ -43,7 +44,7 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
   return (
     <div className="p-4 lg:p-8">
       <h1 className="mb-4 text-2xl font-bold text-gray-900">Edit Listing</h1>
-      <ListingForm mode="edit" listing={listingData as Listing} landlordId={user.id} isPro={isPro} />
+      <ListingForm mode="edit" listing={listingData as Listing} landlordId={user.id} isPro={!!isPro} isAgent={profile?.role === "agent"} />
     </div>
   )
 }
