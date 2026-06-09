@@ -41,7 +41,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             .from("listings")
             .select(`
               *,
-              landlord:profiles(full_name, verification_status)
+              landlord:profiles!landlord_id(id, full_name, phone, avatar_url, verification_status, role, created_at)
             `)
             .eq("id", listingId)
             .single()
@@ -155,7 +155,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   if (!listingRowData || !canView) notFound()
 
-  landlordRowData = landlordRowData || dbLandlordRow
+  landlordRowData = landlordRowData || dbLandlordRow || (listingRowData as any)?.landlord
   
   reviews = (reviewsRows ?? []).map((review: any) => ({
     ...review,

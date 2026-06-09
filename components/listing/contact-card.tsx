@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { ShieldCheck, Phone, MessageCircle, ShieldAlert, Lock, Info } from "lucide-react"
+import { ShieldCheck, Phone, MessageCircle, ShieldAlert, Lock, Info, Check } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick } from "@/app/actions"
@@ -67,19 +67,33 @@ export default function ContactCard({ listing }: ContactCardProps) {
             </p>
           </div>
 
-          {listing.landlord?.role === "agent" && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Info className="w-4 h-4 text-amber-700" />
-                <p className="text-sm font-semibold text-amber-800">Agent Fee</p>
+          {listing.landlord?.role === "agent" &&
+            listing.agent_fee_type &&
+            listing.agent_fee_type !== "none" && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Info className="w-4 h-4 text-amber-700 shrink-0" />
+                  <p className="text-sm font-semibold text-amber-800">Agent Fee</p>
+                </div>
+                {listing.agent_fee_type === "fixed" && (
+                  <p className="text-sm text-amber-700">
+                    This listing has an agent fee of {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                  </p>
+                )}
+                {listing.agent_fee_type === "negotiable" && (
+                  <p className="text-sm text-amber-700">
+                    Agent fee is negotiable from {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                  </p>
+                )}
               </div>
-              {listing.agent_fee_type === "fixed" ? (
-                <p className="text-sm text-amber-700">Agent fee: {formatNaira(listing.agent_fee_amount ?? 0)}</p>
-              ) : listing.agent_fee_type === "negotiable" ? (
-                <p className="text-sm text-amber-700">Agent fee: Negotiable from {formatNaira(listing.agent_fee_amount ?? 0)}</p>
-              ) : (
-                <p className="text-sm text-amber-700">No agent fee. Listed by agent.</p>
-              )}
+            )}
+
+          {listing.landlord?.role === "agent" && listing.agent_fee_type === "none" && (
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-700 shrink-0" />
+                <p className="text-sm font-semibold text-green-800">No agent fee for this listing</p>
+              </div>
             </div>
           )}
 
