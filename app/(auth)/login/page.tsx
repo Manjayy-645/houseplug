@@ -1,218 +1,191 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { AlertCircle } from "lucide-react"
-import { redirectByRole } from "@/lib/auth"
 import { GoogleIcon } from "@/components/auth/google-icon"
 
-const loginSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(1, "Password is required")
-})
-
-type LoginValues = z.infer<typeof loginSchema>
+type LoginStep = "email" | "password"
 
 export default function LoginPage() {
-  const [authError, setAuthError] = useState<string | null>(null)
-  const [needsVerification, setNeedsVerification] = useState(false)
-  const [resendCooldown, setResendCooldown] = useState(0)
-  const [resendStatus, setResendStatus] = useState<string | null>(null)
-
   const supabase = createClient()
 
-  const {
-    register,
-    handleSubmit,
-    getValues,
-    formState: { errors, isSubmitting }
-  } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: ""
-    }
-  })
+  const [step, setStep] = useState<LoginStep>("email")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [resendCooldown])
-
-  const onSubmit = async (values: LoginValues) => {
-    setAuthError(null)
-    setNeedsVerification(false)
-
-    const { data: authData, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password
+  async function handleGoogleLogin() {
+    setError("")
+    // New Google users are created directly via the signup flow; existing users
+    // simply log in and redirect by role.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?source=signup` },
     })
+    if (error) setError("Failed to sign in with Google. Try again.")
+  }
+
+  function handleEmailContinue() {
+    if (!email || !email.includes("@")) {
+      setError("Enter a valid email address")
+      return
+    }
+    setError("")
+    setStep("password")
+  }
+
+  async function handleLogin() {
+    setLoading(true)
+    setError("")
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       if (error.message.includes("Email not confirmed")) {
-        setNeedsVerification(true)
-        setAuthError("Please check your email and click the verification link before logging in.")
-        return
+        setError("Please verify your email first. Check your inbox.")
+      } else if (error.message.includes("Invalid login")) {
+        setError("Wrong password. Try again or reset it.")
+      } else {
+        setError(error.message)
       }
-      setAuthError("Invalid email or password")
+      setLoading(false)
       return
     }
 
-    if (authData.user) {
-      await handlePostLoginRedirect(authData.user)
-    }
-  }
-
-  const handlePostLoginRedirect = async (user: any) => {
-    // Prefer the DB role; fall back to auth metadata if the profile is missing.
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
-      .maybeSingle()
+      .eq("id", data.user.id)
+      .single()
 
-    const role = profile?.role || user.user_metadata?.role || "student"
-    redirectByRole(role)
-  }
+    const role = profile?.role || "student"
 
-  async function handleGoogleLogin() {
-    setAuthError(null)
-    // Use the signup flow so a brand-new Google user is created directly
-    // (default student role) instead of being rejected. Existing users still
-    // just log in and redirect by their stored role.
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?source=signup`
-      }
-    })
-    if (error) {
-      console.error('Google sign-in error:', error)
-      setAuthError('Failed to sign in with Google. Try again.')
-    }
-  }
-
-  const handleResend = async () => {
-    if (resendCooldown > 0) return
-    const email = getValues("email")
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
-    })
-    if (error) {
-      setAuthError(error.message)
+    if (role === "landlord" || role === "agent") {
+      window.location.href = "/landlord/dashboard"
+    } else if (role === "admin" || role === "super_admin") {
+      window.location.href = "/admin/listings"
     } else {
-      setResendStatus("Verification email sent!")
-      setResendCooldown(60)
-      setTimeout(() => setResendStatus(null), 3000)
+      window.location.href = "/browse"
     }
   }
 
-  return (
-    <div>
-      <h2 className="mb-5 text-xl font-semibold text-gray-900">Welcome back</h2>
-
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
-
-      <div className="flex items-center gap-3 my-6">
-        <div className="flex-1 h-px bg-gray-200" />
-        <span className="text-xs text-gray-400 font-medium">or log in with email</span>
-        <div className="flex-1 h-px bg-gray-200" />
-      </div>
-
-      {needsVerification && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col gap-3">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 shrink-0" />
-            <p className="text-sm font-medium text-amber-800 leading-relaxed">
-              {authError}
-            </p>
-          </div>
-          <div>
-            {resendStatus ? (
-              <span className="text-xs font-bold text-emerald-600">{resendStatus}</span>
-            ) : (
-              <button
-                onClick={handleResend}
-                disabled={resendCooldown > 0}
-                className="text-xs font-bold text-[#F59E0B] hover:underline disabled:opacity-50"
-              >
-                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend verification email"}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            {...register("email")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1B4332] focus:ring-2 focus:ring-[#1B4332]/20"
-          />
-          {errors.email ? <p className="mt-1 text-xs text-red-600">{errors.email.message}</p> : null}
-        </div>
-
-        <div>
-          <div className="mb-1 flex items-center justify-between">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <Link href="/forgot-password" title="Reset your password" className="text-xs font-medium text-[#1B4332] hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register("password")}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1B4332] focus:ring-2 focus:ring-[#1B4332]/20"
-          />
-          {errors.password ? (
-            <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
-          ) : null}
-        </div>
-
-        {authError && !needsVerification ? (
-          <p className="text-sm text-red-600 font-medium">{authError}</p>
-        ) : null}
+  // STEP 1 — EMAIL
+  if (step === "email") {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
+        <p className="text-sm text-gray-500 mt-1">Log in to your account</p>
 
         <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-lg bg-[#1B4332] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all mt-6"
         >
-          {isSubmitting ? "Logging in..." : "Login"}
+          <GoogleIcon />
+          Continue with Google
         </button>
 
-        <p className="text-center text-sm text-gray-600">
-          New here?{" "}
-          <Link href="/signup" className="font-medium text-[#1B4332] hover:underline">
-            Create an account
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400 font-medium">or</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleEmailContinue()}
+          placeholder="Enter your email"
+          autoFocus
+          className="w-full rounded-xl border border-gray-200 px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]"
+        />
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+
+        <button
+          onClick={handleEmailContinue}
+          className="w-full bg-[#1B4332] text-white rounded-xl py-3.5 font-semibold text-sm mt-3 hover:bg-[#143728] transition-all"
+        >
+          Continue
+        </button>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="text-[#1B4332] font-semibold">
+            Sign up
           </Link>
         </p>
-      </form>
+      </div>
+    )
+  }
+
+  // STEP 2 — PASSWORD
+  return (
+    <div>
+      <button
+        onClick={() => {
+          setStep("email")
+          setError("")
+        }}
+        className="flex items-center gap-1 text-sm text-gray-500 mb-6"
+      >
+        <ChevronLeft className="w-4 h-4" /> Back
+      </button>
+
+      <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-3 mb-6">
+        <Mail className="w-4 h-4 text-gray-400" />
+        <span className="text-sm text-gray-600 truncate">{email}</span>
+        <button onClick={() => setStep("email")} className="ml-auto text-xs text-[#1B4332] font-medium shrink-0">
+          Change
+        </button>
+      </div>
+
+      <h1 className="text-2xl font-bold text-gray-900">Enter your password</h1>
+
+      <div className="relative mt-6">
+        <input
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+          placeholder="Your password"
+          autoFocus
+          className="w-full rounded-xl border border-gray-200 px-4 py-3.5 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+        >
+          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
+
+      <div className="mt-2 text-right">
+        <Link href="/forgot-password" className="text-xs text-[#1B4332] font-medium">
+          Forgot password?
+        </Link>
+      </div>
+
+      {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+
+      <button
+        onClick={handleLogin}
+        disabled={loading}
+        className="w-full bg-[#1B4332] text-white rounded-xl py-3.5 font-semibold text-sm mt-4 disabled:opacity-50"
+      >
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Logging in...
+          </span>
+        ) : (
+          "Log In"
+        )}
+      </button>
     </div>
   )
 }
