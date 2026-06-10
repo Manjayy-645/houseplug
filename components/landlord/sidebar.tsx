@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Search,
+  ExternalLink
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import type { Plan, Profile } from "@/types"
@@ -94,6 +96,19 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
               </Link>
             )
           })}
+
+          {/* Divider */}
+          <div className="my-2 border-t border-white/15" />
+
+          {/* Browse Listings — leaves the dashboard */}
+          <Link
+            href="/browse"
+            className="group flex items-center gap-3 rounded-md border-l-4 border-l-transparent px-3 py-2.5 text-sm text-white/85 transition hover:bg-white/10 hover:text-white"
+          >
+            <Search className="h-4 w-4" />
+            <span>Browse Listings</span>
+            <ExternalLink className="ml-auto h-3 w-3 text-white/40 group-hover:text-white" />
+          </Link>
         </nav>
 
         <div className="space-y-3 border-t border-white/15 p-3">
@@ -172,7 +187,23 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
                  </Link>
                )
              })}
-             
+
+             {/* Divider */}
+             <div className="my-2 border-t border-gray-100" />
+
+             {/* Browse Listings — leaves the dashboard */}
+             <Link
+               href="/browse"
+               onClick={() => setIsMenuOpen(false)}
+               className="group flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-white text-gray-700 shadow-sm transition active:scale-95"
+             >
+               <div className="flex items-center gap-3 font-bold">
+                 <Search className="h-5 w-5 text-gray-400 group-hover:text-[#1B4332]" />
+                 <span>Browse Listings</span>
+               </div>
+               <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-[#1B4332]" />
+             </Link>
+
              <button
                onClick={onLogout}
                className="flex items-center justify-center gap-2 w-full p-4 rounded-xl border-2 border-red-50 text-red-600 font-black mt-4 active:bg-red-50 transition"
