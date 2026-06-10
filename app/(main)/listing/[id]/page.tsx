@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Flame, Users } from "lucide-react"
+import { Star, Flame, Users, Info, Check } from "lucide-react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -206,7 +206,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                     <Flame className="h-3 w-3" /> Urgent
                   </span>
                 )}
-                {listing.landlord?.role === "agent" && (
+                {(listing.landlord?.role === "agent" ||
+                  (listing.agent_fee_type && listing.agent_fee_type !== "none")) && (
                   <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 border border-blue-100">
                     <Users className="h-3 w-3" /> Agent Listed
                   </span>
@@ -256,6 +257,35 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-[1fr,360px] lg:px-8">
           <div className="space-y-6">
             <ListingDetailsGrid listing={listing} />
+
+            {/* Agent fee — driven by the fee fields on the listing (only agents
+                ever set fixed/negotiable), so it shows regardless of viewport. */}
+            {(listing.agent_fee_type === "fixed" || listing.agent_fee_type === "negotiable") && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <Info className="w-4 h-4 text-amber-700 shrink-0" />
+                  <p className="text-sm font-semibold text-amber-800">Agent Fee</p>
+                </div>
+                {listing.agent_fee_type === "fixed" ? (
+                  <p className="text-sm text-amber-700">
+                    This listing has an agent fee of {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                  </p>
+                ) : (
+                  <p className="text-sm text-amber-700">
+                    Agent fee is negotiable from {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {listing.landlord?.role === "agent" && listing.agent_fee_type === "none" && (
+              <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-700 shrink-0" />
+                  <p className="text-sm font-semibold text-green-800">No agent fee for this listing</p>
+                </div>
+              </div>
+            )}
 
             {listing.description && (
               <div className="rounded-2xl border bg-white p-6">
