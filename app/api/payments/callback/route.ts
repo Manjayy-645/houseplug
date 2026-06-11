@@ -25,6 +25,9 @@ export async function GET(request: Request) {
       console.log('[CALLBACK] processSuccessfulPayment completed')
 
       const type = transaction.metadata?.type
+      if (type === 'verification') {
+        return NextResponse.redirect(`${base}/landlord/verification?payment=success`)
+      }
       if (type === 'boost') {
         return NextResponse.redirect(`${base}/landlord/subscription?boost=success`)
       }
@@ -32,6 +35,10 @@ export async function GET(request: Request) {
     }
 
     console.error('[CALLBACK] Payment not successful:', transaction.status)
+    const failType = transaction.metadata?.type
+    if (failType === 'verification') {
+      return NextResponse.redirect(`${base}/landlord/verification?error=payment_failed`)
+    }
     return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {
     console.error('[CALLBACK] Error:', error)

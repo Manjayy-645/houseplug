@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { sendAdminNotification } from './email'
 
 export async function processSuccessfulPayment(transaction: any) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -162,16 +163,35 @@ export async function processSuccessfulPayment(transaction: any) {
   }
 
   if (type === 'verification') {
+    // Mark paid (so a rejected user can resubmit for free) and submit the docs
+    // that were uploaded before payment and carried through the metadata.
     const { error: verifyError } = await supabase
-      .from('listings')
-      .update({ status: 'pending' })
-      .eq('landlord_id', landlord_id)
-      .eq('status', 'inactive')
-      .limit(1)
+      .from('profiles')
+      .update({
+        verification_paid: true,
+        verification_payment_ref: reference,
+        verification_status: 'pending',
+        id_document_url: metadata.id_document_url ?? null,
+        id_document_back_url: metadata.id_document_back_url ?? null,
+        selfie_url: metadata.selfie_url ?? null,
+        property_document_url: metadata.property_document_url ?? null,
+        id_document_type: metadata.id_document_type ?? null,
+        nin_number: metadata.nin_number ?? null,
+        verification_type: metadata.verification_type ?? 'identity',
+        verification_note: null,
+      })
+      .eq('id', landlord_id)
 
     if (verifyError) {
       console.error('[BILLING] Verification update error:', verifyError)
     }
+
+    await sendAdminNotification(
+      'New Verification Submission',
+      'A landlord/agent has paid and submitted documents for verification. Review their ID and property docs.',
+      `${process.env.NEXT_PUBLIC_APP_URL || 'https://houseplug.ng'}/admin/verification`,
+      'Review Verification'
+    )
   }
 }
 

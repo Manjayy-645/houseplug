@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { type, plan, billing_cycle, listing_id, boost_type } = await request.json()
+  const { type, plan, billing_cycle, listing_id, boost_type, verification } = await request.json()
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single()
 
-  if (!profile || !["landlord", "admin", "super_admin"].includes(profile.role)) {
+  if (!profile || !["landlord", "agent", "admin", "super_admin"].includes(profile.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -43,13 +43,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payment type or plan" }, { status: 400 })
   }
 
-  const metadata = {
+  const metadata: Record<string, any> = {
     landlord_id: user.id,
     type,
     plan,
     billing_cycle,
     listing_id,
     boost_type
+  }
+
+  // Carry the (already-uploaded) document URLs through Paystack so the payment
+  // processor can submit the verification server-side after a successful charge.
+  if (type === "verification" && verification) {
+    Object.assign(metadata, {
+      id_document_url: verification.id_document_url ?? null,
+      id_document_back_url: verification.id_document_back_url ?? null,
+      selfie_url: verification.selfie_url ?? null,
+      property_document_url: verification.property_document_url ?? null,
+      id_document_type: verification.id_document_type ?? null,
+      nin_number: verification.nin_number ?? null,
+      verification_type: verification.verification_type ?? "identity"
+    })
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL

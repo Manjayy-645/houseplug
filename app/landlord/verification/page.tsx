@@ -5,17 +5,20 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { 
-  ShieldCheck, 
-  ShieldAlert, 
-  Shield, 
-  Upload, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  ShieldAlert,
+  Shield,
+  Upload,
+  CheckCircle2,
   Loader2,
   Camera,
   FileText,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  X,
+  Lock,
+  Check
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { notifyAdminsVerificationSubmitted } from "@/app/actions"
@@ -45,6 +48,16 @@ export default function VerificationPage() {
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  // Paywall
+  const [showPaywall, setShowPaywall] = useState(false)
+  const [paywallLoading, setPaywallLoading] = useState(false)
+  const [verificationFee, setVerificationFee] = useState(200000) // kobo
+  const [pendingUrls, setPendingUrls] = useState<Record<string, string | null> | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
+
+  const alreadyPaid = profile?.verification_paid ?? false
   
   // Files
   const [idFront, setIdFront] = useState<File | null>(null)
@@ -74,6 +87,13 @@ export default function VerificationPage() {
   const selectedIdType = watch("id_document_type")
 
   useEffect(() => {
+    // Read ?payment=success without useSearchParams (avoids a Suspense boundary).
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("payment") === "success") setPaymentSuccess(true)
+    if (params.get("error") === "payment_failed") {
+      setError("Payment was not completed. Please try again.")
+    }
+
     async function getProfile() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -81,13 +101,13 @@ export default function VerificationPage() {
         return
       }
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single()
-      
+      const [{ data }, { data: feeRow }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("platform_settings").select("value").eq("key", "verification_fee").maybeSingle(),
+      ])
+
       setProfile(data)
+      if (feeRow?.value) setVerificationFee(Number(feeRow.value))
       setLoading(false)
     }
     getProfile()
@@ -117,62 +137,110 @@ export default function VerificationPage() {
     reader.readAsDataURL(file)
   }
 
+  // Upload the documents to storage and return their public URLs + metadata.
+  const uploadDocs = async (values: VerificationValues) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+    const userId = user.id
+
+    const uploadFile = async (file: File, path: string) => {
+      const { data, error } = await supabase.storage
+        .from("verifications")
+        .upload(`${userId}/${path}`, file, { upsert: true })
+      if (error) throw error
+      return supabase.storage.from("verifications").getPublicUrl(data.path).data.publicUrl
+    }
+
+    const [idFrontUrl, idBackUrl, selfieUrl, propertyUrl] = await Promise.all([
+      uploadFile(idFront!, "id_front"),
+      uploadFile(idBack!, "id_back"),
+      uploadFile(selfie!, "selfie"),
+      propertyDoc ? uploadFile(propertyDoc, "property_doc") : Promise.resolve(null),
+    ])
+
+    return {
+      id_document_url: idFrontUrl,
+      id_document_back_url: idBackUrl,
+      selfie_url: selfieUrl,
+      property_document_url: propertyUrl,
+      id_document_type: values.id_document_type,
+      nin_number: values.nin_number ?? null,
+      verification_type: propertyUrl ? "property" : "identity",
+    } as Record<string, string | null>
+  }
+
+  // Free resubmission (already paid once) — write the profile directly.
+  const submitDirect = async (urls: Record<string, string | null>) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        verification_status: "pending",
+        id_document_type: urls.id_document_type,
+        nin_number: urls.nin_number,
+        id_document_url: urls.id_document_url,
+        id_document_back_url: urls.id_document_back_url,
+        selfie_url: urls.selfie_url,
+        property_document_url: urls.property_document_url,
+        verification_type: urls.verification_type,
+        verification_note: null,
+      })
+      .eq("id", user.id)
+
+    if (updateError) throw updateError
+    void notifyAdminsVerificationSubmitted()
+    router.refresh()
+    setStep(4)
+  }
+
   const onSubmit = async (values: VerificationValues) => {
+    setError(null)
     if (!idFront || !idBack || !selfie) {
-      alert("Please upload all required ID documents.")
+      setError("Please upload all required documents")
       return
     }
 
     setSubmitting(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
+      const urls = await uploadDocs(values)
+      setPendingUrls(urls)
 
-      const userId = user.id
-
-      // Upload files
-      const uploadFile = async (file: File, path: string) => {
-        const { data, error } = await supabase.storage
-          .from('verifications')
-          .upload(`${userId}/${path}`, file, { upsert: true })
-        if (error) throw error
-        return supabase.storage.from('verifications').getPublicUrl(data.path).data.publicUrl
+      if (alreadyPaid) {
+        // Rejected user resubmitting — no second charge.
+        await submitDirect(urls)
+      } else {
+        setShowPaywall(true)
       }
-
-      const [idFrontUrl, idBackUrl, selfieUrl, propertyUrl] = await Promise.all([
-        uploadFile(idFront, 'id_front'),
-        uploadFile(idBack, 'id_back'),
-        uploadFile(selfie, 'selfie'),
-        propertyDoc ? uploadFile(propertyDoc, 'property_doc') : Promise.resolve(null)
-      ])
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          verification_status: 'pending',
-          id_document_type: values.id_document_type,
-          nin_number: values.nin_number,
-          id_document_url: idFrontUrl,
-          id_document_back_url: idBackUrl,
-          selfie_url: selfieUrl,
-          property_document_url: propertyUrl,
-          verification_type: propertyUrl ? 'property' : 'identity'
-        })
-        .eq('id', userId)
-
-      if (updateError) throw updateError
-
-      // Notify admins that verification docs were submitted (best-effort).
-      void notifyAdminsVerificationSubmitted()
-
-      router.refresh()
-      setStep(4) // Success step
-    } catch (error: any) {
-      console.error("Verification submission failed:", error)
-      alert("Submission failed: " + error.message)
+    } catch (err: any) {
+      console.error("Verification upload failed:", err)
+      setError("Upload failed: " + (err?.message ?? "please try again"))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handlePayForVerification = async () => {
+    if (!pendingUrls) return
+    setPaywallLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "verification", verification: pendingUrls }),
+      })
+      const data = await res.json()
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url
+      } else {
+        setError(data.error || "Payment initiation failed. Try again.")
+        setPaywallLoading(false)
+      }
+    } catch {
+      setError("Something went wrong. Try again.")
+      setPaywallLoading(false)
     }
   }
 
@@ -188,7 +256,16 @@ export default function VerificationPage() {
 
   if (status === 'pending') {
     return (
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="mx-auto max-w-2xl p-6 space-y-4">
+        {paymentSuccess && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+            <div>
+              <p className="font-semibold text-green-800">Verification submitted!</p>
+              <p className="text-sm text-green-600">We&apos;ll review your documents within 24-48 hours.</p>
+            </div>
+          </div>
+        )}
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-8 text-center">
           <Shield className="mx-auto h-16 w-16 text-blue-500" />
           <h1 className="mt-6 text-2xl font-bold text-gray-900">Verification Under Review</h1>
@@ -242,6 +319,18 @@ export default function VerificationPage() {
             <p className="text-sm font-bold text-red-900">Verification Rejected</p>
             <p className="mt-1 text-sm text-red-700">{profile.verification_note || "Your documents were not clear enough. Please resubmit."}</p>
           </div>
+        </div>
+      )}
+
+      {alreadyPaid && status === "rejected" && (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          You&apos;ve already paid the verification fee — resubmitting is free.
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
         </div>
       )}
 
@@ -484,6 +573,73 @@ export default function VerificationPage() {
             >
               Back to Dashboard
             </button>
+        </div>
+      )}
+
+      {showPaywall && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">Submit Verification</h3>
+              <button onClick={() => setShowPaywall(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-[#10B981]/10 rounded-xl p-4 flex items-center gap-3">
+              <ShieldCheck className="w-8 h-8 text-[#10B981] shrink-0" />
+              <div>
+                <p className="font-semibold text-gray-900">Get Verified</p>
+                <p className="text-xs text-gray-500">
+                  Verified badge builds trust with students and increases inquiries
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                "Verified badge on all your listings",
+                "Higher ranking in search results",
+                "More student inquiries",
+                "One-time fee — pay once, keep forever",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#10B981] shrink-0" />
+                  <span className="text-sm text-gray-600">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-gray-600 text-sm">Verification fee</span>
+                <span className="text-xl font-bold text-gray-900">{formatNaira(verificationFee / 100)}</span>
+              </div>
+              <p className="text-xs text-gray-400 mb-4">
+                One-time payment. If your verification is rejected, you can resubmit for free.
+              </p>
+
+              {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+              <button
+                onClick={handlePayForVerification}
+                disabled={paywallLoading}
+                className="w-full bg-[#1B4332] text-white rounded-xl py-3.5 font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {paywallLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Initiating payment...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    Pay {formatNaira(verificationFee / 100)} to Submit
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
