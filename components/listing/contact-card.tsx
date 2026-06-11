@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { ShieldCheck, Phone, MessageCircle, ShieldAlert, Lock } from "lucide-react"
+import { ShieldCheck, Phone, MessageCircle, ShieldAlert, UserPlus } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick } from "@/app/actions"
@@ -36,7 +36,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
   const handleWhatsAppClick = (e: React.MouseEvent) => {
     if (!user) {
       e.preventDefault()
-      window.location.href = `/login?returnTo=/listing/${listing.id}`
+      window.location.href = `/signup?redirect=/listing/${listing.id}`
       return
     }
     recordWhatsAppClick(listing.id)
@@ -44,7 +44,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
   const handleRevealPhone = () => {
     if (!user) {
-      window.location.href = `/login?returnTo=/listing/${listing.id}`
+      window.location.href = `/signup?redirect=/listing/${listing.id}`
       return
     }
     if (!showPhone) {
@@ -70,11 +70,11 @@ export default function ContactCard({ listing }: ContactCardProps) {
           {!loading && !user ? (
             <div className="space-y-3">
               <Link
-                href={`/login?returnTo=/listing/${listing.id}`}
+                href={`/signup?redirect=/listing/${listing.id}`}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-4 py-3 text-sm font-bold text-white hover:brightness-95 shadow-md transition active:scale-95"
               >
-                <Lock className="h-4 w-4" />
-                Login to Contact Landlord
+                <UserPlus className="h-4 w-4" />
+                Sign Up to Contact
               </Link>
               <p className="text-[10px] text-center text-gray-400 font-medium">Authentication required to prevent spam</p>
             </div>
@@ -135,11 +135,11 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
             {!loading && !user ? (
               <Link
-                href={`/login?returnTo=/listing/${listing.id}`}
+                href={`/signup?redirect=/listing/${listing.id}`}
                 className="flex-1 max-w-[200px] flex items-center justify-center gap-2 rounded-xl bg-[#1B4332] py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/10 transition active:scale-95"
               >
-                <Lock className="h-4 w-4" />
-                Login to Chat
+                <UserPlus className="h-4 w-4" />
+                Sign Up to Contact
               </Link>
             ) : (
               <a

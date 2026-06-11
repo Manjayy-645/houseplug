@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 import { grantTrialToNewUser } from "@/lib/billing"
 
 export async function GET(request: Request) {
@@ -10,6 +11,9 @@ export async function GET(request: Request) {
   const type = searchParams.get("type")
   const source = searchParams.get("source") // 'login' | 'signup' (Google OAuth)
   const roleParam = searchParams.get("role")
+  // Set during signup/login when the user came from a listing's "Sign Up to
+  // Contact" button. Only students are sent back to the listing.
+  const redirectTo = cookies().get("signup_redirect")?.value
 
   const supabase = createClient()
 
@@ -61,7 +65,7 @@ export async function GET(request: Request) {
 
   // SCENARIOS 2 & 3: profile exists (login or signup) → normal login.
   if (profile) {
-    return redirectByRole(profile.role, origin)
+    return redirectByRole(profile.role, origin, redirectTo)
   }
 
   // SCENARIO 4: Google signup, new user → create profile (+ trial for landlords/agents).
@@ -86,7 +90,7 @@ export async function GET(request: Request) {
       await grantTrialToNewUser(service, user.id, undefined, user.email ?? undefined)
     }
 
-    return redirectByRole(userRole, origin)
+    return redirectByRole(userRole, origin, redirectTo)
   }
 
   // FALLBACK: email-verification flow (no source param) where the trigger
@@ -109,19 +113,28 @@ export async function GET(request: Request) {
     await grantTrialToNewUser(service, user.id, meta.phone || undefined, user.email ?? undefined)
   }
 
-  return redirectByRole(userRole, origin)
+  return redirectByRole(userRole, origin, redirectTo)
 }
 
-function redirectByRole(role: string, origin: string) {
+function redirectByRole(role: string, origin: string, redirectTo?: string) {
+  let target: string
   switch (role) {
     case "landlord":
     case "agent":
-      return NextResponse.redirect(`${origin}/landlord/dashboard`)
+      target = "/landlord/dashboard"
+      break
     case "admin":
     case "super_admin":
-      return NextResponse.redirect(`${origin}/admin/listings`)
+      target = "/admin/listings"
+      break
     case "student":
     default:
-      return NextResponse.redirect(`${origin}/browse`)
+      // Students go back to the listing they came from, if any.
+      target = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/browse"
   }
+
+  const res = NextResponse.redirect(`${origin}${target}`)
+  // One-shot: clear the redirect cookie so it doesn't leak into later sessions.
+  if (redirectTo) res.cookies.set("signup_redirect", "", { path: "/", maxAge: 0 })
+  return res
 }

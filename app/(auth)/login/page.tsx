@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -17,9 +17,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [redirect, setRedirect] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setRedirect(params.get("redirect"))
+  }, [])
 
   async function handleGoogleLogin() {
     setError("")
+    // Persist the destination so the callback (server-side) can honour it for
+    // students after OAuth.
+    if (redirect) document.cookie = `signup_redirect=${redirect}; path=/; max-age=3600`
     // New Google users are created directly via the signup flow; existing users
     // simply log in and redirect by role.
     const { error } = await supabase.auth.signInWithOAuth({
@@ -64,12 +73,17 @@ export default function LoginPage() {
 
     const role = profile?.role || "student"
 
+    // Students may have come from a listing's "Sign Up to Contact" button.
+    const storedRedirect = typeof window !== "undefined" ? window.localStorage.getItem("signup_redirect") : null
+    const destination = redirect || storedRedirect
+    if (typeof window !== "undefined") window.localStorage.removeItem("signup_redirect")
+
     if (role === "landlord" || role === "agent") {
       window.location.href = "/landlord/dashboard"
     } else if (role === "admin" || role === "super_admin") {
       window.location.href = "/admin/listings"
     } else {
-      window.location.href = "/browse"
+      window.location.href = destination || "/browse"
     }
   }
 
@@ -114,7 +128,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[#1B4332] font-semibold">
+          <Link href={redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : "/signup"} className="text-[#1B4332] font-semibold">
             Sign up
           </Link>
         </p>

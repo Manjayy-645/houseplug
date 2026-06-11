@@ -44,6 +44,12 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [redirect, setRedirect] = useState("/browse")
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setRedirect(params.get("redirect") || "/browse")
+  }, [])
 
   useEffect(() => {
     if (resendCooldown <= 0) return
@@ -51,9 +57,20 @@ export default function SignupPage() {
     return () => clearTimeout(t)
   }, [resendCooldown])
 
+  // Persist the post-auth destination so it survives the OAuth / email-link
+  // round trips (cookie is read server-side by the callback; localStorage is
+  // read client-side by the login redirect).
+  function persistRedirect() {
+    if (typeof document !== "undefined") {
+      document.cookie = `signup_redirect=${redirect}; path=/; max-age=3600`
+      window.localStorage.setItem("signup_redirect", redirect)
+    }
+  }
+
   async function handleGoogleSignUp() {
     if (!selectedRole) return
     setError("")
+    persistRedirect()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -98,6 +115,7 @@ export default function SignupPage() {
       setError(error.message.toLowerCase().includes("already") ? "This email is already in use." : error.message)
       return
     }
+    persistRedirect()
     setStep("confirm")
   }
 
@@ -223,7 +241,7 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#1B4332] font-semibold">
+            <Link href={`/login?redirect=${encodeURIComponent(redirect)}`} className="text-[#1B4332] font-semibold">
               Log in
             </Link>
           </p>
@@ -280,7 +298,7 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}
-            <Link href="/login" className="text-[#1B4332] font-semibold">
+            <Link href={`/login?redirect=${encodeURIComponent(redirect)}`} className="text-[#1B4332] font-semibold">
               Log in
             </Link>
           </p>
