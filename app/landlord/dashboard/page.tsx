@@ -249,7 +249,9 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           {listings.map((listing) => (
             <article
               key={listing.id}
-              className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 md:flex-row md:items-center md:justify-between"
+              className={`flex flex-col gap-3 rounded-lg border border-gray-200 p-3 md:flex-row md:items-center md:justify-between ${
+                listing.status === "unavailable" ? "bg-gray-50 opacity-75" : ""
+              }`}
             >
               <div className="flex min-w-0 items-center gap-3">
                 <Link href={`/listing/${listing.id}`} className="h-14 w-16 shrink-0 overflow-hidden rounded bg-gray-200">
@@ -291,7 +293,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                   </p>
                 </div>
               </div>
-              <ListingRowActions listingId={listing.id} status={listing.status} />
+              <ListingRowActions listingId={listing.id} status={listing.status} landlordId={user.id} />
             </article>
           ))}
         </div>

@@ -25,7 +25,7 @@ export type Profile = {
 
 export type RoomType = "self_con" | "one_bedroom" | "two_bedroom" | "shared"
 export type DistanceFromGate = "under_5" | "5_to_15" | "15_to_30" | "above_30"
-export type ListingStatus = "pending" | "active" | "rejected" | "inactive"
+export type ListingStatus = "pending" | "active" | "rejected" | "unavailable"
 export type Plan = "free" | "pro" | "business"
 
 export type BillingCycle = 'monthly' | 'annual'

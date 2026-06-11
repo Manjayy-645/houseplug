@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Flame, Users, Info, Check } from "lucide-react"
+import { Star, Flame, Users, Info, Check, EyeOff } from "lucide-react"
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
@@ -182,7 +182,13 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-24 lg:pb-12">
       <ViewTracker listingId={listing.id} />
-      {listing.status !== "active" && (
+      {listing.status === "unavailable" && (isOwner || isAdmin) && (
+        <div className="bg-gray-800 text-white px-4 py-3 text-center text-sm font-medium flex items-center justify-center gap-2">
+          <EyeOff className="w-4 h-4" />
+          This listing is marked as unavailable and hidden from students.
+        </div>
+      )}
+      {listing.status !== "active" && listing.status !== "unavailable" && (
         <div className="bg-[#1B4332] text-white px-4 py-3 text-center text-sm font-bold flex items-center justify-center gap-2">
           <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
           PREVIEW MODE: This listing is {listing.status} and only visible to you.

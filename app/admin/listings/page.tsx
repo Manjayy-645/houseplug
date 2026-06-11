@@ -39,6 +39,7 @@ export default async function AdminListingsPage({
     { label: "Pending", value: "pending" },
     { label: "Active", value: "active" },
     { label: "Rejected", value: "rejected" },
+    { label: "Unavailable", value: "unavailable" },
     { label: "All", value: "all" },
   ]
 
