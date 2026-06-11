@@ -233,8 +233,8 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
   const onSubmit = async () => {
     const valid = await trigger()
     if (!valid) return
-    if (photoItems.length === 0) {
-      setMessage("Add at least one photo before submitting.")
+    if (photoItems.length === 0 && !videoUrl) {
+      setMessage("Please upload at least one photo or a video of the property.")
       return
     }
     if (!landlordId) {
@@ -299,7 +299,10 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
   }
 
   const amenities = watch("amenities")
-  const canSubmit = useMemo(() => !submitting && photoItems.length > 0, [photoItems.length, submitting])
+  const canSubmit = useMemo(
+    () => !submitting && (photoItems.length > 0 || !!videoUrl),
+    [photoItems.length, submitting, videoUrl]
+  )
 
   if (complete) {
     return (
@@ -626,55 +629,23 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
       ) : null}
 
       {currentStep === 3 ? (
-        <section className="space-y-4">
-          <h3 className="text-lg font-semibold">Step 4 - Photos</h3>
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-8 text-sm text-gray-600">
-            <Upload className="h-4 w-4" />
-            Upload photos (max 8)
-            <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => onFilesSelected(event.target.files)} />
-          </label>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {photoItems.map((photo, index) => (
-              <div
-                key={photo.id}
-                draggable
-                onDragStart={() => setDraggedId(photo.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => {
-                  if (draggedId) reorderPhotos(draggedId, photo.id)
-                  setDraggedId(null)
-                }}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-              >
-                <div className="relative h-24">
-                  <img src={photo.url} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(photo.id)}
-                    className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                  {index === 0 ? (
-                    <span className="absolute left-1 top-1 rounded bg-[#F59E0B] px-1.5 py-0.5 text-[10px] font-semibold text-gray-900">
-                      Cover
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-1 px-2 py-1">
-                  <GripVertical className="h-3 w-3 text-gray-400" />
-                  <div className="h-1.5 flex-1 overflow-hidden rounded bg-gray-100">
-                    <div className="h-full bg-[#1B4332]" style={{ width: `${photo.progress}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
+        <section className="space-y-5">
+          <div>
+            <h3 className="text-lg font-semibold">Step 4 - Photos &amp; Video</h3>
+            <p className="text-xs text-gray-500">
+              Upload at least one photo or video. Video recommended for faster inquiries.
+            </p>
           </div>
 
+          {/* Video first — the priority */}
           <div className="space-y-3">
-            <label className="text-sm font-semibold text-gray-700">Property Video (Optional)</label>
-            <p className="text-xs text-gray-500">Upload a short video tour. Max 100MB. MP4, MOV.</p>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700">Property Video</label>
+              <span className="rounded-full bg-[#F59E0B] px-2 py-0.5 text-xs font-medium text-white">Recommended</span>
+            </div>
+            <p className="text-xs text-gray-500">
+              A short video tour gets 3x more inquiries. Max 100MB. MP4, MOV.
+            </p>
 
             {!videoUrl && !videoUploading && (
               <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:border-[#1B4332]">
@@ -726,6 +697,58 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Photos — optional when a video is uploaded */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-gray-700">
+              Photos
+              <span className="ml-1 text-xs font-normal text-gray-400">(optional if video uploaded)</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-8 text-sm text-gray-600">
+              <Upload className="h-4 w-4" />
+              Upload photos (max 8)
+              <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => onFilesSelected(event.target.files)} />
+            </label>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {photoItems.map((photo, index) => (
+                <div
+                  key={photo.id}
+                  draggable
+                  onDragStart={() => setDraggedId(photo.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    if (draggedId) reorderPhotos(draggedId, photo.id)
+                    setDraggedId(null)
+                  }}
+                  className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+                >
+                  <div className="relative h-24">
+                    <img src={photo.url} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(photo.id)}
+                      className="absolute right-1 top-1 rounded bg-black/60 p-1 text-white"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                    {index === 0 ? (
+                      <span className="absolute left-1 top-1 rounded bg-[#F59E0B] px-1.5 py-0.5 text-[10px] font-semibold text-gray-900">
+                        Cover
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-1">
+                    <GripVertical className="h-3 w-3 text-gray-400" />
+                    <div className="h-1.5 flex-1 overflow-hidden rounded bg-gray-100">
+                      <div className="h-full bg-[#1B4332]" style={{ width: `${photo.progress}%` }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}

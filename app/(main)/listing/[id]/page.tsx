@@ -248,16 +248,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           </div>
         </header>
 
-        {listing.video_url && (
-          <div className="px-0 sm:px-4 lg:px-0">
-            <div className="bg-black rounded-2xl overflow-hidden">
-              <video src={listing.video_url} controls className="w-full max-h-[480px] object-contain" />
-            </div>
-          </div>
-        )}
-
         <div className="px-0 sm:px-4 lg:px-0">
-          <PhotoGallery photos={listing.photos} />
+          <PhotoGallery photos={listing.photos} videoUrl={listing.video_url} />
         </div>
 
         <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-[1fr,360px] lg:px-8">
@@ -294,11 +286,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             )}
 
             {listing.description && (
-              <div className="rounded-2xl border bg-white p-6">
+              <div className="max-w-full overflow-hidden rounded-2xl border bg-white p-6">
                 <h2 className="font-semibold text-lg text-gray-900 mb-3">
                   About this property
                 </h2>
-                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                   {listing.description}
                 </p>
               </div>
