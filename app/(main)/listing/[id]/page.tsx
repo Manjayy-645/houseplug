@@ -180,7 +180,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   }
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB] pb-24 lg:pb-12">
+    <main className="min-h-screen bg-[#F9FAFB] pt-20 pb-24 lg:pt-24 lg:pb-12">
       <ViewTracker listingId={listing.id} />
       {listing.status === "unavailable" && (isOwner || isAdmin) && (
         <div className="bg-gray-800 text-white px-4 py-3 text-center text-sm font-medium flex items-center justify-center gap-2">
