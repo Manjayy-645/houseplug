@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
 import { House, X, ChevronLeft, ChevronRight, Maximize2, Play } from "lucide-react"
+import { streamableVideoUrl } from "@/lib/cloudinary"
 
 type PhotoGalleryProps = {
   photos: string[]
@@ -60,9 +61,12 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
         <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           {heroItem.type === "video" ? (
             <video
-              src={heroItem.url}
+              src={streamableVideoUrl(heroItem.url)}
               controls
               playsInline
+              controlsList="nodownload noplaybackrate"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
               className="h-full w-full bg-black object-contain"
             />
           ) : (

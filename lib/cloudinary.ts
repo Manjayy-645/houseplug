@@ -23,3 +23,20 @@ export async function uploadVideo(file: File): Promise<string> {
   const data = await res.json()
   return data.secure_url as string
 }
+
+/**
+ * Rewrite a stored Cloudinary video URL so it streams as web-playable H.264
+ * MP4. Phone uploads are often .mov / HEVC, which Chrome and Firefox cannot
+ * decode from the original — Cloudinary transcodes on delivery when we ask for
+ * an mp4 + h264 + auto quality. Non-Cloudinary URLs are returned untouched.
+ */
+export function streamableVideoUrl(url?: string | null): string {
+  if (!url) return ""
+  if (!url.includes("/video/upload/")) return url
+  // Inject the delivery transformation right after /upload/.
+  let out = url.replace("/video/upload/", "/video/upload/f_mp4,vc_h264,q_auto/")
+  // Force the .mp4 container extension so the browser gets an H.264 stream.
+  out = out.replace(/\.(mov|m4v|webm|mkv|avi|hevc|3gp)$/i, ".mp4")
+  return out
+}
+
