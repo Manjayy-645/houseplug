@@ -11,6 +11,7 @@ import { UNIVERSITIES } from "@/lib/constants"
 import { AiDescribeButton } from "@/components/listing/ai-describe-button"
 import { notifyAdminsNewListing } from "@/app/actions"
 import { uploadVideo } from "@/lib/cloudinary"
+import { compressImage } from "@/lib/image-compress"
 import type { Listing } from "@/types"
 
 type AgentFeeType = "none" | "fixed" | "negotiable"
@@ -202,8 +203,12 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
         continue
       }
       if (!item.file || !landlordId) continue
-      
-      const safeName = item.file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
+
+      // Downscale + re-encode to WebP before upload to avoid storing full-size
+      // originals. Falls back to the original file if it can't do better.
+      const fileToUpload = await compressImage(item.file)
+
+      const safeName = fileToUpload.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
       const filePath = `${landlordId}/${listingId}/${Date.now()}-${safeName}`
 
       const timer = window.setInterval(() => {
@@ -214,7 +219,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
         )
       }, 120)
 
-      const { error } = await supabase.storage.from("listings").upload(filePath, item.file, {
+      const { error } = await supabase.storage.from("listings").upload(filePath, fileToUpload, {
         upsert: false
       })
       window.clearInterval(timer)

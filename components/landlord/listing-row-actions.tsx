@@ -5,6 +5,7 @@ import Link from "next/link"
 import { MoreHorizontal, Pencil, Loader2, Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { deleteListing } from "@/app/actions"
 
 type ListingRowActionsProps = {
   listingId: string
@@ -46,14 +47,9 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
 
     setIsDeleting(true)
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from("listings")
-        .delete()
-        .eq("id", listingId)
-        .eq("landlord_id", landlordId)
-
-      if (error) throw error
+      // Server action removes stored photos + video before dropping the row.
+      const result = await deleteListing(listingId)
+      if (result?.error) throw new Error(result.error)
       router.refresh()
     } catch (error: any) {
       console.error("Error deleting listing:", error)

@@ -1,8 +1,10 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import { sendAdminNotification } from "@/lib/email"
+import { cleanupListingMedia } from "@/lib/storage"
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
 
@@ -78,6 +80,52 @@ export async function replyToReview(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath("/landlord/reviews")
+  return { success: true }
+}
+
+/**
+ * Delete a listing and its stored media (photos + video). Authorizes the
+ * caller as either the owner or an admin, then cleans up storage with the
+ * service role before removing the row so nothing is orphaned.
+ */
+export async function deleteListing(listingId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: "You must be logged in." }
+
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { data: listing } = await service
+    .from("listings")
+    .select("id, landlord_id, video_url")
+    .eq("id", listingId)
+    .single()
+
+  if (!listing) return { error: "Listing not found." }
+
+  // Owner, or admin/super_admin.
+  let authorized = listing.landlord_id === user.id
+  if (!authorized) {
+    const { data: profile } = await service
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+    authorized = ["admin", "super_admin"].includes(profile?.role || "")
+  }
+  if (!authorized) return { error: "You are not authorized to delete this listing." }
+
+  await cleanupListingMedia(service, listing)
+
+  const { error } = await service.from("listings").delete().eq("id", listingId)
+  if (error) return { error: error.message }
+
+  revalidatePath("/landlord/listings")
+  revalidatePath("/landlord/dashboard")
   return { success: true }
 }
 

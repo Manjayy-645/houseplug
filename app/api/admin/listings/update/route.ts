@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { logAdminAction } from '@/lib/audit'
+import { cleanupListingMedia } from '@/lib/storage'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   )
 
   try {
-    const { data: listing } = await serviceClient.from('listings').select('title').eq('id', listingId).single()
+    const { data: listing } = await serviceClient.from('listings').select('title, landlord_id, video_url').eq('id', listingId).single()
 
     if (action === 'approve') {
       const { error } = await serviceClient.from('listings').update({ status: 'active' }).eq('id', listingId)
@@ -45,6 +46,10 @@ export async function POST(request: Request) {
     }
 
     if (action === 'delete') {
+      // Remove stored photos + video before dropping the row so nothing is orphaned.
+      if (listing) {
+        await cleanupListingMedia(serviceClient, { id: listingId, landlord_id: listing.landlord_id, video_url: listing.video_url })
+      }
       const { error } = await serviceClient.from('listings').delete().eq('id', listingId)
       if (error) throw error
       await logAdminAction({ admin_id: user.id, action: 'deleted_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title } })
