@@ -25,16 +25,53 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const path = request.nextUrl.pathname
+
+  // --- Site-wide maintenance gate ------------------------------------------
+  // Applies to everyone, including logged-out visitors. Admins bypass it, and a
+  // few routes stay open so an admin can still log in and turn it back off.
+  const maintenanceExempt =
+    path === "/maintenance" ||
+    path.startsWith("/login") ||
+    path.startsWith("/auth")
+
+  if (!maintenanceExempt) {
+    const { data: maintenance } = await supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "maintenance_mode")
+      .single()
+
+    if (maintenance?.value === "true" || maintenance?.value === true) {
+      // Only fetch the user/role when we actually need to decide who bypasses.
+      const { data: { user } } = await supabase.auth.getUser()
+      let isAdmin = false
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single()
+        isAdmin = ["admin", "super_admin"].includes(profile?.role ?? "")
+      }
+      if (!isAdmin) {
+        return NextResponse.redirect(new URL("/maintenance", request.url))
+      }
+    }
+  }
+
+  // --- Auth + role gating (protected areas only) ---------------------------
+  // Public routes are done once the maintenance gate passes; avoid the extra
+  // auth/profile lookups on them.
+  const isProtected = path.startsWith("/landlord") || path.startsWith("/admin")
+  if (!isProtected) return response
+
   const {
     data: { user }
   } = await supabase.auth.getUser()
 
   if (!user) {
-    // Only redirect if trying to access protected routes
-    if (request.nextUrl.pathname.startsWith("/landlord") || request.nextUrl.pathname.startsWith("/admin")) {
-      return NextResponse.redirect(new URL("/login", request.url))
-    }
-    return response
+    return NextResponse.redirect(new URL("/login", request.url))
   }
 
   const { data: profile } = await supabase
@@ -48,21 +85,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=account_banned", request.url))
   }
 
-  // Maintenance mode check
-  const { data: maintenance } = await supabase
-    .from('platform_settings')
-    .select('value')
-    .eq('key', 'maintenance_mode')
-    .single()
-
-  if (
-    (maintenance?.value === 'true' || maintenance?.value === true) && 
-    !['admin', 'super_admin'].includes(profile?.role ?? '') &&
-    request.nextUrl.pathname !== '/maintenance'
-  ) {
-    return NextResponse.redirect(new URL('/maintenance', request.url))
-  }
-
   // Super admin only routes
   const superAdminRoutes = [
     '/admin/revenue',
@@ -73,12 +95,12 @@ export async function middleware(request: NextRequest) {
     '/admin/audit',
   ]
 
-  if (request.nextUrl.pathname.startsWith("/admin")) {
+  if (path.startsWith("/admin")) {
     if (!["admin", "super_admin"].includes(profile?.role ?? "")) {
       return NextResponse.redirect(new URL("/", request.url))
     }
 
-    if (superAdminRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+    if (superAdminRoutes.some(route => path.startsWith(route))) {
       if (profile?.role !== 'super_admin') {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
@@ -86,7 +108,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (
-    request.nextUrl.pathname.startsWith("/landlord") &&
+    path.startsWith("/landlord") &&
     !["landlord", "agent", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
     return NextResponse.redirect(new URL("/", request.url))
@@ -96,5 +118,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/landlord/:path*", "/admin/:path*", "/maintenance"]
+  // Run on every page except Next internals, API routes, and static files, so
+  // the maintenance gate can cover the whole public site.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"]
 }
