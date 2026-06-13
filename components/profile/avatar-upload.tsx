@@ -3,6 +3,7 @@
 import { useState, useRef } from "react"
 import { Camera, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { compressImage } from "@/lib/image-compress"
 import { getInitials } from "@/lib/utils"
 
 type UploadState = "idle" | "uploading" | "success" | "error"
@@ -24,13 +25,8 @@ export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadCompl
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowed = ["image/jpeg", "image/png", "image/webp"]
-    if (!allowed.includes(file.type)) {
-      setErrorMsg("Please upload a JPG or PNG under 2MB.")
-      return
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setErrorMsg("Please upload a JPG or PNG under 2MB.")
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("Please choose an image file.")
       return
     }
 
@@ -38,13 +34,27 @@ export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadCompl
     setUploadState("uploading")
 
     try {
+      // Downscale + convert to WebP so large phone photos (and iPhone HEIC) are
+      // accepted instead of rejected. Falls back to the original if it can't.
+      let uploadFile = file
+      try {
+        uploadFile = await compressImage(file, { maxDimension: 512, quality: 0.85, skipUnder: 0 })
+      } catch {
+        uploadFile = file
+      }
+
+      // Safety net in case compression was skipped and the original is huge.
+      if (uploadFile.size > 8 * 1024 * 1024) {
+        throw new Error("Image is too large. Please choose a smaller photo.")
+      }
+
       const supabase = createClient()
-      const ext = file.name.split(".").pop() ?? "jpg"
-      const filePath = `${userId}/avatar.${ext}` // Removed "avatars/" prefix as it's implied by .from("avatars")
+      const ext = (uploadFile.type.split("/")[1] || "jpg").replace("jpeg", "jpg")
+      const filePath = `${userId}/avatar.${ext}` // bucket implied by .from("avatars")
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, uploadFile, { upsert: true })
 
       if (uploadError) {
         console.error("Storage upload error:", uploadError)
@@ -132,7 +142,7 @@ export function AvatarUpload({ currentAvatarUrl, userId, fullName, onUploadCompl
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />

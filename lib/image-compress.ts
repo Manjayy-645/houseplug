@@ -20,8 +20,11 @@ type CompressOptions = {
 export async function compressImage(file: File, opts: CompressOptions = {}): Promise<File> {
   const { maxDimension = 1600, quality = 0.8, skipUnder = 300 * 1024 } = opts
 
-  // Only re-encode raster types we can reliably decode + redraw.
-  if (!/^image\/(jpe?g|png|webp)$/i.test(file.type)) return file
+  // Re-encode any raster image (including iPhone HEIC) — browsers that can
+  // decode it get a downscaled WebP; ones that can't fall back to the original.
+  // Leave animated/vector formats untouched so we don't flatten them.
+  if (!file.type.startsWith("image/")) return file
+  if (/^image\/(gif|svg\+xml)$/i.test(file.type)) return file
   if (file.size <= skipUnder) return file
 
   let img: HTMLImageElement
