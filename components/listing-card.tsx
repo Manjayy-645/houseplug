@@ -5,6 +5,7 @@ import Image from "next/image"
 import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap, Users } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
 import { UNIVERSITIES } from "@/lib/constants"
+import { UniversityLogo } from "@/components/university-logo"
 import type { Listing } from "@/types"
 
 type ListingCardProps = {
@@ -88,7 +89,12 @@ export function ListingCard({ listing }: ListingCardProps) {
             {formatDistance(listing.distance_from_gate, university?.shortName)}
           </p>
           <span className="inline-flex items-center gap-1 text-xs text-gray-500 ml-5">
-            <GraduationCap className="h-3.5 w-3.5" /> {university?.shortName ?? 'Near Campus'}
+            {university ? (
+              <UniversityLogo university={university} size={16} />
+            ) : (
+              <GraduationCap className="h-3.5 w-3.5" />
+            )}
+            {university?.shortName ?? 'Near Campus'}
           </span>
         </div>
         

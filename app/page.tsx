@@ -5,32 +5,11 @@ import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
 import { CheckCircle2, Users, BadgeCheck, Search, MessageCircle, Home, ArrowRight, MapPin, Plus } from "lucide-react"
 import { UNIVERSITIES } from "@/lib/constants"
+import { UniversityLogo } from "@/components/university-logo"
 import { createClient } from "@/lib/supabase/server"
 import type { Listing } from "@/types"
 
 export const revalidate = 3600 // revalidate once per hour
-
-const UniversityLogo = ({ university }: { university: any }) => {
-  if (!university.logoUrl) {
-    return (
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center 
-                      text-white font-bold text-sm shadow-inner ${university.bgColor}`}>
-        {university.initials}
-      </div>
-    )
-  }
-  
-  return (
-    <div className="w-12 h-12 relative">
-      <Image
-        src={university.logoUrl}
-        alt={university.name}
-        fill
-        className="object-contain"
-      />
-    </div>
-  )
-}
 
 export default async function LandingPage() {
   const supabase = createClient()
@@ -140,7 +119,7 @@ export default async function LandingPage() {
                   href={`/browse?university=${uni.id}`}
                   className="flex flex-col items-center gap-3 bg-white rounded-xl p-6 shadow-sm border border-gray-100 min-w-[160px] md:min-w-[200px] transition-all hover:shadow-md hover:-translate-y-1 active:scale-95 group"
                 >
-                  <UniversityLogo university={uni} />
+                  <UniversityLogo university={uni} size={48} />
                   <div className="text-center">
                     <p className="font-bold text-primary group-hover:text-hp-amber transition-colors">
                       {uni.shortName}

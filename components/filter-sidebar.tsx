@@ -6,6 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { SlidersHorizontal, X } from "lucide-react"
 
 import { UNIVERSITIES, ROOM_TYPES, DISTANCE_OPTIONS, AMENITIES } from "@/lib/constants"
+import { UniversityLogo } from "@/components/university-logo"
 
 function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname()
@@ -103,6 +104,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
                   onChange={() => setUniversity(option.id)}
                   className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
                 />
+                <UniversityLogo university={option} size={20} />
                 {option.shortName} — {option.name}
               </label>
             ))}
