@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { notifyAdminsVerificationSubmitted } from "@/app/actions"
+import { compressImage } from "@/lib/image-compress"
 import { formatNaira } from "@/lib/utils"
 
 const verificationSchema = z.object({
@@ -149,9 +150,13 @@ export default function VerificationPage() {
     const userId = user.id
 
     const uploadFile = async (file: File, path: string) => {
+      // Compress/convert images (incl. iPhone HEIC) so large photos upload
+      // reliably and documents are viewable by admins. PDFs pass through
+      // untouched (compressImage only touches image/* files).
+      const toUpload = await compressImage(file)
       const { data, error } = await supabase.storage
         .from("verifications")
-        .upload(`${userId}/${path}`, file, { upsert: true })
+        .upload(`${userId}/${path}`, toUpload, { upsert: true })
       if (error) throw error
       return supabase.storage.from("verifications").getPublicUrl(data.path).data.publicUrl
     }
