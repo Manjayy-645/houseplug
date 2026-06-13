@@ -137,6 +137,11 @@ export default function VerificationPage() {
     reader.readAsDataURL(file)
   }
 
+  const clearPropertyDoc = () => {
+    setPropertyDoc(null)
+    setPropertyDocPreview(null)
+  }
+
   // Upload the documents to storage and return their public URLs + metadata.
   const uploadDocs = async (values: VerificationValues) => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -454,22 +459,47 @@ export default function VerificationPage() {
               </p>
               
               <div className="rounded-xl bg-amber-50 border border-amber-100 p-4 text-xs text-amber-800">
-                Acceptable: Tenancy agreement, Land certificate, Property ownership document.
+                Upload an image or PDF — C of O, land certificate, tenancy agreement, or property ownership document.
               </div>
 
               <label className={`relative flex flex-col items-center justify-center h-64 rounded-2xl border-2 border-dashed transition cursor-pointer overflow-hidden ${propertyDocPreview ? 'border-[#1B4332]' : 'border-gray-200 hover:border-[#1B4332]'}`}>
                 {propertyDocPreview ? (
-                  <div className="flex flex-col items-center p-4">
-                    <FileText className="h-16 w-16 text-[#1B4332] mb-2" />
-                    <span className="text-sm font-medium text-gray-900">{propertyDoc?.name}</span>
-                  </div>
+                  propertyDoc?.type === 'application/pdf' ? (
+                    <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200 w-full max-w-sm">
+                      <FileText className="w-8 h-8 text-red-500 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-700 truncate">{propertyDoc.name}</p>
+                        <p className="text-xs text-gray-400">PDF document</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearPropertyDoc() }}
+                        className="ml-auto text-gray-400 hover:text-red-500"
+                        aria-label="Remove document"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <img src={propertyDocPreview} alt="Property document" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearPropertyDoc() }}
+                        className="absolute top-2 right-2 rounded-full bg-white/90 p-1.5 text-gray-500 shadow hover:text-red-500"
+                        aria-label="Remove document"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  )
                 ) : (
                   <div className="flex flex-col items-center text-gray-400">
                     <Upload className="h-10 w-10 mb-2" />
                     <span className="text-sm font-bold uppercase">Upload Property Document</span>
                   </div>
                 )}
-                <input type="file" className="hidden" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'property')} />
+                <input type="file" className="hidden" accept="image/*,application/pdf,.pdf" onChange={(e) => handleFileChange(e, 'property')} />
               </label>
             </section>
 
