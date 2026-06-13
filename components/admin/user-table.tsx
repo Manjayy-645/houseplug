@@ -4,17 +4,50 @@ import { useState } from "react"
 import { Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Ban, ShieldCheck, Loader2, User, Crown } from "lucide-react"
+import { Ban, ShieldCheck, Loader2, User, Crown, Trash2, AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface UserWithCounts extends Profile {
   listings: { count: number }[]
 }
 
-export default function UserTable({ users }: { users: UserWithCounts[] }) {
+export default function UserTable({
+  users,
+  isSuperAdmin = false,
+  currentUserId = null,
+}: {
+  users: UserWithCounts[]
+  isSuperAdmin?: boolean
+  currentUserId?: string | null
+}) {
   const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [userToDelete, setUserToDelete] = useState<UserWithCounts | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDeleteUser() {
+    if (!userToDelete) return
+    setDeleting(true)
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userToDelete.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setUserToDelete(null)
+        router.refresh()
+      } else {
+        alert(data.error || "Failed to delete user")
+      }
+    } catch (err) {
+      alert("Something went wrong")
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const handleToggleBan = async (id: string, isBanned: boolean) => {
     if (!confirm(`Are you sure you want to ${isBanned ? "unban" : "ban"} this user?`)) return
@@ -117,31 +150,94 @@ export default function UserTable({ users }: { users: UserWithCounts[] }) {
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleToggleBan(user.id, !!user.banned)}
-                    disabled={loading === user.id}
-                    className={`p-2 rounded-lg transition-colors ${
-                      user.banned 
-                        ? "text-green-600 hover:bg-green-50" 
-                        : "text-red-600 hover:bg-red-50"
-                    } disabled:opacity-50`}
-                    title={user.banned ? "Unban User" : "Ban User"}
-                  >
-                    {loading === user.id ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : user.banned ? (
-                      <ShieldCheck className="w-5 h-5" />
-                    ) : (
-                      <Ban className="w-5 h-5" />
+                <td className="px-6 py-4">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => handleToggleBan(user.id, !!user.banned)}
+                      disabled={loading === user.id}
+                      className={`p-2 rounded-lg transition-colors ${
+                        user.banned
+                          ? "text-green-600 hover:bg-green-50"
+                          : "text-red-600 hover:bg-red-50"
+                      } disabled:opacity-50`}
+                      title={user.banned ? "Unban User" : "Ban User"}
+                    >
+                      {loading === user.id ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : user.banned ? (
+                        <ShieldCheck className="w-5 h-5" />
+                      ) : (
+                        <Ban className="w-5 h-5" />
+                      )}
+                    </button>
+
+                    {isSuperAdmin && user.role !== "super_admin" && user.id !== currentUserId && (
+                      <button
+                        onClick={() => setUserToDelete(user)}
+                        className="flex items-center gap-1.5 text-red-600 hover:bg-red-50 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                        title="Delete User"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete
+                      </button>
                     )}
-                  </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {userToDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Delete User</h3>
+            </div>
+
+            <p className="text-sm text-gray-600">
+              Are you sure you want to permanently delete{" "}
+              <span className="font-semibold">{userToDelete.full_name}</span>{" "}
+              ({userToDelete.email})?
+            </p>
+
+            <div className="bg-red-50 rounded-xl p-3">
+              <p className="text-xs text-red-700">
+                This will permanently delete their account, all their listings, reviews,
+                subscriptions, payments, and verification documents. This cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setUserToDelete(null)}
+                disabled={deleting}
+                className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={deleting}
+                className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Permanently"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

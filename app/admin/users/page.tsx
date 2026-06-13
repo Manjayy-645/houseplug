@@ -32,7 +32,14 @@ export default async function AdminUsersPage({
   }
 
   const { data: users, count, error } = await query
-  
+
+  // Caller identity — gates the super-admin-only delete action in the table.
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  const { data: currentProfile } = currentUser
+    ? await supabase.from("profiles").select("role").eq("id", currentUser.id).single()
+    : { data: null }
+  const isSuperAdmin = currentProfile?.role === "super_admin"
+
   if (error) {
     console.error("[ADMIN_USERS] Error fetching users:", error)
     return (
@@ -102,7 +109,7 @@ export default async function AdminUsersPage({
         </div>
       </div>
 
-      <UserTable users={users as any[]} />
+      <UserTable users={users as any[]} isSuperAdmin={isSuperAdmin} currentUserId={currentUser?.id ?? null} />
 
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-8">
