@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap, Users } from "lucide-react"
+import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap, Users, Play } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
+import { streamableVideoUrl } from "@/lib/cloudinary"
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
 import type { Listing } from "@/types"
@@ -14,6 +15,7 @@ type ListingCardProps = {
 
 export function ListingCard({ listing }: ListingCardProps) {
   const photo = listing.photos?.[0]
+  const videoUrl = listing.video_url
   const isVerified = listing.landlord?.verification_status === "verified"
   const isFeatured = listing.is_featured
   
@@ -30,13 +32,29 @@ export function ListingCard({ listing }: ListingCardProps) {
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-gray-100">
       <Link href={`/listing/${listing.id}`} className="block relative aspect-[16/9] overflow-hidden">
         {photo ? (
-          <Image 
-            src={photo} 
+          <Image
+            src={photo}
             alt={listing.title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
+        ) : videoUrl ? (
+          <>
+            {/* #t=0.1 nudges the browser to render the first frame as a poster */}
+            <video
+              src={`${streamableVideoUrl(videoUrl)}#t=0.1`}
+              muted
+              playsInline
+              preload="metadata"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="rounded-full bg-black/50 p-3">
+                <Play className="h-5 w-5 fill-white text-white" />
+              </div>
+            </div>
+          </>
         ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
             <span className="text-sm font-medium">No image available</span>
