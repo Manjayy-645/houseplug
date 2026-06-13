@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
 import { MarketingCardPreview } from "@/components/landlord/marketing-card-preview"
-import { Mail, Phone, Calendar, Shield, ShieldCheck } from "lucide-react"
+import { Mail, Phone, Calendar, Shield, ShieldCheck, Loader2, Pencil } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+
+const phoneRegex = /^(070|080|081|090)\d{8}$/
 
 export default function LandlordProfilePage() {
   const [profile, setProfile] = useState<any>(null)
@@ -19,7 +21,39 @@ export default function LandlordProfilePage() {
     primaryArea: "Port Harcourt",
   })
   const [loading, setLoading] = useState(true)
+  const [editingPhone, setEditingPhone] = useState(false)
+  const [phoneInput, setPhoneInput] = useState("")
+  const [savingPhone, setSavingPhone] = useState(false)
+  const [phoneError, setPhoneError] = useState("")
   const router = useRouter()
+
+  // Deep-link from the dashboard "Add Number" banner: ?edit=phone opens the
+  // phone field straight into edit mode.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("edit") === "phone") setEditingPhone(true)
+  }, [])
+
+  async function handleSavePhone() {
+    if (!userId) return
+    const value = phoneInput.trim()
+    if (!phoneRegex.test(value)) {
+      setPhoneError("Enter a valid Nigerian phone number (e.g. 080XXXXXXXX)")
+      return
+    }
+    setPhoneError("")
+    setSavingPhone(true)
+    const supabase = createClient()
+    const { error } = await supabase.from("profiles").update({ phone: value }).eq("id", userId)
+    setSavingPhone(false)
+    if (error) {
+      setPhoneError(error.message)
+      return
+    }
+    setProfile({ ...profile, phone: value })
+    setEditingPhone(false)
+  }
+
 
   useEffect(() => {
     const supabase = createClient()
@@ -146,7 +180,55 @@ export default function LandlordProfilePage() {
                 <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
                   <Phone className="h-3 w-3" /> Phone Number
                 </label>
-                <p className="text-sm font-medium text-gray-900">{profile.phone || "Not provided"}</p>
+                {editingPhone ? (
+                  <div className="space-y-2">
+                    <input
+                      type="tel"
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSavePhone()}
+                      placeholder="080XXXXXXXX"
+                      autoFocus
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]"
+                    />
+                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleSavePhone}
+                        disabled={savingPhone}
+                        className="flex items-center gap-1.5 rounded-lg bg-[#1B4332] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143728] disabled:opacity-50"
+                      >
+                        {savingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                        Save
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingPhone(false)
+                          setPhoneError("")
+                        }}
+                        disabled={savingPhone}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900">{profile.phone || "Not provided"}</p>
+                    <button
+                      onClick={() => {
+                        setPhoneInput(profile.phone || "")
+                        setPhoneError("")
+                        setEditingPhone(true)
+                      }}
+                      className="flex items-center gap-1 text-xs font-semibold text-[#1B4332] hover:underline"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      {profile.phone ? "Edit" : "Add"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">

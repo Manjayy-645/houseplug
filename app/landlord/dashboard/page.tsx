@@ -107,7 +107,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
               </p>
             </div>
             <Link
-              href="/landlord/profile"
+              href="/landlord/profile?edit=phone"
               className="ml-auto bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap"
             >
               Add Number
