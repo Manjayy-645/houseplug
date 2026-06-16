@@ -437,8 +437,7 @@ export default function VerificationPage() {
                     <span className="text-sm font-bold uppercase">Take/Upload Selfie</span>
                   </div>
                 )}
-                {/* capture="user" opens the front camera directly — selfies are taken live */}
-                <input type="file" className="hidden" accept="image/*" capture="user" onChange={(e) => handleFileChange(e, 'selfie')} />
+                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'selfie')} />
               </label>
             </section>
 
