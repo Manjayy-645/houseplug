@@ -61,9 +61,10 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
         <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           {heroItem.type === "video" ? (
             <video
-              src={streamableVideoUrl(heroItem.url)}
+              src={`${streamableVideoUrl(heroItem.url)}#t=0.1`}
               controls
               playsInline
+              preload="metadata"
               controlsList="nodownload noplaybackrate"
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
@@ -112,8 +113,17 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
               }`}
             >
               {item.type === "video" ? (
-                <div className="flex h-full w-full items-center justify-center bg-gray-900">
-                  <Play className="h-5 w-5 fill-white text-white" />
+                <div className="relative h-full w-full bg-gray-900">
+                  <video
+                    src={`${streamableVideoUrl(item.url)}#t=0.1`}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <Play className="h-5 w-5 fill-white text-white" />
+                  </div>
                 </div>
               ) : (
                 <Image src={item.url} alt={`Thumbnail ${idx + 1}`} fill sizes="100px" className="object-cover" />
