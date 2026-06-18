@@ -1,11 +1,10 @@
 import { Resend } from "resend"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 
-// Server-only address used as the email sender. Defaults to Resend's shared
-// onboarding sender so notifications work without a verified domain. Override
-// with EMAIL_FROM once houseplug.ng is verified in Resend. The recipient list
-// is always fetched from the DB — never hardcoded.
-const EMAIL_FROM = process.env.EMAIL_FROM || "HousePlug <onboarding@resend.dev>"
+// Server-only address used as the email sender. Defaults to the verified
+// houseplug.ng domain sender; override with EMAIL_FROM if needed. The recipient
+// list is always fetched from the DB — never hardcoded.
+const EMAIL_FROM = process.env.EMAIL_FROM || "HousePlug <noreply@send.houseplug.ng>"
 
 /**
  * Email every admin / super_admin with a branded notification and a single
