@@ -208,7 +208,8 @@ export default function VerificationPage() {
   const onSubmit = async (values: VerificationValues) => {
     setError(null)
     if (!idFront || !idBack || !selfie) {
-      setError("Please upload all required documents")
+      setError("Please upload your ID (front & back) and a selfie before submitting.")
+      setStep(1)
       return
     }
 
@@ -228,6 +229,23 @@ export default function VerificationPage() {
       setError("Upload failed: " + (err?.message ?? "please try again"))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // react-hook-form blocks submission silently when validation fails. Since the
+  // failing field (e.g. NIN) can live on an earlier, hidden step, surface a
+  // message and jump back to the step that holds it so the user can fix it.
+  const onInvalid = (formErrors: typeof errors) => {
+    if (formErrors.id_document_type || formErrors.nin_number) {
+      setStep(1)
+      setError(
+        formErrors.nin_number?.message?.toString() ||
+          "Please complete your ID document details."
+      )
+    } else if (formErrors.confirm_details) {
+      setError(formErrors.confirm_details.message?.toString() || "Please confirm your details.")
+    } else {
+      setError("Please complete all required fields before submitting.")
     }
   }
 
@@ -361,7 +379,7 @@ export default function VerificationPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             <section className="space-y-4">
