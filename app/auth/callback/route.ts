@@ -3,6 +3,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { grantTrialToNewUser } from "@/lib/billing"
+import { sendWelcomeEmail, notifyAdminNewUser } from "@/lib/email"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
   if (source === "signup") {
     // Only student/landlord/agent may be self-selected; never an admin role.
     const userRole =
-      roleParam === "landlord" || roleParam === "agent" ? roleParam : "student"
+      (roleParam === "landlord" || roleParam === "agent" ? roleParam : "student") as "student" | "landlord" | "agent"
     const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "User"
 
     const { error: insertError } = await service.from("profiles").insert({
@@ -83,7 +84,16 @@ export async function GET(request: Request) {
       role: userRole,
       created_at: new Date().toISOString(),
     })
-    if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+    
+    if (insertError) {
+      console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+    } else {
+      // Background notifications for new signups.
+      if (user.email) {
+        await sendWelcomeEmail({ email: user.email, fullName, role: userRole })
+        await notifyAdminNewUser(fullName, user.email, userRole)
+      }
+    }
 
     if (userRole === "landlord" || userRole === "agent") {
       // Google provides no phone — dedupe the trial by email.
@@ -96,7 +106,7 @@ export async function GET(request: Request) {
   // FALLBACK: email-verification flow (no source param) where the trigger
   // didn't create the profile. Provision from sign-up metadata.
   const meta = user.user_metadata ?? {}
-  const userRole = meta.role || "student"
+  const userRole = (meta.role || "student") as "student" | "landlord" | "agent"
   const fullName = meta.full_name || "User"
 
   const { error: insertError } = await service.from("profiles").insert({
@@ -107,7 +117,16 @@ export async function GET(request: Request) {
     role: userRole,
     created_at: new Date().toISOString(),
   })
-  if (insertError) console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+
+  if (insertError) {
+    console.error("[AUTH CALLBACK] Profile insert failed:", insertError)
+  } else {
+    // Background notifications for new signups.
+    if (user.email) {
+      await sendWelcomeEmail({ email: user.email, fullName, role: userRole })
+      await notifyAdminNewUser(fullName, user.email, userRole)
+    }
+  }
 
   if (userRole === "landlord" || userRole === "agent") {
     await grantTrialToNewUser(service, user.id, meta.phone || undefined, user.email ?? undefined)

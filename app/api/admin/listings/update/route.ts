@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { logAdminAction } from '@/lib/audit'
 import { cleanupListingMedia } from '@/lib/storage'
+import { sendListingStatusEmail } from '@/lib/email'
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -22,19 +23,48 @@ export async function POST(request: Request) {
   )
 
   try {
-    const { data: listing } = await serviceClient.from('listings').select('title, landlord_id, video_url').eq('id', listingId).single()
+    const { data: listing } = await serviceClient
+      .from('listings')
+      .select('title, landlord_id, video_url, profiles(email)')
+      .eq('id', listingId)
+      .single()
+
+    const landlordEmail = (listing?.profiles as any)?.email
 
     if (action === 'approve') {
       const { error } = await serviceClient.from('listings').update({ status: 'active' }).eq('id', listingId)
       if (error) throw error
+      
       await logAdminAction({ admin_id: user.id, action: 'approved_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title } })
+      
+      if (landlordEmail) {
+        await sendListingStatusEmail({
+          landlordEmail,
+          listingTitle: listing?.title || 'Your Listing',
+          status: 'approved',
+          listingId
+        })
+      }
+
       return NextResponse.json({ success: true })
     }
 
     if (action === 'reject') {
       const { error } = await serviceClient.from('listings').update({ status: 'rejected', rejection_reason: reason }).eq('id', listingId)
       if (error) throw error
+
       await logAdminAction({ admin_id: user.id, action: 'rejected_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title, reason } })
+
+      if (landlordEmail) {
+        await sendListingStatusEmail({
+          landlordEmail,
+          listingTitle: listing?.title || 'Your Listing',
+          status: 'rejected',
+          listingId,
+          rejectionReason: reason
+        })
+      }
+
       return NextResponse.json({ success: true })
     }
 
