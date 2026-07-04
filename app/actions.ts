@@ -5,6 +5,25 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 import { sendAdminNotification } from "@/lib/email"
 import { cleanupListingMedia } from "@/lib/storage"
+import { logAdminAction } from "@/lib/audit"
+
+/**
+ * Server action wrapper around logAdminAction so client components can call it
+ * without needing direct access to the service role key.
+ */
+export async function logAdminActionClient(params: {
+  admin_id: string
+  action: string
+  target_type?: string
+  target_id?: string
+  details?: Record<string, any>
+}) {
+  try {
+    await logAdminAction(params)
+  } catch (err) {
+    console.error("[actions] logAdminActionClient failed:", err)
+  }
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
 

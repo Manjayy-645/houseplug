@@ -70,3 +70,9 @@ houseplug.ng
 - **NO** data fetching in `useEffect`.
 - **NO** skipping Zod validation.
 - **NO** hardcoded API keys or secrets.
+
+## Deployment & CI/CD
+- **Verification:** Before pushing, always run `npm run build` locally to ensure no build-time errors.
+- **Monitoring:** After every `git push`, use the **Vercel MCP** or Vercel CLI to verify the deployment status.
+- **Alerting:** If a deployment fails on Vercel, immediately investigate logs via Vercel MCP and report the root cause.
+- **Environment:** Ensure `CRON_SECRET` and `RESEND_API_KEY` are configured in the Vercel dashboard before deploying email or cron features.
