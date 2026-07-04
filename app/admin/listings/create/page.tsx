@@ -130,7 +130,7 @@ export default async function AdminCreateListingPage({ searchParams }: PageProps
         <UserCog className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-amber-800">
-            Creating listing on behalf of {targetProfile.full_name}
+            Creating listing on behalf of {targetProfile.full_name ?? "this user"}
           </p>
           <p className="text-xs text-amber-600 mt-0.5">
             This listing will be attributed to their account, not yours. It will go through
@@ -148,7 +148,7 @@ export default async function AdminCreateListingPage({ searchParams }: PageProps
       {/* The listing form — all the same fields, different landlordId */}
       <AdminListingForm
         landlordId={forUserId}
-        forUserName={targetProfile.full_name}
+        forUserName={targetProfile.full_name ?? "Unknown User"}
         forUserPhone={targetProfile.phone ?? null}
         adminId={adminUser.id}
         adminName={adminProfile?.full_name ?? "Admin"}

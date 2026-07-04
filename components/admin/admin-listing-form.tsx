@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -135,7 +135,7 @@ export function AdminListingForm({
   const titleLength = watch("title")?.length ?? 0
   const descriptionLength = watch("description")?.length ?? 0
   const progress = ((currentStep + 1) / 4) * 100
-  const amenities = watch("amenities")
+  const amenities = watch("amenities") ?? []
 
   const nextStep = async () => {
     const valid = await trigger(stepFields[currentStep])

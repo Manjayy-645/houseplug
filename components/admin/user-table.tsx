@@ -51,6 +51,7 @@ interface AccountData {
     type: string
     status: string
     created_at: string
+    paystack_reference: string | null
   }[]
   avgRating: string | null
   reviewCount: number
@@ -73,51 +74,67 @@ function AccountPanel({
   const fetchAccountData = useCallback(async () => {
     setLoading(true)
     try {
-      const [listingsRes, subscriptionRes, paymentsRes, reviewsRes] =
-        await Promise.all([
-          supabase
-            .from("listings")
-            .select("id, title, status, is_featured, is_urgent, views_count, created_at")
-            .eq("landlord_id", user.id)
-            .order("created_at", { ascending: false }),
+      // Fetch listings, subscription, and payments in parallel.
+      // Reviews use a two-step approach to avoid fragile PostgREST join filter syntax.
+      const [listingsRes, subscriptionRes, paymentsRes] = await Promise.all([
+        supabase
+          .from("listings")
+          .select("id, title, status, is_featured, is_urgent, views_count, created_at")
+          .eq("landlord_id", user.id)
+          .order("created_at", { ascending: false }),
 
-          supabase
-            .from("subscriptions")
-            .select("plan, active, expires_at, is_trial, billing_cycle, amount_paid")
-            .eq("landlord_id", user.id)
-            .eq("active", true)
-            .maybeSingle(),
+        supabase
+          .from("subscriptions")
+          .select("plan, active, expires_at, is_trial, billing_cycle, amount_paid")
+          .eq("landlord_id", user.id)
+          .eq("active", true)
+          .maybeSingle(),
 
-          supabase
-            .from("payments")
-            .select("amount, type, status, created_at")
-            .eq("landlord_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(5),
+        supabase
+          .from("payments")
+          .select("amount, type, status, created_at, paystack_reference")
+          .eq("landlord_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ])
 
-          supabase
-            .from("reviews")
-            .select("rating, listings!inner(landlord_id)")
-            .eq("listings.landlord_id", user.id),
-        ])
+      // Step 1: Collect listing IDs owned by this landlord.
+      const listingIds = (listingsRes.data ?? []).map((l) => l.id)
 
-      const reviews = reviewsRes.data ?? []
-      const avgRating =
-        reviews.length > 0
-          ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-          : null
+      // Step 2: Fetch reviews for those listings (avoids fragile embedded join filter).
+      let avgRating: string | null = null
+      let reviewCount = 0
+      if (listingIds.length > 0) {
+        const { data: reviews } = await supabase
+          .from("reviews")
+          .select("rating")
+          .in("listing_id", listingIds)
+        if (reviews && reviews.length > 0) {
+          avgRating = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+          reviewCount = reviews.length
+        }
+      }
 
       setAccountData({
         listings: listingsRes.data ?? [],
         subscription: subscriptionRes.data ?? null,
         payments: paymentsRes.data ?? [],
         avgRating,
-        reviewCount: reviews.length,
+        reviewCount,
       })
     } finally {
       setLoading(false)
     }
   }, [user.id])
+
+  // Escape key closes the panel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", handler)
+    return () => document.removeEventListener("keydown", handler)
+  }, [onClose])
 
   useEffect(() => {
     fetchAccountData()
@@ -136,7 +153,7 @@ function AccountPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Account Summary">
       {/* Backdrop */}
       <div
         className="flex-1 bg-black/40 backdrop-blur-sm"
@@ -364,12 +381,12 @@ function AccountPanel({
                 <div className="space-y-2">
                   {accountData.payments.map((payment, i) => (
                     <div
-                      key={i}
+                      key={payment.paystack_reference ?? i}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100"
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900 capitalize">
-                          {payment.type.replace("_", " ")}
+                          {payment.type.replace(/_/g, " ")}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           {formatDate(payment.created_at)} ·{" "}
@@ -416,7 +433,7 @@ function AccountPanel({
                   <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                   <span className="text-sm text-gray-700 flex-1">{user.phone}</span>
                   <a
-                    href={`https://wa.me/${user.phone.replace(/^0/, "234")}`}
+                    href={`https://wa.me/${user.phone.replace(/\D/g, "").replace(/^0/, "234")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-green-600 font-semibold hover:underline shrink-0"
@@ -469,7 +486,7 @@ function RoleBadge({ role }: { role: string }) {
         styles[role] ?? "bg-gray-100 text-gray-700"
       }`}
     >
-      {role.replace("_", " ")}
+      {role.replace(/_/g, " ")}
     </span>
   )
 }
@@ -534,10 +551,12 @@ export default function UserTable({
         throw new Error(data.error)
       }
       router.refresh()
-    } catch (error: any) {
-      alert(error.message || `Failed to ${isBanned ? "unban" : "ban"} user`)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : `Failed to ${isBanned ? "unban" : "ban"} user`
+      alert(msg)
+    } finally {
+      setLoading(null)
     }
-    setLoading(null)
   }
 
   const isLandlordOrAgent = (role: string) => role === "landlord" || role === "agent"
