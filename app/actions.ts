@@ -50,16 +50,13 @@ export async function submitReview(formData: FormData) {
   }
 
   const { error } = await supabase.from("reviews").insert({
-    listing_id: listingId,
-    student_id: user.id,
+    listing_id: listingId as string,
     rating,
-    comment
+    review_text: comment as string,
+    reviewer_name: "UniPort Student", // Should really be passed from form if we were using this action
   })
 
   if (error) {
-    if (error.code === "23505") {
-      return { error: "You have already reviewed this listing." }
-    }
     return { error: error.message }
   }
 

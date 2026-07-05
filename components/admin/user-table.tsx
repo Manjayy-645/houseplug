@@ -507,6 +507,8 @@ export default function UserTable({
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [userToDelete, setUserToDelete] = useState<UserWithCounts | null>(null)
+  const [userToBan, setUserToBan] = useState<UserWithCounts | null>(null)
+  const [banReason, setBanReason] = useState("")
   const [deleting, setDeleting] = useState(false)
   const [viewingUser, setViewingUser] = useState<UserWithCounts | null>(null)
 
@@ -533,8 +535,13 @@ export default function UserTable({
     }
   }
 
-  const handleToggleBan = async (id: string, isBanned: boolean) => {
-    if (!confirm(`Are you sure you want to ${isBanned ? "unban" : "ban"} this user?`)) return
+  const handleToggleBan = async (id: string, isBanned: boolean, reason?: string) => {
+    if (isBanned) {
+      if (!confirm("Are you sure you want to unban this user?")) return
+    } else {
+      if (!reason) return
+    }
+    
     setLoading(id)
     try {
       const res = await fetch("/api/admin/users/update", {
@@ -543,13 +550,15 @@ export default function UserTable({
         body: JSON.stringify({
           targetUserId: id,
           action: isBanned ? "unban" : "ban",
-          reason: isBanned ? null : "Violating platform policies",
+          reason: isBanned ? null : reason,
         }),
       })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error)
       }
+      setUserToBan(null)
+      setBanReason("")
       router.refresh()
     } catch (err) {
       const msg = err instanceof Error ? err.message : `Failed to ${isBanned ? "unban" : "ban"} user`
@@ -687,7 +696,7 @@ export default function UserTable({
 
                       {/* Ban / Unban */}
                       <button
-                        onClick={() => handleToggleBan(user.id, !!user.banned)}
+                        onClick={() => user.banned ? handleToggleBan(user.id, true) : setUserToBan(user)}
                         disabled={loading === user.id}
                         className={`p-2 rounded-lg transition-colors ${
                           user.banned
@@ -730,6 +739,65 @@ export default function UserTable({
       {/* Account Summary Slide-over */}
       {viewingUser && (
         <AccountPanel user={viewingUser} onClose={() => setViewingUser(null)} />
+      )}
+
+      {/* Ban User Modal */}
+      {userToBan && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0">
+                  <Ban className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Ban User</h3>
+                  <p className="text-xs text-gray-500">{userToBan.full_name} ({userToBan.email})</p>
+                </div>
+              </div>
+              <button onClick={() => { setUserToBan(null); setBanReason(""); }} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="banReason" className="block text-sm font-medium text-gray-700">Reason for ban (required)</label>
+              <textarea
+                id="banReason"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] outline-none text-sm resize-none"
+                placeholder="E.g. Fraudulent listings, inappropriate behavior..."
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">An email will be sent to the user explaining why they were suspended and how to appeal.</p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => { setUserToBan(null); setBanReason(""); }}
+                disabled={loading === userToBan.id}
+                className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleToggleBan(userToBan.id, false, banReason)}
+                disabled={loading === userToBan.id || !banReason.trim()}
+                className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+              >
+                {loading === userToBan.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Banning...
+                  </>
+                ) : (
+                  "Confirm Ban"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Delete Confirmation Modal */}

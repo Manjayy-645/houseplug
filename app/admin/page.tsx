@@ -13,6 +13,7 @@ import {
   Clock
 } from "lucide-react"
 import Link from "next/link"
+import AppealsList from "@/components/admin/appeals-list"
 
 export default async function AdminDashboardPage() {
   const supabase = createClient()
@@ -33,12 +34,14 @@ export default async function AdminDashboardPage() {
     { count: pendingListings },
     { count: pendingVerifications },
     { count: totalActiveListings },
-    { count: totalUsers }
+    { count: totalUsers },
+    { data: pendingAppeals }
   ] = await Promise.all([
     supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'landlord').eq('verification_status', 'pending'),
     supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true })
+    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+    supabase.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10)
   ])
 
   return (
@@ -167,6 +170,12 @@ export default async function AdminDashboardPage() {
              </Link>
            )}
         </div>
+      </div>
+
+      {/* Appeals Section */}
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 mb-4">Pending Appeals</h3>
+        <AppealsList initialAppeals={pendingAppeals as any[]} />
       </div>
     </div>
   )

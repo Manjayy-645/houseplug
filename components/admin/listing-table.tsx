@@ -18,6 +18,7 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
   const [loading, setLoading] = useState<string | null>(null)
   const [rejectingListing, setRejectingListing] = useState<ListingWithLandlord | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
+  const [presetReason, setPresetReason] = useState("")
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Are you sure you want to PERMANENTLY delete "${title}"? This cannot be undone.`)) return
@@ -80,21 +81,24 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
   }
 
   const handleReject = async () => {
-    if (!rejectingListing || !rejectionReason.trim()) return
+    if (!rejectingListing || !presetReason) return
+    const finalReason = presetReason === "Other" ? rejectionReason : (rejectionReason ? `${presetReason} - ${rejectionReason}` : presetReason)
+    if (!finalReason.trim()) return
 
     setLoading(rejectingListing.id)
     try {
       const res = await fetch('/api/admin/listings/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ listingId: rejectingListing.id, action: 'reject', reason: rejectionReason })
+        body: JSON.stringify({ listingId: rejectingListing.id, action: 'reject', reason: finalReason })
       })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error)
       }
       setRejectingListing(null)
-      rejectionReason && setRejectionReason("")
+      setRejectionReason("")
+      setPresetReason("")
       router.refresh()
     } catch (error: any) {
       alert(error.message || "Failed to reject listing")
@@ -236,17 +240,39 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
             <p className="text-sm text-gray-500 mb-4">
               Please provide a reason for rejecting <span className="font-semibold text-gray-700">{rejectingListing.title}</span>. This will be shown to the landlord.
             </p>
-            <textarea
-              className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] focus:border-transparent outline-none resize-none"
-              placeholder="e.g. Photo quality is too low, price is unrealistic..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-            />
+            
+            <div className="space-y-4">
+              <select
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] outline-none text-sm"
+                value={presetReason}
+                onChange={(e) => setPresetReason(e.target.value)}
+              >
+                <option value="">Select a reason</option>
+                <option value="Photos are unclear or missing">Photos are unclear or missing</option>
+                <option value="Price not specified">Price not specified</option>
+                <option value="Location/address is incomplete">Location/address is incomplete</option>
+                <option value="Property details are insufficient">Property details are insufficient</option>
+                <option value="Listing appears to be a duplicate">Listing appears to be a duplicate</option>
+                <option value="Suspicious or fraudulent listing">Suspicious or fraudulent listing</option>
+                <option value="Other">Other (specify below)</option>
+              </select>
+
+              {(presetReason === "Other" || presetReason !== "") && (
+                <textarea
+                  className="w-full h-24 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] outline-none resize-none text-sm"
+                  placeholder={presetReason === "Other" ? "Specify reason..." : "Additional details (optional)..."}
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                />
+              )}
+            </div>
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => {
                   setRejectingListing(null)
                   setRejectionReason("")
+                  setPresetReason("")
                 }}
                 className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
               >
@@ -254,10 +280,16 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
               </button>
               <button
                 onClick={handleReject}
-                disabled={!rejectionReason.trim() || loading === rejectingListing.id}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50"
+                disabled={(!presetReason || (presetReason === "Other" && !rejectionReason.trim())) || loading === rejectingListing.id}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading === rejectingListing.id ? "Rejecting..." : "Confirm Rejection"}
+                {loading === rejectingListing.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Rejecting...
+                  </>
+                ) : (
+                  "Confirm Rejection"
+                )}
               </button>
             </div>
           </div>

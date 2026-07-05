@@ -286,6 +286,22 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
       if (mode === "edit" && listing?.id) {
         const { error } = await supabase.from("listings").update(payload).eq("id", listing.id)
         if (error) throw error
+        
+        if (listing.status === "rejected") {
+          try {
+            await fetch("/api/landlord/listings/appeal", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                listingId: listing.id, 
+                appealType: "resubmit", 
+                appealMessage: "Listing edited and resubmitted." 
+              })
+            })
+          } catch (e) {
+            console.error("Failed to submit appeal for resubmission", e)
+          }
+        }
       } else {
         const { error } = await supabase.from("listings").insert(payload)
         if (error) throw error

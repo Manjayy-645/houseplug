@@ -26,6 +26,29 @@ export async function POST(request: Request) {
     if (action === 'ban') {
       const { error } = await serviceClient.from('profiles').update({ banned: true }).eq('id', targetUserId)
       if (error) throw error
+
+      await serviceClient.from('bans').insert({
+        user_id: targetUserId,
+        reason,
+        banned_by: user.id
+      })
+
+      // Send email
+      if (targetUser?.email) {
+        try {
+          const { Resend } = require('resend')
+          const resend = new Resend(process.env.RESEND_API_KEY)
+          await resend.emails.send({
+            from: "HousePlug <noreply@send.houseplug.ng>",
+            to: targetUser.email,
+            subject: "Your HousePlug account has been suspended",
+            html: `<p>Your account has been suspended.</p><p>Reason: ${reason}</p><p>If you believe this is a mistake, you can <a href="https://houseplug.ng/appeal">submit an appeal</a>.</p>`
+          })
+        } catch (e) {
+          console.error("Failed to send ban email", e)
+        }
+      }
+
       await logAdminAction({ admin_id: user.id, action: 'banned_user', target_type: 'user', target_id: targetUserId, details: { full_name: targetUser?.full_name, email: targetUser?.email, reason } })
       return NextResponse.json({ success: true })
     }
@@ -33,6 +56,9 @@ export async function POST(request: Request) {
     if (action === 'unban') {
       const { error } = await serviceClient.from('profiles').update({ banned: false }).eq('id', targetUserId)
       if (error) throw error
+
+      await serviceClient.from('bans').update({ is_active: false }).eq('user_id', targetUserId).eq('is_active', true)
+
       await logAdminAction({ admin_id: user.id, action: 'unbanned_user', target_type: 'user', target_id: targetUserId, details: { full_name: targetUser?.full_name, email: targetUser?.email } })
       return NextResponse.json({ success: true })
     }

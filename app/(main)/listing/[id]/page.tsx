@@ -15,12 +15,58 @@ import ReviewsSection from "@/components/listing/reviews-section"
 import ReviewForm from "@/components/listing/review-form"
 import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
+import type { Metadata } from "next"
 
 type ListingDetailPageProps = {
   params: { id: string }
 }
 
 export const revalidate = 60 // revalidate every 60 seconds
+
+export async function generateMetadata({ params }: ListingDetailPageProps): Promise<Metadata> {
+  const supabase = createClient()
+  const listingId = params.id
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)
+  
+  if (!isUuid) return {}
+
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("title, price_yearly, room_type, area, university")
+    .eq("id", listingId)
+    .single()
+
+  if (!listing) return {}
+
+  const roomTypeStr = formatRoomType(listing.room_type)
+  const monthlyPrice = Math.round(listing.price_yearly / 12)
+  
+  // Format price and remove the ₦ symbol if formatNaira includes it, to avoid double ₦
+  // Actually, formatNaira includes ₦. Let's just use it and string manipulation if needed, or just insert it.
+  const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(monthlyPrice)
+
+  const campus = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
+
+  const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/month | HousePlug`
+  const description = `Verified student housing near ${campus}. Contact the landlord directly on WhatsApp.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      // Next.js automatically appends the og:image from opengraph-image.tsx
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    }
+  }
+}
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   const supabase = createClient()
@@ -49,7 +95,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       isUuid
         ? supabase
             .from("reviews")
-            .select("id, rating, comment, created_at, student:profiles(full_name, avatar_url)")
+            .select("id, rating, review_text, created_at, reviewer_name")
             .eq("listing_id", listingId)
             .order("created_at", { ascending: false })
         : Promise.resolve({ data: null })
@@ -142,7 +188,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       ? supabase.from("profiles").select("id, full_name, phone, avatar_url, role, created_at").eq("id", listingRowData.landlord_id).single()
       : Promise.resolve({ data: null }),
     user 
-      ? supabase.from("profiles").select("id, role").eq("id", user.id).single() 
+      ? supabase.from("profiles").select("id, role, full_name").eq("id", user.id).single() 
       : Promise.resolve({ data: null }),
     user
       ? supabase.from("reviews").select("id").eq("listing_id", listingId).eq("student_id", user.id).maybeSingle()
@@ -157,10 +203,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   landlordRowData = landlordRowData || dbLandlordRow || (listingRowData as any)?.landlord
   
-  reviews = (reviewsRows ?? []).map((review: any) => ({
-    ...review,
-    student: Array.isArray(review.student) ? review.student[0] : review.student
-  })) as Review[]
+  reviews = (reviewsRows ?? []) as Review[]
 
   const reviewCount = reviews.length
   const averageRating =
@@ -222,7 +265,14 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
                 {listing.title}
               </h1>
-              <p className="flex items-center gap-1.5 text-sm font-medium text-gray-500">
+              {reviewCount > 0 && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Star className="h-5 w-5 fill-[#E8A317] text-[#E8A317]" />
+                  <span className="text-lg font-bold text-gray-900">{averageRating.toFixed(1)}</span>
+                  <span className="text-sm font-medium text-gray-500">· {reviewCount} review{reviewCount !== 1 ? 's' : ''}</span>
+                </div>
+              )}
+              <p className="flex items-center gap-1.5 text-sm font-medium text-gray-500 mt-2">
                 <span className="text-[#1B4332]">{listing.area}</span>
                 <span className="text-gray-300">·</span>
                 <span>{formatDistance(listing.distance_from_gate, UNIVERSITIES.find(u => u.id === listing.university)?.shortName)}</span>
@@ -299,26 +349,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />
             
-            {/* Review Section Call to Action */}
-            {!user ? (
-              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-center">
-                <h3 className="text-lg font-semibold text-gray-900">Stayed here before?</h3>
-                <p className="mt-1 text-sm text-gray-600">Please log in to share your experience with other students.</p>
-                <Link 
-                  href="/login" 
-                  className="mt-4 inline-block rounded-xl bg-[#1B4332] px-6 py-2 text-sm font-bold text-white transition hover:bg-[#2D5A47]"
-                >
-                  Log In to Review
-                </Link>
-              </div>
-            ) : userProfile?.role === "student" && !existingReview ? (
-              <ReviewForm listingId={listing.id} />
-            ) : userProfile?.role === "student" && existingReview ? (
-              <div className="rounded-2xl bg-emerald-50 p-6 text-center border border-emerald-100">
-                <h3 className="text-lg font-semibold text-emerald-900">Thank you for your review!</h3>
-                <p className="mt-1 text-sm text-emerald-700">You have already shared your feedback for this listing.</p>
-              </div>
-            ) : null}
+            {/* Review Section Call to Action - always show form for everyone */}
+            <ReviewForm listingId={listing.id} prefillName={userProfile?.full_name} />
 
             <SimilarListings currentListingId={listing.id} roomType={listing.room_type} />
           </div>

@@ -124,9 +124,10 @@ export function ListingCard({ listing }: ListingCardProps) {
           <div className="flex flex-col items-end">
             <span className="text-gray-500 text-[10px] font-medium truncate max-w-[100px]">{landlordName}</span>
             {reviewCount > 0 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 mt-0.5">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span className="text-[10px] font-bold text-gray-700">{averageRating.toFixed(1)}</span>
+                <span className="text-[10px] text-gray-500">· {reviewCount}</span>
               </div>
             )}
           </div>

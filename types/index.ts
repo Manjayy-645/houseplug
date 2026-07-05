@@ -98,12 +98,11 @@ export type Listing = {
 export type Review = {
   id: string
   listing_id: string
-  student_id: string
+  reviewer_name?: string
   rating: number
-  comment: string
+  review_text?: string
   reply?: string
   created_at: string
-  student?: Profile
 }
 
 export type Subscription = {

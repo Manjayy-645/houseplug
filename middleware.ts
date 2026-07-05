@@ -81,8 +81,9 @@ export async function middleware(request: NextRequest) {
     .single()
 
   if (profile?.banned) {
-    await supabase.auth.signOut()
-    return NextResponse.redirect(new URL("/login?error=account_banned", request.url))
+    if (path !== "/banned" && path !== "/appeal" && !path.startsWith("/api/")) {
+      return NextResponse.redirect(new URL("/banned", request.url))
+    }
   }
 
   // Super admin only routes

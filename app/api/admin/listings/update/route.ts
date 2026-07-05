@@ -25,14 +25,14 @@ export async function POST(request: Request) {
   try {
     const { data: listing } = await serviceClient
       .from('listings')
-      .select('title, landlord_id, video_url, profiles(email)')
+      .select('title, landlord_id, video_url, rejection_count, profiles(email)')
       .eq('id', listingId)
       .single()
 
     const landlordEmail = (listing?.profiles as any)?.email
 
     if (action === 'approve') {
-      const { error } = await serviceClient.from('listings').update({ status: 'active' }).eq('id', listingId)
+      const { error } = await serviceClient.from('listings').update({ status: 'active', rejection_reason: null }).eq('id', listingId)
       if (error) throw error
       
       await logAdminAction({ admin_id: user.id, action: 'approved_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title } })
@@ -50,7 +50,8 @@ export async function POST(request: Request) {
     }
 
     if (action === 'reject') {
-      const { error } = await serviceClient.from('listings').update({ status: 'rejected', rejection_reason: reason }).eq('id', listingId)
+      const newCount = (listing?.rejection_count || 0) + 1
+      const { error } = await serviceClient.from('listings').update({ status: 'rejected', rejection_reason: reason, rejection_count: newCount }).eq('id', listingId)
       if (error) throw error
 
       await logAdminAction({ admin_id: user.id, action: 'rejected_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title, reason } })

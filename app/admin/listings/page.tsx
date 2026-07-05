@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server"
 import { Listing, ListingStatus } from "@/types"
 import ListingTable from "@/components/admin/listing-table"
+import ListingAppealsTable from "@/components/admin/listing-appeals-table"
 import Link from "next/link"
 
 export default async function AdminListingsPage({
   searchParams,
 }: {
-  searchParams: { status?: ListingStatus; page?: string }
+  searchParams: { status?: ListingStatus | "appeals"; page?: string }
 }) {
   const supabase = createClient()
 
@@ -14,34 +15,53 @@ export default async function AdminListingsPage({
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  let query = supabase
-    .from("listings")
-    .select(`
-      *,
-      landlord:profiles(*)
-    `, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
-
-  if (currentStatus !== "all") {
-    query = query.eq("status", currentStatus)
-  }
-
-  const { data: listings, count, error } = await query
-  
-  if (error) {
-    console.error("[ADMIN_LISTINGS] Error fetching listings:", error)
-  }
-
-  const totalPages = Math.ceil((count || 0) / pageSize)
-
-  const tabs: { label: string; value: ListingStatus | "all" }[] = [
+  const tabs = [
     { label: "Pending", value: "pending" },
     { label: "Active", value: "active" },
     { label: "Rejected", value: "rejected" },
     { label: "Unavailable", value: "unavailable" },
+    { label: "Appeals", value: "appeals" },
     { label: "All", value: "all" },
   ]
+
+  let listings: any[] = []
+  let appeals: any[] = []
+  let count = 0
+
+  if (currentStatus === "appeals") {
+    const { data: appealsData, count: appealsCount } = await supabase
+      .from("listing_appeals")
+      .select(`
+        *,
+        listing:listings(title, address),
+        landlord:profiles(full_name, email)
+      `, { count: "exact" })
+      .eq('status', 'pending')
+      .order("created_at", { ascending: false })
+      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+      
+    appeals = appealsData || []
+    count = appealsCount || 0
+  } else {
+    let query = supabase
+      .from("listings")
+      .select(`
+        *,
+        landlord:profiles(*)
+      `, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+
+    if (currentStatus !== "all") {
+      query = query.eq("status", currentStatus)
+    }
+
+    const { data, count: listingsCount } = await query
+    listings = data || []
+    count = listingsCount || 0
+  }
+
+  const totalPages = Math.ceil((count || 0) / pageSize)
 
   return (
     <div className="space-y-6">
@@ -65,7 +85,11 @@ export default async function AdminListingsPage({
         ))}
       </div>
 
-      <ListingTable listings={listings as any[]} />
+      {currentStatus === "appeals" ? (
+        <ListingAppealsTable appeals={appeals} />
+      ) : (
+        <ListingTable listings={listings} />
+      )}
 
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-8">

@@ -8,7 +8,6 @@ import { Trash2, Star, Loader2, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface ReviewWithDetails extends Review {
-  student: Profile
   listing: { title: string }
 }
 
@@ -44,10 +43,10 @@ export default function ReviewTable({ reviews }: { reviews: ReviewWithDetails[] 
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-600">
-              <th className="px-6 py-4">Student</th>
+              <th className="px-6 py-4">Reviewer</th>
               <th className="px-6 py-4">Listing</th>
               <th className="px-6 py-4">Rating</th>
-              <th className="px-6 py-4">Comment</th>
+              <th className="px-6 py-4">Review</th>
               <th className="px-6 py-4">Date</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
@@ -58,15 +57,11 @@ export default function ReviewTable({ reviews }: { reviews: ReviewWithDetails[] 
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                      {review.student?.avatar_url ? (
-                        <img src={review.student.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <User className="w-4 h-4" />
-                        </div>
-                      )}
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <User className="w-4 h-4" />
+                      </div>
                     </div>
-                    <div className="text-sm font-medium text-gray-900">{review.student?.full_name}</div>
+                    <div className="text-sm font-medium text-gray-900">{review.reviewer_name || "UniPort Student"}</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-[150px]">
@@ -79,7 +74,7 @@ export default function ReviewTable({ reviews }: { reviews: ReviewWithDetails[] 
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 italic max-w-xs">
-                  <p className="truncate">"{review.comment}"</p>
+                  <p className="truncate">"{review.review_text || ""}"</p>
                   {review.reply && (
                     <p className="text-[10px] text-[#1B4332] font-bold mt-1 uppercase tracking-tighter truncate">
                       Reply: {review.reply}

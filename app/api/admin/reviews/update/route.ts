@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   )
 
   try {
-    const { data: review } = await serviceClient.from('reviews').select('comment, student:profiles(full_name)').eq('id', reviewId).single()
+    const { data: review } = await serviceClient.from('reviews').select('review_text, reviewer_name').eq('id', reviewId).single()
 
     if (action === 'delete') {
       const { error } = await serviceClient.from('reviews').delete().eq('id', reviewId)
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         action: 'deleted_review', 
         target_type: 'review', 
         target_id: reviewId, 
-        details: { student: (review?.student as any)?.full_name, comment: review?.comment?.substring(0, 50) + '...' } 
+        details: { reviewer: review?.reviewer_name, comment: review?.review_text?.substring(0, 50) + '...' } 
       })
       return NextResponse.json({ success: true })
     }

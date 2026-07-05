@@ -16,7 +16,6 @@ export default async function AdminReviewsPage({
     .from("reviews")
     .select(`
       *,
-      student:profiles(*),
       listing:listings(title)
     `, { count: "exact" })
     .order("created_at", { ascending: false })

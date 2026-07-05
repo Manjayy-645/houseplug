@@ -3,6 +3,7 @@ import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
+import { ListingAppealActions } from "@/components/landlord/listing-appeal-actions"
 import type { Listing, Review } from "@/types"
 import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
 import { isSubscriptionExpiringSoon, formatExpiryDate, daysUntilExpiry } from "@/lib/billing-utils"
@@ -253,45 +254,51 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                 listing.status === "unavailable" ? "bg-gray-50 opacity-75" : ""
               }`}
             >
-              <div className="flex min-w-0 items-center gap-3">
-                <Link href={`/listing/${listing.id}`} className="h-14 w-16 shrink-0 overflow-hidden rounded bg-gray-200">
-                  {listing.photos?.[0] ? (
-                    <img src={listing.photos[0]} alt={listing.title} className="h-full w-full object-cover" />
-                  ) : null}
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        listing.status === "active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : listing.status === "pending"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {listing.status}
-                    </span>
-                    <Link href={`/listing/${listing.id}`} className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px] hover:text-[#1B4332] hover:underline">{listing.title}</Link>
-                    {listing.is_featured ? (
-                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
-                        <Star className="h-3 w-3 fill-current" /> Featured
-                      </span>
-                    ) : (subscription.plan !== "free" && !subscription.expired) ? (
-                      <span className="shrink-0 text-[10px] font-bold text-gray-400 uppercase tracking-tight">Standard Placement</span>
-                    ) : subscription.plan === "free" ? (
-                      <Link href="/landlord/subscription" className="shrink-0 text-[10px] font-bold text-gray-400 hover:text-[#1B4332] hover:underline uppercase tracking-tight">
-                        Featured &mdash; Upgrade
-                      </Link>
+              <div className="flex flex-col flex-1">
+                <div className="flex min-w-0 items-center gap-3">
+                  <Link href={`/listing/${listing.id}`} className="h-14 w-16 shrink-0 overflow-hidden rounded bg-gray-200">
+                    {listing.photos?.[0] ? (
+                      <img src={listing.photos[0]} alt={listing.title} className="h-full w-full object-cover" />
                     ) : null}
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          listing.status === "active"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : listing.status === "pending"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {listing.status}
+                      </span>
+                      <Link href={`/listing/${listing.id}`} className="truncate text-sm font-bold text-gray-900 flex-1 min-w-[100px] hover:text-[#1B4332] hover:underline">{listing.title}</Link>
+                      {listing.is_featured ? (
+                        <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 uppercase tracking-tight">
+                          <Star className="h-3 w-3 fill-current" /> Featured
+                        </span>
+                      ) : (subscription.plan !== "free" && !subscription.expired) ? (
+                        <span className="shrink-0 text-[10px] font-bold text-gray-400 uppercase tracking-tight">Standard Placement</span>
+                      ) : subscription.plan === "free" ? (
+                        <Link href="/landlord/subscription" className="shrink-0 text-[10px] font-bold text-gray-400 hover:text-[#1B4332] hover:underline uppercase tracking-tight">
+                          Featured &mdash; Upgrade
+                        </Link>
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs text-gray-600">
+                      {listing.area} - {formatNaira(listing.price_yearly)}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {listing.views_count ?? 0} views - {listing.whatsapp_clicks ?? 0} contacts
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-gray-600">
-                    {listing.area} - {formatNaira(listing.price_yearly)}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {listing.views_count ?? 0} views - {listing.whatsapp_clicks ?? 0} contacts
-                  </p>
                 </div>
+                
+                {listing.status === "rejected" && (
+                  <ListingAppealActions listingId={listing.id} rejectionReason={listing.rejection_reason} />
+                )}
               </div>
               <ListingRowActions listingId={listing.id} status={listing.status} landlordId={user.id} />
             </article>
@@ -320,11 +327,11 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
                     {new Date(review.created_at).toLocaleDateString("en-NG")}
                   </p>
                 </div>
-                <p className="mt-1 text-xs text-gray-600">{review.student?.full_name ?? "Student"}</p>
+                <p className="mt-1 text-xs text-gray-600">{review.reviewer_name ?? "UniPort Student"}</p>
                 <p className="mt-1 flex items-center gap-1 text-sm text-amber-600">
                   <Star className="h-4 w-4 fill-[#F59E0B]" /> {review.rating.toFixed(1)}
                 </p>
-                <p className="mt-1 line-clamp-2 text-sm text-gray-700">{review.comment}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-gray-700">{review.review_text}</p>
               </div>
             ))
           )}

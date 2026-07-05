@@ -452,3 +452,46 @@ export async function notifyAdminNewUser(fullName: string, email: string, role: 
     "View in Admin Panel"
   )
 }
+
+export async function sendNewReviewEmail({
+  landlordEmail,
+  rating,
+  reviewerName,
+  reviewText,
+  listingId,
+}: {
+  landlordEmail: string,
+  rating: number,
+  reviewerName: string,
+  reviewText?: string,
+  listingId: string,
+}): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://houseplug.ng'
+  const subject = "New review on your HousePlug listing"
+  
+  const stars = Array(rating).fill('⭐').join('')
+  
+  const message = `
+    <div style="background-color:#F0FDF4; border-left:4px solid #10B981; padding:16px 20px; border-radius:0 8px 8px 0; margin:0 0 28px;">
+      <p style="margin:0; font-size:17px; font-weight:700; color:#065F46; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">&#10003;&nbsp; New Review Received!</p>
+    </div>
+    <p style="margin:0 0 16px;"><strong>${reviewerName}</strong> just left a ${rating}-star review on your listing.</p>
+    
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">
+      <tr>
+        <td style="background-color:#F9FAFB; padding:16px 20px; border-radius:8px;">
+          <p style="margin:0 0 6px; font-size:16px; font-weight:700; color:#F59E0B; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">${stars}</p>
+          ${reviewText ? `<p style="margin:0; color:#374151; font-style:italic; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">"${reviewText}"</p>` : ''}
+        </td>
+      </tr>
+    </table>
+  `
+
+  await sendEmail({
+    to: landlordEmail,
+    subject,
+    message,
+    actionUrl: `${baseUrl}/listing/${listingId}`,
+    actionLabel: "View Listing",
+  })
+}

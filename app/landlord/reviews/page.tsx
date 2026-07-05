@@ -17,7 +17,7 @@ export default async function LandlordReviewsPage() {
   const { data: reviews } = listingIds.length > 0 
     ? await supabase
         .from("reviews")
-        .select("*, student:profiles(*), listing:listings(title)")
+        .select("*, listing:listings(title)")
         .in("listing_id", listingIds)
         .order("created_at", { ascending: false })
     : { data: [] }
@@ -37,7 +37,7 @@ export default async function LandlordReviewsPage() {
                     <User className="h-6 w-6 text-gray-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{review.student?.full_name || "Anonymous Student"}</p>
+                    <p className="font-semibold text-gray-900">{review.reviewer_name || "UniPort Student"}</p>
                     <p className="text-xs text-gray-500">{formatDate(review.created_at)}</p>
                   </div>
                 </div>
@@ -52,7 +52,7 @@ export default async function LandlordReviewsPage() {
               </div>
               <div className="mt-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#1B4332]">Listing: {review.listing?.title}</p>
-                <p className="mt-2 text-sm text-gray-700 leading-relaxed italic">"{review.comment}"</p>
+                <p className="mt-2 text-sm text-gray-700 leading-relaxed italic">"{review.review_text}"</p>
               </div>
 
               <ReviewReplyForm reviewId={review.id} initialReply={review.reply} />
