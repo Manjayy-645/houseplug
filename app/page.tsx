@@ -74,6 +74,21 @@ export default async function LandingPage() {
             </p>
             
             <HeroSearch />
+
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link 
+                href="/signup" 
+                className="bg-[#F59E0B] text-white px-8 py-3.5 rounded-xl font-bold hover:brightness-105 transition shadow-lg shadow-amber-500/20 active:scale-95"
+              >
+                Sign up to start listing
+              </Link>
+              <Link 
+                href="/browse" 
+                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-white/20 transition active:scale-95"
+              >
+                View all listing
+              </Link>
+            </div>
           </div>
         </section>
 
