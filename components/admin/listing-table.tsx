@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2 } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -181,6 +181,13 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                       title="View Listing"
                     >
                       <Eye className="w-5 h-5" />
+                    </Link>
+                    <Link
+                      href={`/admin/listings/${listing.id}/edit`}
+                      className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Listing"
+                    >
+                      <Pencil className="w-5 h-5" />
                     </Link>
                     {listing.status === "active" && (
                       <button

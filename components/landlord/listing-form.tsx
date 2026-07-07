@@ -269,7 +269,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
         landmark: values.landmark || null,
         amenities: values.amenities,
         photos: photoUrls,
-        status: "pending",
+        status: mode === "edit" ? (listing?.status || "pending") : "pending",
         is_featured: isPro,
         whatsapp_number: values.whatsapp_number,
         phone_number: values.phone_number || null,
@@ -329,7 +329,9 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
         <h2 className="text-lg font-semibold text-emerald-900">
-          Submitted for verification. We&apos;ll review within 24 hours.
+          {mode === "edit" && listing?.status === "active" 
+            ? "Your listing changes have been saved."
+            : "Submitted for verification. We'll review within 24 hours."}
         </h2>
         <button
           type="button"
@@ -344,12 +346,6 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
 
   return (
     <div className="space-y-5 rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:p-6">
-      {mode === "edit" ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          Editing requires re-verification before going live.
-        </div>
-      ) : null}
-
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-medium text-gray-700">Progress</p>
