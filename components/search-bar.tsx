@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search, X } from "lucide-react"
 
@@ -11,34 +11,48 @@ export function SearchBar() {
   const initialQuery = searchParams.get("q") ?? ""
   const [query, setQuery] = useState(initialQuery)
 
+  // Keep a ref to the latest searchParams so the debounce effect
+  // can read them without re-triggering on every URL change.
+  const searchParamsRef = useRef(searchParams)
+  useEffect(() => {
+    searchParamsRef.current = searchParams
+  }, [searchParams])
+
+  // Sync local state when the URL's q param changes externally
+  // (e.g. back/forward navigation).
   useEffect(() => {
     setQuery(initialQuery)
   }, [initialQuery])
 
-  const debouncedQuery = useMemo(() => query.trim(), [query])
-
   useEffect(() => {
+    const trimmed = query.trim()
+    const currentQ = searchParamsRef.current.get("q") ?? ""
+
+    // Only navigate when the query actually changed from URL state
+    if (trimmed === currentQ) return
+
     const timeout = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (debouncedQuery) {
-        params.set("q", debouncedQuery)
+      const params = new URLSearchParams(searchParamsRef.current.toString())
+      if (trimmed) {
+        params.set("q", trimmed)
       } else {
         params.delete("q")
       }
+      // Reset to page 1 when search query changes
       params.delete("page")
       router.replace(`${pathname}?${params.toString()}`, { scroll: false })
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [debouncedQuery, pathname, router, searchParams])
+  }, [query, pathname, router])
 
-  const clear = () => {
+  const clear = useCallback(() => {
     setQuery("")
-    const params = new URLSearchParams(searchParams.toString())
+    const params = new URLSearchParams(searchParamsRef.current.toString())
     params.delete("q")
     params.delete("page")
     router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }
+  }, [pathname, router])
 
   return (
     <div className="relative w-full">

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { ListingCard } from "@/components/listing-card"
 import { SearchBar } from "@/components/search-bar"
@@ -134,25 +135,66 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             )}
 
             {totalPages > 1 ? (
-              <nav className="flex items-center justify-center gap-3 pt-2 text-sm">
+              <nav className="flex items-center justify-center gap-2 py-8" aria-label="Pagination">
                 <Link
                   href={buildPageLink(previousPage)}
-                  className={`rounded-md px-3 py-1.5 ${
-                    page <= 1 ? "pointer-events-none text-gray-400" : "text-gray-700 hover:bg-gray-200"
+                  aria-disabled={page <= 1}
+                  className={`flex items-center gap-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium transition-all ${
+                    page <= 1
+                      ? "pointer-events-none cursor-not-allowed text-gray-300 opacity-40"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Link>
-                <span className="rounded-md bg-[#1B4332] px-3 py-1.5 font-semibold text-white">{page}</span>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p =>
+                      p === 1 ||
+                      p === totalPages ||
+                      Math.abs(p - page) <= 1
+                    )
+                    .reduce<(number | "...")[]>((acc, p, i, arr) => {
+                      if (i > 0 && p - (arr[i - 1] as number) > 1) {
+                        acc.push("...")
+                      }
+                      acc.push(p)
+                      return acc
+                    }, [])
+                    .map((p, i) =>
+                      p === "..." ? (
+                        <span key={`ellipsis-${i}`} className="px-2 text-gray-400">
+                          …
+                        </span>
+                      ) : (
+                        <Link
+                          key={p}
+                          href={buildPageLink(p as number)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-all ${
+                            page === p
+                              ? "bg-[#1B4332] text-white shadow-sm"
+                              : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {p}
+                        </Link>
+                      )
+                    )}
+                </div>
+
                 <Link
                   href={buildPageLink(nextPage)}
-                  className={`rounded-md px-3 py-1.5 ${
+                  aria-disabled={page >= totalPages}
+                  className={`flex items-center gap-1 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium transition-all ${
                     page >= totalPages
-                      ? "pointer-events-none text-gray-400"
-                      : "text-gray-700 hover:bg-gray-200"
+                      ? "pointer-events-none cursor-not-allowed text-gray-300 opacity-40"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   Next
+                  <ChevronRight className="h-4 w-4" />
                 </Link>
               </nav>
             ) : null}
