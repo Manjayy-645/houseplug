@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil, Play } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -141,7 +141,27 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                       {listing.photos?.[0] ? (
-                        <img src={listing.photos[0]} alt="" className="w-full h-full object-cover" />
+                        <img
+                          src={listing.photos[0]}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-room.jpg'
+                          }}
+                        />
+                      ) : listing.video_url ? (
+                        <div className="relative w-full h-full bg-gray-900">
+                          <video
+                            src={listing.video_url}
+                            preload="metadata"
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <Play className="w-5 h-5 text-white fill-white" />
+                          </div>
+                        </div>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <Home className="w-6 h-6" />
