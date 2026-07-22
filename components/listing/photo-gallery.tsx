@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
 import { House, X, ChevronLeft, ChevronRight, Maximize2, Play } from "lucide-react"
-import { streamableVideoUrl } from "@/lib/cloudinary"
+import { streamableVideoUrl, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
 
 type PhotoGalleryProps = {
   photos: string[]
@@ -61,7 +61,7 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
         <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           {heroItem.type === "video" ? (
             <video
-              src={`${streamableVideoUrl(heroItem.url)}#t=0.1`}
+              src={`${getSafariCompatibleVideoUrl(heroItem.url)}#t=0.1`}
               controls
               playsInline
               preload="metadata"
@@ -115,7 +115,7 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
               {item.type === "video" ? (
                 <div className="relative h-full w-full bg-gray-900">
                   <video
-                    src={`${streamableVideoUrl(item.url)}#t=0.1`}
+                    src={`${getSafariCompatibleVideoUrl(item.url)}#t=0.1`}
                     muted
                     playsInline
                     preload="metadata"

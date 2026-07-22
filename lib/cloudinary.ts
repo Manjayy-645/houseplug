@@ -40,3 +40,19 @@ export function streamableVideoUrl(url?: string | null): string {
   return out
 }
 
+export function getSafariCompatibleVideoUrl(url: string | null | undefined): string {
+  if (!url) return ""
+  
+  // Only transform Cloudinary URLs
+  if (!url.includes('cloudinary.com')) return url
+  
+  // Already has transformations — don't double-add
+  if (url.includes('vc_h264') || url.includes('f_mp4,')) return url
+  
+  // Insert transformation after /upload/
+  return url.replace(
+    '/upload/',
+    '/upload/vc_h264,f_mp4,q_auto/'
+  )
+}
+

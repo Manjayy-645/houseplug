@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import { UNIVERSITIES } from "@/lib/constants"
 import { AiDescribeButton } from "@/components/listing/ai-describe-button"
 import { notifyAdminsNewListing, logAdminActionClient } from "@/app/actions"
-import { uploadVideo } from "@/lib/cloudinary"
+import { uploadVideo, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
 import { compressImage } from "@/lib/image-compress"
 
 type AgentFeeType = "none" | "fixed" | "negotiable"
@@ -774,7 +774,7 @@ export function AdminListingForm({
 
             {videoUrl && (
               <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                <video src={videoUrl} controls className="w-full max-h-64 object-cover" />
+                <video src={getSafariCompatibleVideoUrl(videoUrl)} controls className="w-full max-h-64 object-cover" />
                 <button
                   type="button"
                   onClick={() => setVideoUrl(null)}
