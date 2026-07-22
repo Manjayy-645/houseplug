@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { ListingCard } from "@/components/listing-card"
 import { SearchBar } from "@/components/search-bar"
@@ -84,6 +85,22 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     return `/browse?${params.toString()}`
   }
 
+  const getPageNumbers = () => {
+    const pages: (number | "ellipsis")[] = []
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (page <= 3) {
+        pages.push(1, 2, 3, 4, "ellipsis", totalPages)
+      } else if (page >= totalPages - 2) {
+        pages.push(1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, "ellipsis", page - 1, page, page + 1, "ellipsis", totalPages)
+      }
+    }
+    return pages
+  }
+
   return (
     <main className="min-h-screen bg-[#F9FAFB] px-4 py-8 pt-24 lg:px-6 lg:pt-28">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -134,25 +151,58 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             )}
 
             {totalPages > 1 ? (
-              <nav className="flex items-center justify-center gap-3 pt-2 text-sm">
+              <nav className="flex items-center justify-center gap-1 pt-6 text-sm">
                 <Link
                   href={buildPageLink(previousPage)}
-                  className={`rounded-md px-3 py-1.5 ${
-                    page <= 1 ? "pointer-events-none text-gray-400" : "text-gray-700 hover:bg-gray-200"
+                  aria-disabled={page <= 1}
+                  tabIndex={page <= 1 ? -1 : undefined}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 transition-colors ${
+                    page <= 1 
+                      ? "pointer-events-none opacity-50 bg-gray-50 text-gray-400" 
+                      : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
-                  Previous
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Previous</span>
                 </Link>
-                <span className="rounded-md bg-[#1B4332] px-3 py-1.5 font-semibold text-white">{page}</span>
+
+                <div className="flex items-center gap-1 mx-2">
+                  {getPageNumbers().map((p, i) => {
+                    if (p === "ellipsis") {
+                      return (
+                        <div key={`ellipsis-${i}`} className="flex h-9 w-9 items-center justify-center text-gray-400">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </div>
+                      )
+                    }
+                    return (
+                      <Link
+                        key={p}
+                        href={buildPageLink(p)}
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl text-sm font-medium transition-colors ${
+                          page === p
+                            ? "bg-[#1B4332] text-white pointer-events-none"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    )
+                  })}
+                </div>
+
                 <Link
                   href={buildPageLink(nextPage)}
-                  className={`rounded-md px-3 py-1.5 ${
+                  aria-disabled={page >= totalPages}
+                  tabIndex={page >= totalPages ? -1 : undefined}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 transition-colors ${
                     page >= totalPages
-                      ? "pointer-events-none text-gray-400"
-                      : "text-gray-700 hover:bg-gray-200"
+                      ? "pointer-events-none opacity-50 bg-gray-50 text-gray-400"
+                      : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                   }`}
                 >
-                  Next
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Next</span>
                 </Link>
               </nav>
             ) : null}

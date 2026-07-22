@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { BadgeCheck, Heart, MapPin, Star, Flame, GraduationCap, Users, Play } from "lucide-react"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
-import { streamableVideoUrl } from "@/lib/cloudinary"
+import { streamableVideoUrl, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
 import type { Listing } from "@/types"
@@ -43,7 +43,7 @@ export function ListingCard({ listing }: ListingCardProps) {
           <>
             {/* #t=0.1 nudges the browser to render the first frame as a poster */}
             <video
-              src={`${streamableVideoUrl(videoUrl)}#t=0.1`}
+              src={`${getSafariCompatibleVideoUrl(videoUrl)}#t=0.1`}
               muted
               playsInline
               preload="metadata"

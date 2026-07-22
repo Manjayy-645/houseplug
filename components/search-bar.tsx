@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search, X } from "lucide-react"
 
@@ -11,6 +11,11 @@ export function SearchBar() {
   const initialQuery = searchParams.get("q") ?? ""
   const [query, setQuery] = useState(initialQuery)
 
+  const searchParamsRef = useRef(searchParams)
+  useEffect(() => {
+    searchParamsRef.current = searchParams
+  }, [searchParams])
+
   useEffect(() => {
     setQuery(initialQuery)
   }, [initialQuery])
@@ -19,7 +24,10 @@ export function SearchBar() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
+      const currentUrlQuery = searchParamsRef.current.get("q") ?? ""
+      if (debouncedQuery === currentUrlQuery) return
+
+      const params = new URLSearchParams(searchParamsRef.current.toString())
       if (debouncedQuery) {
         params.set("q", debouncedQuery)
       } else {
@@ -30,7 +38,7 @@ export function SearchBar() {
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [debouncedQuery, pathname, router, searchParams])
+  }, [debouncedQuery, pathname, router])
 
   const clear = () => {
     setQuery("")
