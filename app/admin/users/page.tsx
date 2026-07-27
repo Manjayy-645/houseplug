@@ -28,7 +28,13 @@ export default async function AdminUsersPage({
   }
 
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+    const terms = search.trim().split(/\s+/).filter(Boolean)
+    terms.forEach(term => {
+      const safeTerm = term.replace(/[,'\"()\\\\]/g, '')
+      if (safeTerm) {
+        query = query.or(`full_name.ilike.%${safeTerm}%,email.ilike.%${safeTerm}%`)
+      }
+    })
   }
 
   const { data: users, count, error } = await query

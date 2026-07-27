@@ -50,7 +50,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     .eq("status", "active")
 
   if (q) {
-    query = query.or(`address.ilike.%${q}%,area.ilike.%${q}%,landmark.ilike.%${q}%,title.ilike.%${q}%`)
+    // Split the query into individual words and require ALL words to match somewhere
+    // This makes the search order-independent and much more robust.
+    const terms = q.trim().split(/\s+/).filter(Boolean)
+    terms.forEach(term => {
+      // Remove characters that might break PostgREST syntax (commas, quotes, parentheses, backslashes)
+      const safeTerm = term.replace(/[,'\"()\\\\]/g, '')
+      if (safeTerm) {
+        query = query.or(`address.ilike.%${safeTerm}%,area.ilike.%${safeTerm}%,landmark.ilike.%${safeTerm}%,title.ilike.%${safeTerm}%`)
+      }
+    })
   }
   if (university) query = query.eq("university", university)
   if (roomType) query = query.eq("room_type", roomType)
