@@ -75,8 +75,27 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   else query = query.order("created_at", { ascending: false })
 
   const { data, count } = await query.range(from, to)
-  const listings = (data ?? []) as unknown as Listing[]
+  let listings = (data ?? []) as unknown as Listing[]
   const total = count ?? 0
+
+  // Fetch saved listings for the logged in user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user && listings.length > 0) {
+    const listingIds = listings.map(l => l.id)
+    const { data: savedData } = await supabase
+      .from("saved_listings")
+      .select("listing_id")
+      .eq("user_id", user.id)
+      .in("listing_id", listingIds)
+    
+    if (savedData && savedData.length > 0) {
+      const savedSet = new Set(savedData.map(s => s.listing_id))
+      listings = listings.map(l => ({
+        ...l,
+        is_saved: savedSet.has(l.id)
+      }))
+    }
+  }
   const totalPages = Math.max(Math.ceil(total / PER_PAGE), 1)
 
   const selectedUniversity = UNIVERSITIES.find(u => u.id === university)

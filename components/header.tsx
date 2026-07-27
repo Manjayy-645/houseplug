@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User } from "lucide-react"
+import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User, Heart } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { getInitials } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types"
@@ -256,6 +256,13 @@ export function Header() {
                         className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                       >
                         <User className="h-4 w-4 shrink-0" /> My Profile
+                      </Link>
+                      <Link
+                        href="/saved"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
+                      >
+                        <Heart className="h-4 w-4 shrink-0" /> Saved Lodges
                       </Link>
 
                       <div className="border-t border-gray-100 my-1" />

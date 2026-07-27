@@ -7,6 +7,7 @@ import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
 import { streamableVideoUrl, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
+import SaveButton from "@/components/listing/save-button"
 import type { Listing } from "@/types"
 
 type ListingCardProps = {
@@ -88,12 +89,11 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
             </span>
           )}
         </div>
-        <button 
-          onClick={(e) => { e.preventDefault(); /* save logic */ }}
-          className="absolute top-4 right-4 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-white hover:text-red-500 transition-colors z-10"
-        >
-          <Heart className="h-4 w-4" />
-        </button>
+        <SaveButton 
+          listingId={listing.id} 
+          initialSaved={listing.is_saved || false}
+          className="absolute top-4 right-4 z-10"
+        />
       </Link>
       
       <div className="p-5">

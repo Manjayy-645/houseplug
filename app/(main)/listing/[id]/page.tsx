@@ -15,6 +15,7 @@ import ReviewsSection from "@/components/listing/reviews-section"
 import ReviewForm from "@/components/listing/review-form"
 import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
+import SaveButton from "@/components/listing/save-button"
 import type { Metadata } from "next"
 
 type ListingDetailPageProps = {
@@ -238,6 +239,19 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     void supabase.rpc("increment_views", { listing_id: listingId })
   }
 
+  let isSaved = false
+  if (user && listingId) {
+    const { data: savedData } = await supabase
+      .from("saved_listings")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("listing_id", listingId)
+      .single()
+    if (savedData) {
+      isSaved = true
+    }
+  }
+
   const listing: Listing = {
     ...(listingRowData as Listing),
     landlord: landlordRowData as unknown as any,
@@ -286,9 +300,17 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   </span>
                 )}
               </div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl">
-                {listing.title}
-              </h1>
+              <div className="flex items-start gap-4">
+                <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl flex-1">
+                  {listing.title}
+                </h1>
+                <SaveButton 
+                  listingId={listing.id} 
+                  initialSaved={isSaved} 
+                  className="shrink-0 bg-gray-50 border border-gray-100 p-2.5 rounded-full hover:bg-gray-100" 
+                  iconClassName="w-5 h-5"
+                />
+              </div>
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-1">
                   <Star className="h-5 w-5 fill-[#E8A317] text-[#E8A317]" />

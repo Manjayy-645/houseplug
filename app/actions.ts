@@ -231,3 +231,48 @@ export async function notifyAdminsVerificationSubmitted() {
     console.error("[actions] notifyAdminsVerificationSubmitted failed:", error)
   }
 }
+
+/**
+ * Toggle a saved listing for the current user.
+ */
+export async function toggleSavedListing(listingId: string) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: "You must be logged in to save listings." }
+  }
+
+  // Check if it's already saved
+  const { data: existing } = await supabase
+    .from("saved_listings")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("listing_id", listingId)
+    .single()
+
+  if (existing) {
+    // Unsave
+    const { error } = await supabase
+      .from("saved_listings")
+      .delete()
+      .eq("id", existing.id)
+    
+    if (error) {
+      console.error("[actions] unsave listing failed:", error)
+      return { error: "Failed to unsave listing." }
+    }
+    return { saved: false }
+  } else {
+    // Save
+    const { error } = await supabase
+      .from("saved_listings")
+      .insert({ user_id: user.id, listing_id: listingId })
+    
+    if (error) {
+      console.error("[actions] save listing failed:", error)
+      return { error: "Failed to save listing." }
+    }
+    return { saved: true }
+  }
+}

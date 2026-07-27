@@ -90,6 +90,7 @@ export type Listing = {
   agent_fee_type?: "none" | "fixed" | "negotiable"
   agent_fee_amount?: number | null
   video_url?: string | null
+  is_saved?: boolean
   created_at: string
   landlord?: Profile
   reviews?: Review[]
@@ -118,4 +119,12 @@ export type Subscription = {
   expires_at: string | null
   cancelled_at?: string
   created_at: string
+}
+
+export type SavedListing = {
+  id: string
+  user_id: string
+  listing_id: string
+  created_at: string
+  listing?: Listing
 }
