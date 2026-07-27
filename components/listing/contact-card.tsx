@@ -29,8 +29,8 @@ export default function ContactCard({ listing }: ContactCardProps) {
   }, [supabase])
 
   const whatsappUrl = useMemo(
-    () => buildWhatsAppLink(listing.whatsapp_number, listing.title),
-    [listing.whatsapp_number, listing.title]
+    () => buildWhatsAppLink(listing.whatsapp_number, listing.title, listing.id),
+    [listing.whatsapp_number, listing.title, listing.id]
   )
 
   const handleWhatsAppClick = (e: React.MouseEvent) => {

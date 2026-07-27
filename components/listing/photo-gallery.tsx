@@ -118,7 +118,6 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
                     src={`${getSafariCompatibleVideoUrl(item.url)}#t=0.1`}
                     muted
                     playsInline
-                    preload="metadata"
                     className="h-full w-full object-cover"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -126,7 +125,7 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
                   </div>
                 </div>
               ) : (
-                <Image src={item.url} alt={`Thumbnail ${idx + 1}`} fill sizes="100px" className="object-cover" />
+                <img src={item.url} alt={`Media ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
               )}
               {idx === 0 && (
                 <span className="absolute left-1 top-1 rounded bg-[#1B4332] px-1 text-[9px] font-bold text-white">

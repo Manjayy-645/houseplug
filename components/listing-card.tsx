@@ -11,9 +11,10 @@ import type { Listing } from "@/types"
 
 type ListingCardProps = {
   listing: Listing
+  index?: number
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, index = 1 }: ListingCardProps) {
   const photo = listing.photos?.[0]
   const videoUrl = listing.video_url
   const isVerified = listing.landlord?.verification_status === "verified"
@@ -32,13 +33,21 @@ export function ListingCard({ listing }: ListingCardProps) {
     <div className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-gray-100">
       <Link href={`/listing/${listing.id}`} className="block relative aspect-[16/9] overflow-hidden">
         {photo ? (
-          <Image
-            src={photo}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          index === 0 ? (
+            <img
+              src={photo}
+              alt={listing.title}
+              loading="eager"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <img
+              src={photo}
+              alt={listing.title}
+              loading="lazy"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+            />
+          )
         ) : videoUrl ? (
           <>
             {/* #t=0.1 nudges the browser to render the first frame as a poster */}
@@ -46,7 +55,6 @@ export function ListingCard({ listing }: ListingCardProps) {
               src={`${getSafariCompatibleVideoUrl(videoUrl)}#t=0.1`}
               muted
               playsInline
-              preload="metadata"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

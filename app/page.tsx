@@ -176,8 +176,8 @@ export default async function LandingPage() {
 
           {featuredListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
-              {featuredListings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing as Listing} />
+              {featuredListings.map((listing, index) => (
+                <ListingCard key={listing.id} listing={listing as Listing} index={index} />
               ))}
             </div>
           ) : (

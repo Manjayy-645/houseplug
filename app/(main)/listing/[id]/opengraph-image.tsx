@@ -35,8 +35,7 @@ export default async function OpengraphImage({ params }: OpengraphImageProps) {
   }
 
   const roomTypeStr = formatRoomType(data.room_type)
-  const monthlyPrice = typeof data.price_yearly === "number" ? Math.round(data.price_yearly / 12) : 0
-  const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(monthlyPrice)
+  const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(data.price_yearly)
 
   const reviews = data.reviews || []
   const reviewCount = reviews.length
@@ -159,7 +158,7 @@ export default async function OpengraphImage({ params }: OpengraphImageProps) {
                   ₦{formattedPriceRaw}
                 </div>
                 <div style={{ fontSize: 24, fontWeight: 700, color: "#9CA3AF" }}>
-                  / month
+                  / year
                 </div>
               </div>
             </div>

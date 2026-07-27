@@ -33,32 +33,27 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("title, price_yearly, room_type, area, university")
+    .select("title, price_yearly, room_type, area, university, video_url")
     .eq("id", listingId)
     .single()
 
   if (!listing) return {}
 
   const roomTypeStr = formatRoomType(listing.room_type)
-  const monthlyPrice = Math.round(listing.price_yearly / 12)
-  
-  // Format price and remove the ₦ symbol if formatNaira includes it, to avoid double ₦
-  // Actually, formatNaira includes ₦. Let's just use it and string manipulation if needed, or just insert it.
-  const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(monthlyPrice)
+  const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(listing.price_yearly)
 
   const campus = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
 
-  const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/month | HousePlug`
+  const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/year | HousePlug`
   const description = `Verified student housing near ${campus}. Contact the landlord directly on WhatsApp.`
 
-  return {
+  const metadata: Metadata = {
     title,
     description,
     openGraph: {
       title,
       description,
       type: "website",
-      // Next.js automatically appends the og:image from opengraph-image.tsx
     },
     twitter: {
       card: "summary_large_image",
@@ -66,6 +61,35 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
       description,
     }
   }
+
+  if (listing.video_url) {
+    // Add video metadata for WhatsApp/iMessage/Telegram previews
+    metadata.openGraph!.videos = [
+      {
+        url: listing.video_url,
+        secureUrl: listing.video_url,
+        type: "video/mp4",
+        width: 1280,
+        height: 720,
+      }
+    ]
+    // Add twitter player card for Twitter previews
+    metadata.twitter = {
+      card: "player",
+      title,
+      description,
+      players: [
+        {
+          playerUrl: listing.video_url,
+          streamUrl: listing.video_url,
+          width: 1280,
+          height: 720,
+        }
+      ]
+    }
+  }
+
+  return metadata
 }
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {

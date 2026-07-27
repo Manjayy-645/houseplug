@@ -32,10 +32,11 @@ export function formatRoomType(type: string): string {
   return map[type] ?? type
 }
 
-export function buildWhatsAppLink(phone: string, listingTitle: string): string {
+export function buildWhatsAppLink(phone: string, listingTitle: string, listingId?: string): string {
   const normalized = phone.replace(/^0/, "234")
+  const urlSuffix = listingId ? `\nhttps://houseplug.ng/listing/${listingId}` : ''
   const message = encodeURIComponent(
-    `Hi, I found your listing on HousePlug - ${listingTitle}. Is it still available?`
+    `Hi, I found your listing on HousePlug - ${listingTitle}. Is it still available?${urlSuffix}`
   )
   return `https://wa.me/${normalized}?text=${message}`
 }

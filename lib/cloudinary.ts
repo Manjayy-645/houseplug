@@ -12,6 +12,9 @@ export async function uploadVideo(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
   formData.append("upload_preset", uploadPreset)
+  formData.append("resource_type", "video")
+  formData.append("eager", "vc_h264,f_mp4,q_auto")
+  formData.append("eager_async", "false")
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
@@ -21,7 +24,7 @@ export async function uploadVideo(file: File): Promise<string> {
   if (!res.ok) throw new Error("Video upload failed")
 
   const data = await res.json()
-  return data.secure_url as string
+  return data.eager?.[0]?.secure_url ?? data.secure_url
 }
 
 /**
