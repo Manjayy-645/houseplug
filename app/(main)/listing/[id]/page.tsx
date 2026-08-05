@@ -112,7 +112,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             .from("listings")
             .select(`
               *,
-              landlord:profiles!landlord_id(id, full_name, phone, avatar_url, verification_status, role, created_at)
+              landlord:profiles!landlord_id(id, full_name, phone, avatar_url, verification_status, role, username, created_at)
             `)
             .eq("id", listingId)
             .single()
@@ -210,7 +210,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   // Fetch real landlord profile and user profile if needed if not already set by fallback
   const [{ data: dbLandlordRow }, { data: userProfile }, { data: existingReview }] = await Promise.all([
     !landlordRowData && listingRowData
-      ? supabase.from("profiles").select("id, full_name, phone, avatar_url, role, created_at").eq("id", listingRowData.landlord_id).single()
+      ? supabase.from("profiles").select("id, full_name, phone, avatar_url, role, username, created_at").eq("id", listingRowData.landlord_id).single()
       : Promise.resolve({ data: null }),
     user 
       ? supabase.from("profiles").select("id, role, full_name").eq("id", user.id).single() 

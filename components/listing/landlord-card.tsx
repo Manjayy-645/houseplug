@@ -11,6 +11,9 @@ type LandlordCardProps = {
 
 export default function LandlordCard({ landlord, rating, reviewCount }: LandlordCardProps) {
   const memberSinceYear = landlord.created_at ? new Date(landlord.created_at).getFullYear() : new Date().getFullYear()
+  const profileLink = landlord.username
+    ? `/landlord/${landlord.username}`
+    : `/browse?landlord_id=${landlord.id}`
 
   return (
     <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -49,7 +52,7 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
       <p className="text-sm text-gray-600">Replies within a few hours</p>
 
       <Link
-        href={`/browse?landlord_id=${landlord.id}`}
+        href={profileLink}
         className="block w-full rounded-xl border border-[#1B4332] bg-white px-4 py-2.5 text-center text-sm font-semibold text-[#1B4332] hover:bg-[#1B4332]/5"
       >
         View all listings by this landlord
