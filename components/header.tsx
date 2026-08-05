@@ -160,6 +160,16 @@ export function Header() {
               Browse Listings
             </Link>
             <Link
+              href="/roommates"
+              className={`text-sm font-semibold py-1 transition-colors ${
+                isActive("/roommates")
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-gray-600 hover:text-primary"
+              }`}
+            >
+              Find Roommate
+            </Link>
+            <Link
               href="/signup"
               className={`text-sm font-medium transition-colors ${
                 isActive("/signup")
@@ -310,28 +320,35 @@ export function Header() {
             )}
 
             {/* Nav links */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
               <Link
                 href="/browse"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between border-b border-gray-50 pb-4"
+                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
               >
-                <span>Browse Listings</span>
-                <Search className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-700 font-bold">Browse Listings</span>
+                <Search className="h-5 w-5 text-gray-400" />
+              </Link>
+              <Link
+                href="/roommates"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
+              >
+                <span className="text-gray-700 font-bold">Find Roommate</span>
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between border-b border-gray-50 pb-4"
+                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
               >
-                <span>List Property</span>
+                <span className="text-gray-700 font-bold">List Property</span>
               </Link>
               <Link
                 href="/about"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between border-b border-gray-50 pb-4"
+                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
               >
-                <span>About Us</span>
+                <span className="text-gray-700 font-bold">About Us</span>
               </Link>
             </div>
 
@@ -388,14 +405,14 @@ export function Header() {
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl border border-primary text-primary px-4 py-3 text-center font-bold"
+                    className="rounded-2xl border-2 border-primary text-primary px-4 py-3.5 text-center font-bold text-base hover:bg-primary/5 transition-colors"
                   >
                     Login
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-xl bg-[#F59E0B] px-4 py-3 text-center text-white font-bold shadow-md"
+                    className="rounded-2xl bg-[#F59E0B] px-4 py-3.5 text-center text-white font-bold shadow-lg shadow-amber-500/20 hover:brightness-105 transition-all text-base"
                   >
                     Get Started
                   </Link>

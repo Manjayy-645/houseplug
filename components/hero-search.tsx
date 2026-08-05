@@ -24,16 +24,18 @@ export function HeroSearch() {
   return (
     <form 
       onSubmit={handleSearch} 
-      className="bg-white p-4 md:p-2 rounded-xl md:rounded-full shadow-xl max-w-5xl mx-auto flex flex-col md:flex-row gap-2 items-center border border-white/20 mt-12"
+      className="bg-white/95 backdrop-blur-md p-3 md:p-2 rounded-[2rem] md:rounded-full shadow-2xl shadow-primary/10 max-w-5xl mx-auto flex flex-col md:flex-row items-stretch md:items-center border border-white/40 mt-10 md:mt-12"
     >
-      <div className="w-full md:w-1/3 flex items-center px-4 gap-3 border-b md:border-b-0 md:border-r border-gray-100 py-3 md:py-0">
-        <GraduationCap className="h-5 w-5 text-primary" />
-        <div className="text-left w-full">
-          <span className="block text-[10px] uppercase font-bold text-gray-400">University</span>
+      <div className="w-full md:w-1/3 flex items-center px-5 py-4 md:py-2 gap-4 border-b border-gray-100 md:border-b-0 md:border-r transition-colors focus-within:bg-gray-50/50 rounded-t-3xl md:rounded-none md:rounded-l-full">
+        <div className="bg-primary/5 p-2.5 rounded-full">
+          <GraduationCap className="h-5 w-5 text-primary" />
+        </div>
+        <div className="text-left w-full flex-1">
+          <span className="block text-[10px] tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">University</span>
           <select 
             value={university}
             onChange={(e) => setUniversity(e.target.value)}
-            className="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent text-sm"
+            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm md:text-base outline-none cursor-pointer"
           >
             <option value="">Select your university</option>
             {UNIVERSITIES.map((u) => (
@@ -43,14 +45,16 @@ export function HeroSearch() {
         </div>
       </div>
       
-      <div className="w-full md:w-1/3 flex items-center px-4 gap-3 border-b md:border-b-0 md:border-r border-gray-100 py-3 md:py-0">
-        <Home className="h-5 w-5 text-primary" />
-        <div className="text-left w-full">
-          <span className="block text-[10px] uppercase font-bold text-gray-400">Room Type</span>
+      <div className="w-full md:w-1/3 flex items-center px-5 py-4 md:py-2 gap-4 border-b border-gray-100 md:border-b-0 md:border-r transition-colors focus-within:bg-gray-50/50">
+        <div className="bg-primary/5 p-2.5 rounded-full">
+          <Home className="h-5 w-5 text-primary" />
+        </div>
+        <div className="text-left w-full flex-1">
+          <span className="block text-[10px] tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">Room Type</span>
           <select 
             value={type}
             onChange={(e) => setType(e.target.value)}
-            className="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent text-sm"
+            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm md:text-base outline-none cursor-pointer"
           >
             <option value="">All Types</option>
             {ROOM_TYPES.map((t) => (
@@ -60,14 +64,16 @@ export function HeroSearch() {
         </div>
       </div>
       
-      <div className="w-full md:w-1/3 flex items-center px-4 gap-3 py-3 md:py-0">
-        <CreditCard className="h-5 w-5 text-primary" />
-        <div className="text-left w-full">
-          <span className="block text-[10px] uppercase font-bold text-gray-400">Price Range</span>
+      <div className="w-full md:w-1/3 flex items-center px-5 py-4 md:py-2 gap-4 transition-colors focus-within:bg-gray-50/50 md:rounded-r-full">
+        <div className="bg-primary/5 p-2.5 rounded-full">
+          <CreditCard className="h-5 w-5 text-primary" />
+        </div>
+        <div className="text-left w-full flex-1">
+          <span className="block text-[10px] tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">Price Range</span>
           <select 
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="w-full border-none p-0 text-primary font-semibold focus:ring-0 appearance-none bg-transparent text-sm"
+            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm md:text-base outline-none cursor-pointer"
           >
             <option value="">Any Price</option>
             <option value="0-100000">₦0 – ₦100k</option>
@@ -80,7 +86,7 @@ export function HeroSearch() {
       
       <button 
         type="submit"
-        className="w-full md:w-auto bg-secondary-container hover:bg-hp-amber text-primary font-label-lg px-8 py-4 rounded-lg md:rounded-full whitespace-nowrap transition-colors active:scale-95"
+        className="w-full md:w-auto mt-2 md:mt-0 bg-[#F59E0B] hover:bg-[#F59E0B]/90 text-white font-bold text-base md:text-lg px-8 py-4 rounded-[1.5rem] md:rounded-full whitespace-nowrap transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98] md:ml-2"
       >
         Search Rooms
       </button>

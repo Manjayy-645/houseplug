@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useId } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import * as Dialog from "@radix-ui/react-dialog"
 import { SlidersHorizontal, X } from "lucide-react"
@@ -12,8 +12,14 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const id = useId()
   const [university, setUniversity] = useState(searchParams.get("university") ?? "")
-  const [roomType, setRoomType] = useState(searchParams.get("room_type") ?? "")
+  const [roomTypes, setRoomTypes] = useState<string[]>(
+    (searchParams.get("room_type") ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  )
   const [minPrice, setMinPrice] = useState(searchParams.get("min_price") ?? "")
   const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "")
   const [distance, setDistance] = useState(searchParams.get("distance") ?? "")
@@ -38,7 +44,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
     if (university) params.set("university", university)
     else params.delete("university")
 
-    if (roomType) params.set("room_type", roomType)
+    if (roomTypes.length > 0) params.set("room_type", roomTypes.join(","))
     else params.delete("room_type")
 
     if (minPrice) params.set("min_price", minPrice)
@@ -62,7 +68,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
 
   const resetFilters = () => {
     setUniversity("")
-    setRoomType("")
+    setRoomTypes([])
     setMinPrice("")
     setMaxPrice("")
     setDistance("")
@@ -77,6 +83,12 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
     )
   }
 
+  const toggleRoomType = (value: string) => {
+    setRoomTypes((prev) =>
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+    )
+  }
+
   return (
     <aside className={boxClass}>
       <div className="space-y-5">
@@ -86,7 +98,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="radio"
-                name={`university-${mobile ? "mobile" : "desktop"}`}
+                name={`university-${id}`}
                 value=""
                 checked={university === ""}
                 onChange={() => setUniversity("")}
@@ -98,7 +110,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               <label key={option.id} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="radio"
-                  name={`university-${mobile ? "mobile" : "desktop"}`}
+                  name={`university-${id}`}
                   value={option.id}
                   checked={university === option.id}
                   onChange={() => setUniversity(option.id)}
@@ -118,8 +130,8 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
-                  checked={roomType === option.value}
-                  onChange={() => setRoomType(roomType === option.value ? "" : option.value)}
+                  checked={roomTypes.includes(option.value)}
+                  onChange={() => toggleRoomType(option.value)}
                   className="h-4 w-4 rounded border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
                 />
                 {option.label}
@@ -157,7 +169,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               <label key={option.label} className="flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="radio"
-                  name={`distance-${mobile ? "mobile" : "desktop"}`}
+                  name={`distance-${id}`}
                   value={option.value}
                   checked={distance === option.value}
                   onChange={(event) => setDistance(event.target.value)}
@@ -169,7 +181,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
             <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="radio"
-                name={`distance-${mobile ? "mobile" : "desktop"}`}
+                name={`distance-${id}`}
                 value=""
                 checked={distance === ""}
                 onChange={() => setDistance("")}

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Users } from "lucide-react"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { ListingCard } from "@/components/listing-card"
 import { SearchBar } from "@/components/search-bar"
@@ -30,7 +30,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
   const q = searchParams.q?.trim()
   const university = searchParams.university?.trim()
-  const roomType = searchParams.room_type?.trim()
+  const roomTypeStr = searchParams.room_type?.trim()
   const minPrice = Number(searchParams.min_price)
   const maxPrice = Number(searchParams.max_price)
   const distance = searchParams.distance?.trim()
@@ -62,7 +62,12 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     })
   }
   if (university) query = query.eq("university", university)
-  if (roomType) query = query.eq("room_type", roomType)
+  if (roomTypeStr) {
+    const types = roomTypeStr.split(',').filter(Boolean)
+    if (types.length > 0) {
+      query = query.in("room_type", types)
+    }
+  }
   if (!Number.isNaN(minPrice) && minPrice > 0) query = query.gte("price_yearly", minPrice)
   if (!Number.isNaN(maxPrice) && maxPrice > 0) query = query.lte("price_yearly", maxPrice)
   if (distance) query = query.eq("distance_from_gate", distance)
@@ -133,11 +138,30 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
 
           <section className="space-y-4">
+            {/* Roommate Promo Banner on Browse Page */}
+            <div className="bg-gradient-to-r from-emerald-50 to-amber-50 border border-emerald-100/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
+              <div className="flex items-center gap-4 text-center sm:text-left">
+                <div className="bg-white p-3 rounded-xl shadow-sm text-[#F59E0B]">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Need someone to split the rent?</h3>
+                  <p className="text-gray-500 text-xs sm:text-sm">Find verified roommates from your university.</p>
+                </div>
+              </div>
+              <Link 
+                href="/roommates" 
+                className="bg-[#1B4332] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-emerald-900 transition-colors w-full sm:w-auto text-center shrink-0"
+              >
+                Find Roommates
+              </Link>
+            </div>
+
             <div className="flex flex-col gap-2 px-1">
               <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                 {selectedUniversity 
                   ? `Rooms near ${selectedUniversity.shortName}` 
-                  : "All Student Rooms in Port Harcourt"}
+                  : "All Student Rooms across Nigeria"}
               </h1>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-600">
