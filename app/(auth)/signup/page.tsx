@@ -49,6 +49,10 @@ export default function SignupPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setRedirect(params.get("redirect") || "/browse")
+    const emailParam = params.get("email")
+    if (emailParam) {
+      setEmail(emailParam)
+    }
   }, [])
 
   useEffect(() => {

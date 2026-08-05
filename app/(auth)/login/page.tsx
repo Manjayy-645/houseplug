@@ -38,14 +38,43 @@ export default function LoginPage() {
     if (error) setError("Failed to sign in with Google. Try again.")
   }
 
-  function handleEmailContinue() {
+  async function handleEmailContinue() {
     if (!email || !email.includes("@")) {
       setError("Enter a valid email address")
       return
     }
     setError("")
-    setStep("password")
+    setLoading(true)
+
+    try {
+      const res = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      })
+      const { exists } = await res.json()
+
+      if (!exists) {
+        setError("No account found with this email. Redirecting you to sign up...")
+        setLoading(false)
+        setTimeout(() => {
+          const signupUrl = redirect
+            ? `/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirect)}`
+            : `/signup?email=${encodeURIComponent(email)}`
+          window.location.href = signupUrl
+        }, 2000)
+        return
+      }
+
+      setLoading(false)
+      setStep("password")
+    } catch {
+      // If the check fails for any reason, just proceed to password step
+      setLoading(false)
+      setStep("password")
+    }
   }
+
 
   async function handleLogin() {
     setLoading(true)
@@ -121,9 +150,17 @@ export default function LoginPage() {
 
         <button
           onClick={handleEmailContinue}
-          className="w-full bg-[#1B4332] text-white rounded-xl py-3.5 font-semibold text-sm mt-3 hover:bg-[#143728] transition-all"
+          disabled={loading}
+          className="w-full bg-[#1B4332] text-white rounded-xl py-3.5 font-semibold text-sm mt-3 hover:bg-[#143728] transition-all disabled:opacity-50"
         >
-          Continue
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Checking...
+            </span>
+          ) : (
+            "Continue"
+          )}
         </button>
 
         <p className="text-center text-sm text-gray-500 mt-6">
