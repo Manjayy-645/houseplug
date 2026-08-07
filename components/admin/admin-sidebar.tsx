@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X, ShieldCheck, BarChart2, DollarSign, UserCog, Settings, ScrollText, Download, Clock } from "lucide-react"
+import { LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X, ShieldCheck, BarChart2, DollarSign, UserCog, Settings, ScrollText, Download, Clock, MessageCircle } from "lucide-react"
 
 const baseNavItems = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
@@ -18,6 +18,7 @@ const baseNavItems = [
 
 const superAdminNavItems = [
   { name: "Analytics", href: "/admin/analytics", icon: BarChart2 },
+  { name: "WhatsApp Clicks", href: "/admin/whatsapp-analytics", icon: MessageCircle },
   { name: "Revenue", href: "/admin/revenue", icon: DollarSign },
   { name: "Admin Accounts", href: "/admin/admins", icon: UserCog },
   { name: "Platform Settings", href: "/admin/settings", icon: Settings },

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Star, Check } from "lucide-react"
+import { Star, Check, ArrowRight } from "lucide-react"
 import type { Profile } from "@/types"
 import { getInitials } from "@/lib/utils"
 
@@ -16,48 +16,59 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
     : `/browse?landlord_id=${landlord.id}`
 
   return (
-    <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3">
-        {landlord.avatar_url ? (
-          <img
-            src={landlord.avatar_url}
-            alt={landlord.full_name}
-            className="h-12 w-12 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1B4332] text-sm font-semibold text-white">
-            {getInitials(landlord.full_name)}
-          </div>
-        )}
-
-        <div className="flex-1">
-          <h3 className="text-base font-semibold text-gray-900">{landlord.full_name}</h3>
-          <p className="text-sm text-gray-600">Member since {memberSinceYear}</p>
-
-          <div className="mt-2 flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1 text-[#F59E0B]">
-              <Star className="h-4 w-4 fill-[#F59E0B]" />
-              <span className="font-semibold text-gray-800">{reviewCount ? rating.toFixed(1) : "New"}</span>
+    <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      {/* Landlord identity */}
+      <div className="p-5 pb-4">
+        <div className="flex items-center gap-3.5">
+          {landlord.avatar_url ? (
+            <img
+              src={landlord.avatar_url}
+              alt={landlord.full_name}
+              className="h-14 w-14 rounded-full object-cover ring-2 ring-gray-100"
+            />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1B4332] text-sm font-bold text-white ring-2 ring-[#1B4332]/10">
+              {getInitials(landlord.full_name)}
             </div>
-            <span className="text-gray-500">({reviewCount} reviews)</span>
+          )}
+
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug">{landlord.full_name}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Member since {memberSinceYear}</p>
+
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                <span className="text-sm font-bold text-gray-800 leading-none">{reviewCount ? rating.toFixed(1) : "New"}</span>
+              </div>
+              <span className="text-xs text-gray-400">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
-        <Check className="h-4 w-4" />
-        ID Verified
+      {/* Divider */}
+      <div className="mx-5 border-t border-gray-100" />
+
+      {/* Info & CTA */}
+      <div className="p-5 pt-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+            <Check className="h-3.5 w-3.5" />
+            ID Verified
+          </div>
+          <span className="text-xs text-gray-400">·</span>
+          <p className="text-xs text-gray-500">Replies within a few hours</p>
+        </div>
+
+        <Link
+          href={profileLink}
+          className="group flex items-center justify-center gap-2 w-full rounded-xl bg-[#1B4332] px-4 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-[#143728] active:scale-[0.98] shadow-sm shadow-[#1B4332]/10"
+        >
+          View all listings
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
       </div>
-
-      <p className="text-sm text-gray-600">Replies within a few hours</p>
-
-      <Link
-        href={profileLink}
-        className="block w-full rounded-xl border border-[#1B4332] bg-white px-4 py-2.5 text-center text-sm font-semibold text-[#1B4332] hover:bg-[#1B4332]/5"
-      >
-        View all listings by this landlord
-      </Link>
     </section>
   )
 }
-
