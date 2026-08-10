@@ -51,8 +51,15 @@ export function MobileNav() {
     return () => subscription.unsubscribe()
   }, [])
   
-  // Hide bottom nav on specific auth pages
-  if (pathname === "/login" || pathname === "/signup") return null
+  // Hide bottom nav on specific auth pages and dashboard routes
+  if (
+    pathname === "/login" || 
+    pathname === "/signup" || 
+    pathname.startsWith("/landlord") || 
+    pathname.startsWith("/admin")
+  ) {
+    return null
+  }
 
   const isLandlord = role === "landlord" || role === "super_admin"
 
