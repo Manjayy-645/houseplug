@@ -88,6 +88,15 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
               <Users className="w-2.5 h-2.5" /> Agent
             </span>
           )}
+          {(listing.views_count || 0) >= 50 ? (
+            <span className="inline-flex items-center gap-1 bg-[#F59E0B] text-white px-2.5 py-0.5 rounded-xl text-[10px] font-bold shadow-sm">
+              <Flame className="h-3 w-3" /> High interest
+            </span>
+          ) : (listing.views_count || 0) >= 20 ? (
+            <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur text-gray-800 px-2.5 py-0.5 rounded-xl text-[10px] font-bold shadow-sm border border-gray-100">
+              <Flame className="h-3 w-3 text-[#F59E0B]" /> {Math.floor((listing.views_count || 0) / 5) * 5}+ views
+            </span>
+          ) : null}
         </div>
         <SaveButton 
           listingId={listing.id} 

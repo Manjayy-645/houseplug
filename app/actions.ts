@@ -60,6 +60,26 @@ export async function submitReview(formData: FormData) {
     return { error: error.message }
   }
 
+  // We need area and university from the listing
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("area, university")
+    .eq("id", listingId)
+    .single()
+
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  await service.from("activity_events").insert({
+    event_type: "new_review",
+    listing_id: listingId,
+    area: listing?.area || null,
+    university: listing?.university || null
+  })
+
   revalidatePath(`/listing/${listingId}`)
   return { success: true }
 }

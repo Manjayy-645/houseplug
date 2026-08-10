@@ -40,6 +40,12 @@ export default function ContactCard({ listing }: ContactCardProps) {
       return
     }
     recordWhatsAppClick(listing.id)
+    supabase.from("activity_events").insert({
+      event_type: "whatsapp_click",
+      listing_id: listing.id,
+      area: listing.area,
+      university: listing.university
+    }).then()
   }
 
   const handleRevealPhone = () => {

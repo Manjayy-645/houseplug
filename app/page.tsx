@@ -4,6 +4,8 @@ import { Header } from "@/components/header"
 import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
 import { CheckCircle2, Users, BadgeCheck, Search, MessageCircle, Home, ArrowRight, MapPin, Plus } from "lucide-react"
+import { ActivityTicker } from "@/components/home/activity-ticker"
+import { TrendingStrip } from "@/components/home/trending-strip"
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
 import { createClient } from "@/lib/supabase/server"
@@ -92,6 +94,8 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        <ActivityTicker />
+
         {/* Trust Bar */}
         <section className="py-6 sm:py-8 md:py-12 bg-white border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-5 sm:px-6 md:px-20">
@@ -159,6 +163,8 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        <TrendingStrip />
 
         {/* Featured Listings */}
         <section className="py-10 sm:py-16 md:py-24 max-w-7xl mx-auto px-5 sm:px-6 md:px-20">

@@ -63,6 +63,19 @@ export async function POST(request: Request) {
         details: { landlord_name: landlord?.full_name }
       })
 
+      const { data: firstListing } = await serviceClient
+        .from('listings')
+        .select('area, university')
+        .eq('landlord_id', landlord_id)
+        .limit(1)
+        .single()
+        
+      await serviceClient.from('activity_events').insert({
+        event_type: 'verified_landlord',
+        area: firstListing?.area || null,
+        university: firstListing?.university || null
+      })
+
       if (landlord?.email) {
         await sendVerificationStatusEmail({
           landlordEmail: landlord.email,

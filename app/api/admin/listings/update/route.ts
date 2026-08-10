@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const { data: listing } = await serviceClient
       .from('listings')
-      .select('title, landlord_id, video_url, rejection_count, profiles(email)')
+      .select('title, landlord_id, video_url, rejection_count, area, university, profiles(email)')
       .eq('id', listingId)
       .single()
 
@@ -37,6 +37,13 @@ export async function POST(request: Request) {
       
       await logAdminAction({ admin_id: user.id, action: 'approved_listing', target_type: 'listing', target_id: listingId, details: { title: listing?.title } })
       
+      await serviceClient.from('activity_events').insert({
+        event_type: 'new_listing',
+        listing_id: listingId,
+        area: listing?.area,
+        university: listing?.university
+      })
+
       if (landlordEmail) {
         await sendListingStatusEmail({
           landlordEmail,
