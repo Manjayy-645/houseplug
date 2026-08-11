@@ -149,12 +149,14 @@ export default function LandlordProfilePage() {
           <p className="mt-1 text-sm text-gray-500">Manage your personal information.</p>
         </div>
 
-        <div className="mt-8 max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-          <div className="bg-[#1B4332] h-32" />
-          <div className="px-8 pb-8">
-            <div className="-mt-12 flex items-end gap-6">
+        <div className="mt-8 max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-200/50">
+          <div className="bg-gradient-to-r from-[#1B4332] to-[#10B981] h-32 relative">
+            <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,white_1px,transparent_1px)] bg-[size:20px_20px]" />
+          </div>
+          <div className="px-6 sm:px-8 pb-8">
+            <div className="-mt-16 flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6 relative z-10">
               {/* Avatar upload replaces static avatar */}
-              <div className="bg-white p-1 rounded-2xl shadow-lg">
+              <div className="bg-white p-1.5 rounded-2xl shadow-xl w-fit">
                 <AvatarUpload
                   currentAvatarUrl={profile.avatar_url}
                   userId={userId}
@@ -162,26 +164,35 @@ export default function LandlordProfilePage() {
                   onUploadComplete={(url) => setProfile({ ...profile, avatar_url: url })}
                 />
               </div>
-              <div className="mb-2">
-                <h2 className="text-2xl font-bold text-gray-900">{profile.full_name}</h2>
-                <p className="text-sm text-gray-500 capitalize">{profile.role}</p>
+              <div className="mb-2 flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-3xl font-black text-gray-900">{profile.full_name}</h2>
+                  {profile.verification_status === "verified" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#10B981]/10 px-2.5 py-0.5 text-xs font-bold text-[#10B981] uppercase tracking-wide">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                    </span>
+                  )}
+                </div>
+                <p className="mt-1 text-sm font-semibold text-[#1B4332] uppercase tracking-widest flex items-center gap-1.5">
+                  <Shield className="h-4 w-4" /> {profile.role}
+                </p>
               </div>
             </div>
 
-            <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                  <Mail className="h-3 w-3" /> Email Address
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-[#F59E0B]" /> Email Address
                 </label>
                 <p className="text-sm font-medium text-gray-900">{profile.email}</p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                  <Phone className="h-3 w-3" /> Phone Number
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                  <Phone className="h-3.5 w-3.5 text-[#F59E0B]" /> Phone Number
                 </label>
                 {editingPhone ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-1">
                     <input
                       type="tel"
                       value={phoneInput}
@@ -189,14 +200,14 @@ export default function LandlordProfilePage() {
                       onKeyDown={(e) => e.key === "Enter" && handleSavePhone()}
                       placeholder="080XXXXXXXX"
                       autoFocus
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:border-transparent"
                     />
-                    {phoneError && <p className="text-xs text-red-600">{phoneError}</p>}
+                    {phoneError && <p className="text-xs font-medium text-red-500">{phoneError}</p>}
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleSavePhone}
                         disabled={savingPhone}
-                        className="flex items-center gap-1.5 rounded-lg bg-[#1B4332] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#143728] disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg bg-[#1B4332] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#143728] disabled:opacity-50 transition"
                       >
                         {savingPhone ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                         Save
@@ -207,14 +218,14 @@ export default function LandlordProfilePage() {
                           setPhoneError("")
                         }}
                         disabled={savingPhone}
-                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+                        className="rounded-lg px-4 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-200 disabled:opacity-50 transition"
                       >
                         Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-900">{profile.phone || "Not provided"}</p>
                     <button
                       onClick={() => {
@@ -222,7 +233,7 @@ export default function LandlordProfilePage() {
                         setPhoneError("")
                         setEditingPhone(true)
                       }}
-                      className="flex items-center gap-1 text-xs font-semibold text-[#1B4332] hover:underline"
+                      className="flex items-center gap-1.5 rounded-lg bg-[#F59E0B]/10 px-3 py-1 text-xs font-bold text-[#F59E0B] hover:bg-[#F59E0B]/20 transition"
                     >
                       <Pencil className="h-3 w-3" />
                       {profile.phone ? "Edit" : "Add"}
@@ -231,20 +242,20 @@ export default function LandlordProfilePage() {
                 )}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                  <Calendar className="h-3 w-3" /> Joined Date
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-[#F59E0B]" /> Joined Date
                 </label>
                 <p className="text-sm font-medium text-gray-900">{formatDate(profile.created_at)}</p>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                  <Shield className="h-3 w-3" /> Account Status
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#F59E0B]" /> Status
                 </label>
                 {profile.verification_status === "verified" ? (
-                  <p className="text-sm font-medium text-green-600 flex items-center gap-1">
-                    <ShieldCheck className="h-4 w-4" /> Verified Landlord
+                  <p className="text-sm font-bold text-[#10B981]">
+                    Verified
                   </p>
                 ) : (
                   <p className="text-sm font-medium text-gray-500 capitalize">

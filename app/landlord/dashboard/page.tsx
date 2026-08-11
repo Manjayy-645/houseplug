@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown, Phone } from "lucide-react"
+import { Lock, Star, ShieldAlert, X, Share2, PartyPopper, Sparkles, Clock, Crown, Phone, Eye, User, ShieldCheck } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { formatNaira } from "@/lib/utils"
 import { ListingRowActions } from "@/components/landlord/listing-row-actions"
@@ -203,6 +203,33 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           </div>
         )}
       </div>
+
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Link href="/landlord/reviews" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-[#F59E0B] hover:shadow-md transition">
+          <div className="bg-[#F59E0B]/10 p-3 rounded-full text-[#F59E0B]">
+            <Star className="h-6 w-6" />
+          </div>
+          <span className="text-sm font-bold text-gray-900">Reviews</span>
+        </Link>
+        <Link href="/landlord/analytics" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-[#F59E0B] hover:shadow-md transition">
+          <div className="bg-[#1B4332]/10 p-3 rounded-full text-[#1B4332]">
+            <Eye className="h-6 w-6" />
+          </div>
+          <span className="text-sm font-bold text-gray-900">Stats</span>
+        </Link>
+        <Link href="/landlord/profile" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-[#F59E0B] hover:shadow-md transition">
+          <div className="bg-[#1B4332]/10 p-3 rounded-full text-[#1B4332]">
+            <User className="h-6 w-6" />
+          </div>
+          <span className="text-sm font-bold text-gray-900">Profile</span>
+        </Link>
+        <Link href="/landlord/verification" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-[#F59E0B] hover:shadow-md transition">
+          <div className="bg-[#1B4332]/10 p-3 rounded-full text-[#1B4332]">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <span className="text-sm font-bold text-gray-900">Verification</span>
+        </Link>
+      </section>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[

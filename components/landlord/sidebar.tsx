@@ -31,11 +31,7 @@ type SidebarProps = {
 const navItems = [
   { href: "/landlord/dashboard", label: "My Rooms", icon: LayoutDashboard },
   { href: "/landlord/listings/new", label: "Add New", icon: Plus },
-  { href: "/landlord/analytics", label: "Stats", icon: Eye },
-  { href: "/landlord/reviews", label: "Reviews", icon: Star },
-  { href: "/landlord/subscription", label: "Plan", icon: CreditCard },
-  { href: "/landlord/verification", label: "Verification", icon: ShieldCheck },
-  { href: "/landlord/profile", label: "Profile", icon: User }
+  { href: "/landlord/subscription", label: "Plan", icon: CreditCard }
 ]
 
 const planDisplay: Record<string, string> = {
@@ -148,84 +144,59 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 top-[53px] z-40 bg-white lg:hidden overflow-y-auto">
-          <nav className="flex flex-col p-6 space-y-4">
-             <div className="rounded-xl bg-[#1B4332]/5 p-4 mb-2 border border-[#1B4332]/10">
-               <p className="text-xs font-bold text-[#1B4332] uppercase tracking-widest">Active Plan</p>
-               <div className="flex items-center justify-between mt-1">
-                 <p className="text-lg font-black text-[#1B4332] capitalize">{planDisplay[plan] || 'Free Plan'}</p>
-                 <span className="text-sm font-bold text-gray-500">{listingCount} {listingCount === 1 ? 'Room' : 'Rooms'}</span>
+        <>
+          <div className="fixed inset-0 z-30 lg:hidden" onClick={() => setIsMenuOpen(false)} />
+          <div className="absolute right-4 top-[65px] z-40 w-64 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl lg:hidden">
+            <nav className="flex flex-col space-y-4">
+               <div className="rounded-xl bg-[#1B4332]/5 p-4 border border-[#1B4332]/10">
+                 <p className="text-xs font-bold text-[#1B4332] uppercase tracking-widest">Active Plan</p>
+                 <div className="flex items-center justify-between mt-1">
+                   <p className="text-lg font-black text-[#1B4332] capitalize">{planDisplay[plan] || 'Free Plan'}</p>
+                 </div>
+                 {plan === 'free' && (
+                   <Link 
+                    href="/landlord/subscription" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="mt-3 block text-center rounded-lg bg-[#F59E0B] py-2 text-xs font-black text-gray-900"
+                   >
+                     Upgrade to Pro
+                   </Link>
+                 )}
                </div>
-               {plan === 'free' && (
-                 <Link 
-                  href="/landlord/subscription" 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="mt-3 block text-center rounded-lg bg-[#F59E0B] py-2 text-xs font-black text-gray-900"
-                 >
-                   Upgrade to Pro
-                 </Link>
-               )}
-             </div>
 
-             {navItems.map((item) => {
-               const Icon = item.icon
-               const active = pathname === item.href
-               return (
-                 <Link
-                   key={item.href}
-                   href={item.href}
-                   onClick={() => setIsMenuOpen(false)}
-                   className={`flex items-center justify-between p-4 rounded-xl border transition active:scale-95 ${
-                     active ? "bg-[#1B4332] text-white border-[#1B4332] shadow-lg shadow-emerald-900/10" : "bg-white border-gray-100 text-gray-700 shadow-sm"
-                   }`}
-                 >
-                   <div className="flex items-center gap-3 font-bold">
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                   </div>
-                   <Plus className={`h-4 w-4 opacity-50 ${active ? "rotate-45" : ""}`} />
-                 </Link>
-               )
-             })}
+               <Link
+                 href="/landlord/subscription"
+                 onClick={() => setIsMenuOpen(false)}
+                 className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white text-gray-700 shadow-sm transition active:scale-95"
+               >
+                 <div className="flex items-center gap-3 font-bold text-sm">
+                    <CreditCard className="h-4 w-4 text-gray-400" />
+                    <span>View all plans</span>
+                 </div>
+               </Link>
 
-             {/* Divider */}
-             <div className="my-2 border-t border-gray-100" />
+               {/* Divider */}
+               <div className="border-t border-gray-100" />
 
-             {/* Browse Listings — leaves the dashboard */}
-             <Link
-               href="/browse"
-               onClick={() => setIsMenuOpen(false)}
-               className="group flex items-center justify-between p-4 rounded-xl border border-gray-100 bg-white text-gray-700 shadow-sm transition active:scale-95"
-             >
-               <div className="flex items-center gap-3 font-bold">
-                 <Search className="h-5 w-5 text-gray-400 group-hover:text-[#1B4332]" />
-                 <span>Browse Listings</span>
-               </div>
-               <ExternalLink className="h-4 w-4 text-gray-300 group-hover:text-[#1B4332]" />
-             </Link>
-
-             <button
-               onClick={onLogout}
-               className="flex items-center justify-center gap-2 w-full p-4 rounded-xl border-2 border-red-50 text-red-600 font-black mt-4 active:bg-red-50 transition"
-             >
-               <LogOut className="h-5 w-5" />
-               Sign Out
-             </button>
-
-             <div className="pt-8 pb-12 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                HousePlug Landlord v1.0
-             </div>
-          </nav>
-        </div>
+               <button
+                 onClick={onLogout}
+                 className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border-2 border-red-50 text-red-600 font-bold text-sm active:bg-red-50 transition"
+               >
+                 <LogOut className="h-4 w-4" />
+                 Sign Out
+               </button>
+            </nav>
+          </div>
+        </>
       )}
 
       {/* Mobile Bottom Nav */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-white/95 border-t border-gray-100 px-2 py-2 pb-safe shadow-[0_-1px_15px_rgba(0,0,0,0.08)] backdrop-blur-md">
         {[
-          { href: "/landlord/dashboard", icon: LayoutDashboard, label: "Home" },
+          { href: "/browse", icon: LayoutDashboard, label: "Home" },
           { href: "/landlord/analytics", icon: Eye, label: "Stats" },
           { href: "/landlord/listings/new", icon: Plus, label: "Add", highlight: true },
-          { href: "/landlord/reviews", icon: Star, label: "Reviews" },
+          { href: "/landlord/subscription", icon: CreditCard, label: "Plan" },
           { href: "/landlord/profile", icon: User, label: "Profile" }
         ].map((item) => {
           const Icon = item.icon
