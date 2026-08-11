@@ -149,7 +149,7 @@ function redirectByRole(role: string, origin: string, redirectTo?: string) {
     case "student":
     default:
       // Students go back to the listing they came from, if any.
-      target = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/browse"
+      target = redirectTo && redirectTo.startsWith("/") ? redirectTo : "/student/dashboard"
   }
 
   const res = NextResponse.redirect(`${origin}${target}`)

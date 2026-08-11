@@ -112,7 +112,7 @@ export default function LoginPage() {
     } else if (role === "admin" || role === "super_admin") {
       window.location.href = "/admin/listings"
     } else {
-      window.location.href = destination || "/browse"
+      window.location.href = destination || "/student/dashboard"
     }
   }
 
