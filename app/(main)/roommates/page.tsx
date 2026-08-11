@@ -8,65 +8,6 @@ export const metadata = {
   description: "Connect with verified students across Nigerian universities to find your perfect roommate.",
 }
 
-const MOCK_DATA = [
-  {
-    id: "1",
-    intent: "teaming_up" as const,
-    university: "University of Port Harcourt (UniPort)",
-    budget_min: 80000,
-    budget_max: 150000,
-    gender: "Female",
-    preferred_gender: "Female Only",
-    lifestyle_tags: ["Neat freak", "Night owl", "Quiet study", "No visitors"],
-    bio: "Hi! I'm a 300L Med student looking for a serious and clean roommate to hunt for a 1-bedroom apartment in Aluu. I prefer a very quiet environment because I study a lot at night.",
-    phone_number: "hidden",
-    room_photos: [],
-    room_address: "",
-    profile: {
-      full_name: "Sarah Johnson",
-      avatar_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=200&h=200",
-      verification_status: "verified"
-    }
-  },
-  {
-    id: "2",
-    intent: "have_room" as const,
-    university: "Rivers State University (RSU)",
-    budget_min: 120000,
-    budget_max: 120000,
-    gender: "Male",
-    preferred_gender: "Male Only",
-    lifestyle_tags: ["Relaxed", "Early bird", "Group study", "Occasional guests"],
-    bio: "I already have a spacious self-con near the back gate. Rent is paid, just need a chill guy to split the cost. The room has a bed, fan, and AC. You just need to bring your clothes.",
-    phone_number: "hidden",
-    room_photos: [],
-    room_address: "Nkpolu-Oroworukwo",
-    profile: {
-      full_name: "David O.",
-      avatar_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200",
-      verification_status: "verified"
-    }
-  },
-  {
-    id: "3",
-    intent: "teaming_up" as const,
-    university: "Ignatius Ajuru University (IAUE)",
-    budget_min: 50000,
-    budget_max: 90000,
-    gender: "Female",
-    preferred_gender: "Any",
-    lifestyle_tags: ["Relaxed", "Night owl", "Shared cooking"],
-    bio: "Looking for a fun roommate to team up with! I'm super easy-going and love cooking. Let's find a place around Rumuolumeni that doesn't break the bank.",
-    phone_number: "hidden",
-    room_photos: [],
-    room_address: "",
-    profile: {
-      full_name: "Amaka",
-      avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200&h=200",
-      verification_status: "unverified"
-    }
-  }
-]
 
 export default async function RoommatesPage() {
   const supabase = createClient()
@@ -81,9 +22,7 @@ export default async function RoommatesPage() {
     .eq("status", "active")
     .order("created_at", { ascending: false })
 
-  // Use mock data if DB is empty to showcase the UI
-  const profiles = realProfiles && realProfiles.length > 0 ? realProfiles : MOCK_DATA
-
+  const profiles = realProfiles || []
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
       {/* Hero Section */}
