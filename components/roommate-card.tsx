@@ -23,9 +23,27 @@ type RoommateProfile = {
   }
 }
 
-export function RoommateCard({ data }: { data: RoommateProfile }) {
+export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, currentUserId?: string }) {
   const [showConnectModal, setShowConnectModal] = useState(false)
-  const isVerified = data.profile.verification_status === "verified"
+  const isVerified = data.profile?.verification_status === "verified"
+
+  const handleConnect = () => {
+    if (!currentUserId) {
+      setShowConnectModal(true)
+      return
+    }
+
+    let phone = data.phone_number
+    if (phone.startsWith("0")) {
+      phone = "234" + phone.substring(1)
+    } else if (!phone.startsWith("234")) {
+      phone = "234" + phone
+    }
+    
+    const name = data.profile?.full_name?.split(" ")[0] || "there"
+    const message = encodeURIComponent(`Hi ${name}, I saw your roommate profile on HousePlug!`)
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank")
+  }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
@@ -53,7 +71,7 @@ export function RoommateCard({ data }: { data: RoommateProfile }) {
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5">
-                {data.profile.full_name.split(' ')[0]} 
+                {data.profile?.full_name?.split(' ')[0] || "Student"} 
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
               </h3>
               <p className="text-sm text-gray-500">{data.gender} • {data.university}</p>
@@ -92,7 +110,7 @@ export function RoommateCard({ data }: { data: RoommateProfile }) {
 
         {/* Actions */}
         <button 
-          onClick={() => setShowConnectModal(true)}
+          onClick={handleConnect}
           className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95 flex items-center justify-center gap-2"
         >
           <MessageCircle className="h-5 w-5" />

@@ -12,6 +12,9 @@ export const metadata = {
 export default async function RoommatesPage() {
   const supabase = createClient()
   
+  const { data: { session } } = await supabase.auth.getSession()
+  const currentUserId = session?.user?.id
+  
   // Fetch real profiles
   const { data: roommateProfiles } = await supabase
     .from("roommate_profiles")
@@ -102,10 +105,9 @@ export default async function RoommatesPage() {
           </div>
         </div>
 
-        {/* Profiles Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {profiles.map((profile: any) => (
-            <RoommateCard key={profile.id} data={profile} />
+            <RoommateCard key={profile.id} data={profile} currentUserId={currentUserId} />
           ))}
         </div>
       </div>
