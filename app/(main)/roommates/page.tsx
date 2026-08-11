@@ -12,17 +12,31 @@ export const metadata = {
 export default async function RoommatesPage() {
   const supabase = createClient()
   
-  // Attempt to fetch real profiles
-  const { data: realProfiles } = await supabase
+  // Fetch real profiles
+  const { data: roommateProfiles } = await supabase
     .from("roommate_profiles")
-    .select(`
-      *,
-      profile:profiles(full_name, avatar_url, verification_status)
-    `)
+    .select("*")
     .eq("status", "active")
     .order("created_at", { ascending: false })
 
-  const profiles = realProfiles || []
+  let profiles = roommateProfiles || []
+
+  // If we have profiles, fetch their corresponding public.profiles data 
+  // since there is no direct foreign key from roommate_profiles to public.profiles
+  if (profiles.length > 0) {
+    const userIds = profiles.map(p => p.user_id)
+    const { data: usersProfiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url, verification_status")
+      .in("id", userIds)
+
+    if (usersProfiles) {
+      profiles = profiles.map(p => ({
+        ...p,
+        profile: usersProfiles.find(up => up.id === p.user_id) || null
+      }))
+    }
+  }
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
       {/* Hero Section */}
