@@ -51,26 +51,31 @@ export function MobileNav() {
     return () => subscription.unsubscribe()
   }, [])
   
-  // Hide bottom nav on specific auth pages and dashboard routes
+  // Hide bottom nav on specific auth pages, dashboard routes, and student routes
+  // (student routes use their own StudentBottomNav)
   if (
     pathname === "/login" || 
     pathname === "/signup" || 
     pathname.startsWith("/landlord") || 
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/student")
   ) {
     return null
   }
 
   const isLandlord = role === "landlord" || role === "super_admin"
+  const isStudent = role === "student"
 
   const navItems = [
-    { name: "Home", href: "/", icon: Home },
+    isStudent
+      ? { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard }
+      : { name: "Home", href: "/", icon: Home },
     { name: "Browse", href: "/browse", icon: Search },
     isLandlord 
       ? { name: "Dashboard", href: "/landlord/dashboard", icon: LayoutDashboard }
       : { name: "Roommates", href: "/roommates", icon: Users, highlight: true },
-    { name: "Saved", href: "/saved", icon: Heart },
-    { name: "Profile", href: isLandlord ? "/landlord/profile" : "/profile", icon: User },
+    { name: "Saved", href: isStudent ? "/student/saved" : "/saved", icon: Heart },
+    { name: "Profile", href: isLandlord ? "/landlord/profile" : isStudent ? "/student/profile" : "/profile", icon: User },
   ]
 
   return (

@@ -60,7 +60,14 @@ function UserAvatar({ profile, size = 36 }: { profile: ProfileSnippet | null; si
 function getProfileHref(role: UserRole | null | undefined): string {
   if (role === "landlord" || role === "super_admin") return "/landlord/profile"
   if (role === "admin") return "/admin"
+  if (role === "student") return "/student/profile"
   return "/profile"
+}
+
+function getDashboardHref(role: UserRole | null | undefined): string {
+  if (role === "landlord" || role === "super_admin") return "/landlord/dashboard"
+  if (role === "admin") return "/admin/listings"
+  return "/student/dashboard"
 }
 
 export function Header() {
@@ -233,15 +240,13 @@ export function Header() {
 
                     {/* Menu items */}
                     <div className="py-1">
-                      {(role === "landlord" || role === "super_admin") && (
-                        <Link
-                          href="/landlord/dashboard"
+                      <Link
+                          href={getDashboardHref(role)}
                           onClick={() => setDropdownOpen(false)}
                           className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                         >
                           <Home className="h-4 w-4 shrink-0" /> My Dashboard
                         </Link>
-                      )}
                       {(role === "admin" || role === "super_admin") && (
                         <Link
                           href="/admin/listings"
@@ -358,15 +363,13 @@ export function Header() {
                 <div className="h-12 rounded-xl bg-gray-100 animate-pulse" />
               ) : user ? (
                 <>
-                  {(role === "landlord" || role === "super_admin") && (
-                    <Link
-                      href="/landlord/dashboard"
+                  <Link
+                      href={getDashboardHref(role)}
                       onClick={() => setIsOpen(false)}
                       className="rounded-xl bg-primary px-4 py-3 text-center text-white text-sm"
                     >
                       <span className="inline-flex items-center justify-center gap-2"><Home className="h-4 w-4" /> My Dashboard</span>
                     </Link>
-                  )}
                   {(role === "admin" || role === "super_admin") && (
                     <Link
                       href="/admin/listings"
