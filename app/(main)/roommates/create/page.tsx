@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { createRoommateProfile } from "@/app/roommate-actions"
 import { UNIVERSITIES } from "@/lib/constants"
 import { Check, Loader2, Home, User, ChevronRight, ChevronLeft } from "lucide-react"
+import { fireCelebrationConfetti } from "@/lib/confetti"
 
 const LIFESTYLE_TAGS = [
   "Neat freak", "Relaxed", "Night owl", "Early bird", 
@@ -98,6 +99,7 @@ export default function CreateRoommateProfilePage() {
       if (result.error) {
         setError(result.error)
       } else {
+        fireCelebrationConfetti()
         router.push("/roommates")
       }
     } catch (e: any) {

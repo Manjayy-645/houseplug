@@ -1,8 +1,10 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { updateRoommateStatus } from "@/app/roommate-actions"
+import { fireCelebrationConfetti, fireCannonConfetti } from "@/lib/confetti"
 import Link from "next/link"
 import {
   Users,
@@ -12,6 +14,7 @@ import {
   PlayCircle,
   Pencil,
   Loader2,
+  Sparkles,
 } from "lucide-react"
 
 export default function StudentRoommatePage() {
@@ -19,6 +22,8 @@ export default function StudentRoommatePage() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [updating, setUpdating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [showCelebrationBanner, setShowCelebrationBanner] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -38,18 +43,30 @@ export default function StudentRoommatePage() {
     fetch()
   }, [router])
 
-  async function updateStatus(status: "active" | "paused" | "found") {
+  async function handleUpdateStatus(status: "active" | "paused" | "found") {
     if (!userId) return
     setUpdating(true)
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from("roommate_profiles")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("user_id", userId)
-      .select()
-      .single()
+    setErrorMessage(null)
+
+    const res = await updateRoommateStatus(status)
     setUpdating(false)
-    if (!error && data) setProfile(data)
+
+    if (res.error) {
+      setErrorMessage(res.error)
+      return
+    }
+
+    if (res.data) {
+      setProfile(res.data)
+      
+      // Trigger celebrations!
+      if (status === "found") {
+        setShowCelebrationBanner(true)
+        fireCannonConfetti()
+      } else if (status === "active") {
+        fireCelebrationConfetti()
+      }
+    }
   }
 
   if (loading) {
@@ -139,32 +156,59 @@ export default function StudentRoommatePage() {
               </div>
             )}
 
+            {errorMessage && (
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl font-medium border border-red-100 text-sm mb-6 text-center">
+                {errorMessage}
+              </div>
+            )}
+
+            {showCelebrationBanner && (
+              <div className="p-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl shadow-lg mb-6 flex items-center justify-between animate-in fade-in zoom-in duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-full">
+                    <Sparkles className="h-6 w-6 text-amber-300 animate-bounce" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base">Congratulations 🎉</h3>
+                    <p className="text-xs text-white/90 font-medium">Glad you found a match on HousePlug! Your profile is now hidden from public search.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCelebrationBanner(false)}
+                  className="px-3 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-bold transition"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               {profile.status === "active" && (
                 <>
                   <button
-                    onClick={() => updateStatus("found")}
+                    onClick={() => handleUpdateStatus("found")}
                     disabled={updating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#10B981] text-white py-3 rounded-xl font-bold hover:bg-[#0ea274] transition disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#10B981] text-white py-3 rounded-xl font-bold hover:bg-[#0ea274] transition disabled:opacity-50 shadow-md shadow-emerald-500/10 active:scale-95"
                   >
                     {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                     Mark as Found ✓
                   </button>
                   <button
-                    onClick={() => updateStatus("paused")}
+                    onClick={() => handleUpdateStatus("paused")}
                     disabled={updating}
-                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 border border-gray-200 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition disabled:opacity-50 active:scale-95"
                   >
-                    <PauseCircle className="h-4 w-4" /> Pause
+                    {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PauseCircle className="h-4 w-4" />}
+                    Pause
                   </button>
                 </>
               )}
               {profile.status === "paused" && (
                 <button
-                  onClick={() => updateStatus("active")}
+                  onClick={() => handleUpdateStatus("active")}
                   disabled={updating}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition disabled:opacity-50 active:scale-95"
                 >
                   {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
                   Re-activate
@@ -172,9 +216,9 @@ export default function StudentRoommatePage() {
               )}
               {profile.status === "found" && (
                 <button
-                  onClick={() => updateStatus("active")}
+                  onClick={() => handleUpdateStatus("active")}
                   disabled={updating}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition disabled:opacity-50 active:scale-95"
                 >
                   {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlayCircle className="h-4 w-4" />}
                   Still Looking — Re-activate

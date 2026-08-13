@@ -60,5 +60,33 @@ export async function createRoommateProfile(data: {
   }
 
   revalidatePath("/roommates")
+  revalidatePath("/student/roommate")
+  revalidatePath("/student/dashboard")
   return { success: true }
+}
+
+export async function updateRoommateStatus(status: "active" | "paused" | "found") {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: "You must be logged in." }
+  }
+
+  const { data, error } = await supabase
+    .from("roommate_profiles")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Failed to update roommate status:", error)
+    return { error: error.message }
+  }
+
+  revalidatePath("/roommates")
+  revalidatePath("/student/roommate")
+  revalidatePath("/student/dashboard")
+  return { success: true, data }
 }
