@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { updateRoommateStatus } from "@/app/roommate-actions"
+import { TopMatches } from "@/components/top-matches"
 import { fireCelebrationConfetti, fireCannonConfetti } from "@/lib/confetti"
 import Link from "next/link"
 import {
@@ -226,6 +227,11 @@ export default function StudentRoommatePage() {
               )}
             </div>
           </div>
+
+          {/* Top Matches Section */}
+          {profile.status === "active" && (
+            <TopMatches myProfile={profile} />
+          )}
 
           <Link
             href="/roommates"
