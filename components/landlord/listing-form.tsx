@@ -684,8 +684,12 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                     try {
                       const url = await uploadVideo(file)
                       setVideoUrl(url)
-                    } catch {
-                      setMessage("Video upload failed. Please try again.")
+                    } catch (err) {
+                      setMessage(
+                        err instanceof Error
+                          ? `Video upload failed: ${err.message}`
+                          : "Video upload failed. Please try again."
+                      )
                     } finally {
                       setVideoUploading(false)
                     }

@@ -12,8 +12,8 @@ export async function uploadVideo(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
   formData.append("upload_preset", uploadPreset)
-  formData.append("resource_type", "video")
-  formData.append("eager", "vc_h264,f_mp4,q_auto")
+  // eager: transcode to H.264 baseline MP4 on upload so playback works everywhere
+  formData.append("eager", "vc_h264:baseline,f_mp4,q_auto")
   formData.append("eager_async", "false")
 
   const res = await fetch(
@@ -21,7 +21,10 @@ export async function uploadVideo(file: File): Promise<string> {
     { method: "POST", body: formData }
   )
 
-  if (!res.ok) throw new Error("Video upload failed")
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    throw new Error(errBody?.error?.message ?? "Video upload failed")
+  }
 
   const data = await res.json()
   return data.eager?.[0]?.secure_url ?? data.secure_url
