@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createClient } from "@/lib/supabase/server"
-import { StudentBottomNav } from "@/components/student/bottom-nav"
+import { StudentNav } from "@/components/student/student-nav"
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   const supabase = createClient()
@@ -23,8 +23,8 @@ export default async function StudentLayout({ children }: { children: ReactNode 
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900">
+      <StudentNav />
       <main className="pb-24">{children}</main>
-      <StudentBottomNav />
     </div>
   )
 }
