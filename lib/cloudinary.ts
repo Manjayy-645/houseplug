@@ -12,9 +12,8 @@ export async function uploadVideo(file: File): Promise<string> {
   const formData = new FormData()
   formData.append("file", file)
   formData.append("upload_preset", uploadPreset)
-  // eager: transcode to H.264 baseline MP4 on upload so playback works everywhere
-  formData.append("eager", "vc_h264:baseline,f_mp4,q_auto")
-  formData.append("eager_async", "false")
+  // Note: eager/eager_async are NOT allowed with unsigned presets.
+  // H.264 compatibility is handled at render time via streamableVideoUrl().
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
