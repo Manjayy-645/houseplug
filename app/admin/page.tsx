@@ -35,13 +35,17 @@ export default async function AdminDashboardPage() {
     { count: pendingVerifications },
     { count: totalActiveListings },
     { count: totalUsers },
-    { data: pendingAppeals }
+    { data: pendingAppeals },
+    { count: activeRoommates },
+    { count: totalRoommates }
   ] = await Promise.all([
     supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'landlord').eq('verification_status', 'pending'),
     supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10)
+    supabase.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10),
+    supabase.from('roommate_profiles').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('roommate_profiles').select('*', { count: 'exact', head: true })
   ])
 
   return (
@@ -72,10 +76,10 @@ export default async function AdminDashboardPage() {
           urgent={!!pendingVerifications && pendingVerifications > 0}
         />
         <OverviewCard 
-          title="Active Listings" 
-          value={String(totalActiveListings || 0)} 
-          href="/admin/listings"
-          icon={Home}
+          title="Active Roommates" 
+          value={String(activeRoommates || 0)} 
+          href="/admin/roommates"
+          icon={Users}
           color="text-emerald-600"
           bg="bg-emerald-50"
         />
@@ -149,6 +153,7 @@ export default async function AdminDashboardPage() {
               <QuickLinkCard title="Review Feed" icon={Star} href="/admin/reviews" desc="Moderate comments" />
               <QuickLinkCard title="Billing" icon={CreditCard} href="/admin/subscriptions" desc="View payments" />
               <QuickLinkCard title="Platform" icon={LayoutDashboard} href="/admin/listings" desc="Browse content" />
+              <QuickLinkCard title="Roommates" icon={Users} href="/admin/roommates" desc="Manage roommates" />
            </div>
 
            {profile?.role === 'super_admin' && (

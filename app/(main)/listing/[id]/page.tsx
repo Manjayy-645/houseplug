@@ -106,7 +106,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)
     
     const results = await Promise.all([
-      supabase.auth.getUser(),
+      supabase.auth.getUser().catch(() => ({ data: { user: null } })),
       isUuid 
         ? supabase
             .from("listings")
@@ -126,9 +126,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         : Promise.resolve({ data: null })
     ])
     
-    authData = results[0].data
-    listingRow = results[1].data
-    reviewsRows = results[2].data
+    authData = (results[0] as any)?.data || { user: null }
+    listingRow = (results[1] as any)?.data
+    reviewsRows = (results[2] as any)?.data
   } catch (error) {
     console.error("Error fetching listing details:", error)
   }

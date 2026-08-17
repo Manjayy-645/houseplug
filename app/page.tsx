@@ -264,7 +264,7 @@ export default async function LandingPage() {
                   <Users className="h-4 w-4 sm:h-5 sm:w-5" /> Find Roommates
                 </Link>
                 <Link 
-                  href="/roommates/new" 
+                  href="/roommates/create" 
                   className="bg-white/10 backdrop-blur-sm border border-white/20 text-white font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-full hover:bg-white/20 transition-all active:scale-95 flex items-center justify-center text-sm sm:text-base"
                 >
                   Post a Request

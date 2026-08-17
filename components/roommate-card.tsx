@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck } from "lucide-react"
+import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight } from "lucide-react"
 
 type RoommateProfile = {
   id: string
@@ -24,8 +24,17 @@ type RoommateProfile = {
   }
 }
 
-export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, currentUserId?: string }) {
-  const [showConnectModal, setShowConnectModal] = useState(false)
+export function RoommateCard({
+  data,
+  currentUserId,
+  currentUserRole,
+}: {
+  data: RoommateProfile
+  currentUserId?: string | null
+  currentUserRole?: string | null
+}) {
+  const [showGuestModal, setShowGuestModal] = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -36,18 +45,26 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
   const isVerified = data.profile?.verification_status === "verified"
 
   const handleConnect = () => {
+    // Case 1: not logged in at all
     if (!currentUserId) {
-      setShowConnectModal(true)
+      setShowGuestModal(true)
       return
     }
 
+    // Case 2: logged in but not a student
+    if (currentUserRole !== "student") {
+      setShowRoleModal(true)
+      return
+    }
+
+    // Case 3: verified student — open WhatsApp
     let phone = data.phone_number
     if (phone.startsWith("0")) {
       phone = "234" + phone.substring(1)
     } else if (!phone.startsWith("234")) {
       phone = "234" + phone
     }
-    
+
     const name = data.profile?.full_name?.split(" ")[0] || "there"
     const message = encodeURIComponent(`Hi ${name}, I saw your roommate profile on HousePlug!`)
     window.open(`https://wa.me/${phone}?text=${message}`, "_blank")
@@ -79,7 +96,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5">
-                {data.profile?.full_name?.split(' ')[0] || "Student"} 
+                {data.profile?.full_name?.split(' ')[0] || "Student"}
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
               </h3>
               <p className="text-sm text-gray-500">{data.gender} • {data.university}</p>
@@ -98,7 +115,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
         {/* Bio */}
         <div className="mb-6 flex-1">
           <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
-            "{data.bio}"
+            &ldquo;{data.bio}&rdquo;
           </p>
         </div>
 
@@ -118,14 +135,14 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={() => setShowDetailsModal(true)}
             className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-1.5"
           >
             <Eye className="h-4 w-4 text-gray-500" />
             View Details
           </button>
-          <button 
+          <button
             onClick={handleConnect}
             className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
           >
@@ -135,7 +152,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
         </div>
       </div>
 
-      {/* Full Details Modal */}
+      {/* ── Full Details Modal ── */}
       {mounted && showDetailsModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -148,7 +165,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
                   <><User className="h-4 w-4" /> Looking to Team Up</>
                 )}
               </span>
-              <button 
+              <button
                 onClick={() => setShowDetailsModal(false)}
                 className="p-1 rounded-full hover:bg-white/20 transition-colors"
                 aria-label="Close modal"
@@ -220,7 +237,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
                 </h4>
                 <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
                   <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                    "{data.bio}"
+                    &ldquo;{data.bio}&rdquo;
                   </p>
                 </div>
               </div>
@@ -228,7 +245,7 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
               {/* Full Lifestyle & Preference Tags */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                  Lifestyle & Preferences
+                  Lifestyle &amp; Preferences
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {data.lifestyle_tags.map((tag, i) => (
@@ -263,25 +280,81 @@ export function RoommateCard({ data, currentUserId }: { data: RoommateProfile, c
         document.body
       )}
 
-      {/* Connect Modal Overlay */}
-      {mounted && showConnectModal && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {/* ── Guest Modal (not logged in) ── */}
+      {mounted && showGuestModal && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative text-center">
-            <div className="mx-auto h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center text-blue-500 mb-4">
-              <Info className="h-8 w-8" />
+            <button
+              onClick={() => setShowGuestModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mx-auto h-16 w-16 bg-[#1B4332]/10 rounded-full flex items-center justify-center mb-5">
+              <Info className="h-8 w-8 text-[#1B4332]" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Student Login Required</h3>
-            <p className="text-gray-500 mb-8">
-              To protect the privacy and safety of our users, you need to log in as a student to view WhatsApp numbers and contact potential roommates.
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Sign in to Connect</h3>
+            <p className="text-gray-500 text-sm mb-8">
+              To protect our users&apos; privacy, only registered students can contact roommate listings.
+              Create a free account to get started.
             </p>
             <div className="flex flex-col gap-3">
-              <a href="/login" className="w-full bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:opacity-90">
+              <a
+                href="/signup"
+                className="w-full flex items-center justify-center gap-2 bg-[#F59E0B] text-white py-3.5 rounded-xl font-bold hover:brightness-105 transition shadow-sm shadow-amber-400/20"
+              >
+                Create Free Account <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="/login"
+                className="w-full bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition"
+              >
                 Log In
               </a>
-              <button onClick={() => setShowConnectModal(false)} className="w-full py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl">
-                Cancel
+              <button
+                onClick={() => setShowGuestModal(false)}
+                className="w-full py-3 text-gray-400 font-semibold hover:bg-gray-50 rounded-xl transition-colors text-sm"
+              >
+                Maybe later
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Role Error Modal (logged in but not a student) ── */}
+      {mounted && showRoleModal && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative text-center">
+            <button
+              onClick={() => setShowRoleModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="mx-auto h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-5">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Students Only</h3>
+            <p className="text-gray-500 text-sm mb-3">
+              This feature is exclusively for <span className="font-bold text-gray-700">student accounts</span>.
+              Roommate matching is a student-to-student experience on HousePlug.
+            </p>
+            <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-8">
+              <p className="text-red-700 text-xs font-semibold">
+                Your current account type does not have permission to contact roommate listings.
+                If you&apos;re a student, please sign up with a student account.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowRoleModal(false)}
+              className="w-full py-3 rounded-xl border border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Got it
+            </button>
           </div>
         </div>,
         document.body

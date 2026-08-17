@@ -32,6 +32,16 @@ export default function StudentRoommatePage() {
     const fetch = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push("/login"); return }
+
+      // Role guard: this page is for students only
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+
+      if (profile?.role !== "student") { router.push("/"); return }
+
       setUserId(user.id)
       const { data } = await supabase
         .from("roommate_profiles")

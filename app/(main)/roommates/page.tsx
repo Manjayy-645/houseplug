@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { RoommateCard } from "@/components/roommate-card"
-import { Search, SlidersHorizontal, Users } from "lucide-react"
+import { Search, SlidersHorizontal, Users, ArrowRight, Sparkles } from "lucide-react"
 
 export const metadata = {
   title: "Find a Roommate | HousePlug",
@@ -14,6 +14,17 @@ export default async function RoommatesPage() {
   
   const { data: { session } } = await supabase.auth.getSession()
   const currentUserId = session?.user?.id
+
+  // Fetch current user's role if logged in
+  let currentUserRole: string | null = null
+  if (currentUserId) {
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", currentUserId)
+      .single()
+    currentUserRole = userProfile?.role ?? null
+  }
   
   // Fetch real profiles
   const { data: roommateProfiles } = await supabase
@@ -40,6 +51,9 @@ export default async function RoommatesPage() {
       }))
     }
   }
+
+  const isGuest = !currentUserId
+
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
       {/* Hero Section */}
@@ -69,6 +83,41 @@ export default async function RoommatesPage() {
           </div>
         </div>
       </section>
+
+      {/* Guest Sign-up Prompt Banner */}
+      {isGuest && (
+        <div className="bg-gradient-to-r from-[#F59E0B]/10 via-amber-50 to-[#F59E0B]/10 border-y border-amber-200/60">
+          <div className="max-w-7xl mx-auto px-5 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="shrink-0 h-10 w-10 rounded-full bg-[#F59E0B]/20 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-[#F59E0B]" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">
+                  You&apos;re browsing as a guest
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Create a free student account to contact roommates directly on WhatsApp.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/login"
+                className="px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-gray-700 hover:bg-white transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1B4332] text-white text-sm font-bold hover:bg-[#143326] transition-colors shadow-sm"
+              >
+                Sign Up Free <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-5 py-12">
@@ -107,7 +156,7 @@ export default async function RoommatesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {profiles.map((profile: any) => (
-            <RoommateCard key={profile.id} data={profile} currentUserId={currentUserId} />
+            <RoommateCard key={profile.id} data={profile} currentUserId={currentUserId} currentUserRole={currentUserRole} />
           ))}
         </div>
       </div>
