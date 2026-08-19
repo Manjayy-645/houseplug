@@ -8,6 +8,7 @@ import { streamableVideoUrl, getSafariCompatibleVideoUrl } from "@/lib/cloudinar
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
 import SaveButton from "@/components/listing/save-button"
+import ShareButton from "@/components/listing/share-button"
 import type { Listing } from "@/types"
 
 type ListingCardProps = {
@@ -98,11 +99,16 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
             </span>
           ) : null}
         </div>
-        <SaveButton 
-          listingId={listing.id} 
-          initialSaved={listing.is_saved || false}
-          className="absolute top-4 right-4 z-10"
-        />
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+          <SaveButton 
+            listingId={listing.id} 
+            initialSaved={listing.is_saved || false}
+          />
+          <ShareButton 
+            title={listing.title}
+            url={typeof window !== "undefined" ? `${window.location.origin}/listing/${listing.id}` : `/listing/${listing.id}`}
+          />
+        </div>
       </Link>
       
       <div className="p-5">

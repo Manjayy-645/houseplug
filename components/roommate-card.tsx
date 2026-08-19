@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
+import Link from "next/link"
 import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight } from "lucide-react"
 
 type RoommateProfile = {
@@ -35,7 +36,6 @@ export function RoommateCard({
 }) {
   const [showGuestModal, setShowGuestModal] = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -135,19 +135,13 @@ export function RoommateCard({
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button
-            onClick={() => {
-              if (!currentUserId) {
-                setShowGuestModal(true)
-                return
-              }
-              setShowDetailsModal(true)
-            }}
+          <Link
+            href={`/roommates/${data.id}`}
             className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-1.5"
           >
             <Eye className="h-4 w-4 text-gray-500" />
             View Details
-          </button>
+          </Link>
           <button
             onClick={handleConnect}
             className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
@@ -157,134 +151,6 @@ export function RoommateCard({
           </button>
         </div>
       </div>
-
-      {/* ── Full Details Modal ── */}
-      {mounted && showDetailsModal && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className={`px-6 py-4 flex items-center justify-between text-white ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
-              <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wider">
-                {data.intent === 'have_room' ? (
-                  <><Home className="h-4 w-4" /> Has a Room</>
-                ) : (
-                  <><User className="h-4 w-4" /> Looking to Team Up</>
-                )}
-              </span>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="p-1 rounded-full hover:bg-white/20 transition-colors"
-                aria-label="Close modal"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              {/* Profile Main Info */}
-              <div className="flex items-center gap-4 border-b border-gray-100 pb-5">
-                <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-[#1B4332]/10 bg-gray-50 shrink-0">
-                  {data.profile?.avatar_url ? (
-                    <img src={data.profile.avatar_url} alt={data.profile.full_name} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
-                      <User className="h-7 w-7" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h2 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                    {data.profile?.full_name || "Student"}
-                    {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
-                  </h2>
-                  <p className="text-sm text-gray-500 font-medium">
-                    {data.gender} • {data.university}
-                  </p>
-                  {isVerified && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1">
-                      <ShieldCheck className="h-3 w-3" /> Verified Student
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Budget & Target Overview */}
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Budget / Rent Share</p>
-                  <p className="font-black text-[#1B4332] text-lg">
-                    ₦{data.budget_min.toLocaleString()} - ₦{data.budget_max.toLocaleString()}
-                    <span className="text-xs text-gray-500 font-normal">/yr</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Preferred Roommate</p>
-                  <p className="font-bold text-gray-800 text-sm capitalize mt-1">
-                    {data.preferred_gender === "any" ? "Any Gender" : `${data.preferred_gender} Only`}
-                  </p>
-                </div>
-              </div>
-
-              {/* Room Location (If Has Room) */}
-              {data.intent === "have_room" && data.room_address && (
-                <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-100">
-                  <p className="text-xs text-amber-800 font-bold uppercase tracking-wider flex items-center gap-1.5 mb-1">
-                    <MapPin className="h-3.5 w-3.5 text-amber-600" /> Room Address / Location
-                  </p>
-                  <p className="text-sm font-semibold text-gray-800">{data.room_address}</p>
-                </div>
-              )}
-
-              {/* Complete Bio */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5 text-[#F59E0B]" /> About Me
-                </h4>
-                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-                    &ldquo;{data.bio}&rdquo;
-                  </p>
-                </div>
-              </div>
-
-              {/* Full Lifestyle & Preference Tags */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                  Lifestyle &amp; Preferences
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {data.lifestyle_tags.map((tag, i) => (
-                    <span key={i} className="px-3.5 py-1.5 rounded-xl bg-gray-100 text-xs font-semibold text-gray-700">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="w-1/3 py-3 rounded-xl border border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowDetailsModal(false)
-                  handleConnect()
-                }}
-                className="w-2/3 py-3 rounded-xl bg-[#1B4332] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md"
-              >
-                <Phone className="h-4 w-4 text-[#F59E0B]" /> Connect on WhatsApp
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
 
       {/* ── Guest Modal (not logged in) ── */}
       {mounted && showGuestModal && createPortal(

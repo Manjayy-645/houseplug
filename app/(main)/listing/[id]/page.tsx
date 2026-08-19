@@ -16,6 +16,7 @@ import ReviewForm from "@/components/listing/review-form"
 import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
 import SaveButton from "@/components/listing/save-button"
+import ShareButton from "@/components/listing/share-button"
 import type { Metadata } from "next"
 
 type ListingDetailPageProps = {
@@ -304,12 +305,19 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 sm:text-3xl flex-1">
                   {listing.title}
                 </h1>
-                <SaveButton 
-                  listingId={listing.id} 
-                  initialSaved={isSaved} 
-                  className="shrink-0 bg-gray-50 border border-gray-100 p-2.5 rounded-full hover:bg-gray-100" 
-                  iconClassName="w-5 h-5"
-                />
+                <div className="flex items-center gap-2 shrink-0">
+                  <ShareButton 
+                    title={listing.title}
+                    className="bg-gray-50 border border-gray-100 p-2.5 rounded-full hover:bg-gray-100" 
+                    iconClassName="w-5 h-5 text-gray-500"
+                  />
+                  <SaveButton 
+                    listingId={listing.id} 
+                    initialSaved={isSaved} 
+                    className="bg-gray-50 border border-gray-100 p-2.5 rounded-full hover:bg-gray-100" 
+                    iconClassName="w-5 h-5"
+                  />
+                </div>
               </div>
               {reviewCount > 0 && (
                 <div className="flex items-center gap-2 mt-1">
