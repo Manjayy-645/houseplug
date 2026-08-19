@@ -136,7 +136,13 @@ export function RoommateCard({
         {/* Actions */}
         <div className="flex gap-2">
           <button
-            onClick={() => setShowDetailsModal(true)}
+            onClick={() => {
+              if (!currentUserId) {
+                setShowGuestModal(true)
+                return
+              }
+              setShowDetailsModal(true)
+            }}
             className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-1.5"
           >
             <Eye className="h-4 w-4 text-gray-500" />
@@ -294,9 +300,9 @@ export function RoommateCard({
             <div className="mx-auto h-16 w-16 bg-[#1B4332]/10 rounded-full flex items-center justify-center mb-5">
               <Info className="h-8 w-8 text-[#1B4332]" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Sign in to Connect</h3>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Sign in to View & Connect</h3>
             <p className="text-gray-500 text-sm mb-8">
-              To protect our users&apos; privacy, only registered students can contact roommate listings.
+              To protect our users&apos; privacy, you must be logged in to view roommate details. Only registered students can contact roommates.
               Create a free account to get started.
             </p>
             <div className="flex flex-col gap-3">

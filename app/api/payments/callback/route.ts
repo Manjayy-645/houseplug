@@ -31,6 +31,9 @@ export async function GET(request: Request) {
       if (type === 'boost') {
         return NextResponse.redirect(`${base}/landlord/subscription?boost=success`)
       }
+      if (type === 'success_fee') {
+        return NextResponse.redirect(`${base}/landlord/dashboard?success_fee=paid`)
+      }
       return NextResponse.redirect(`${base}/landlord/subscription?payment=success`)
     }
 
@@ -38,6 +41,9 @@ export async function GET(request: Request) {
     const failType = transaction.metadata?.type
     if (failType === 'verification') {
       return NextResponse.redirect(`${base}/landlord/verification?error=payment_failed`)
+    }
+    if (failType === 'success_fee') {
+      return NextResponse.redirect(`${base}/landlord/dashboard?error=payment_failed`)
     }
     return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {

@@ -8,7 +8,7 @@ import type { Listing, Review } from "@/types"
 import { getLandlordSubscription, getListingLimit } from "@/lib/billing"
 import { isSubscriptionExpiringSoon, formatExpiryDate, daysUntilExpiry } from "@/lib/billing-utils"
 
-export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string } }) {
+export default async function LandlordDashboardPage({ searchParams }: { searchParams?: { payment?: string, success_fee?: string } }) {
   const supabase = createClient()
   const {
     data: { user }
@@ -98,6 +98,22 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
 
       {/* PRIORITY BANNERS */}
       <div className="space-y-4">
+        {searchParams?.success_fee === "paid" && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                <PartyPopper className="h-4 w-4 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-bold">Success Fee Paid!</p>
+                <p className="text-sm text-emerald-600">Your property has been successfully marked as rented. Thank you for your support!</p>
+              </div>
+            </div>
+            <Link href="/landlord/dashboard" className="text-emerald-500 hover:text-emerald-700">
+              <X className="h-5 w-5" />
+            </Link>
+          </div>
+        )}
         {!profile?.phone && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
             <Phone className="w-5 h-5 text-amber-600 shrink-0" />

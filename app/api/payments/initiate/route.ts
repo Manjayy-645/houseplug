@@ -37,6 +37,8 @@ export async function POST(request: Request) {
     amount = prices[boost_type as keyof typeof prices] || 0
   } else if (type === 'verification') {
     amount = prices.verification
+  } else if (type === 'success_fee') {
+    amount = 100000 // 1000 Naira in kobo
   }
 
   if (!amount) {
