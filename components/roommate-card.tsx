@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
-import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight } from "lucide-react"
+import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check } from "lucide-react"
 
 type RoommateProfile = {
   id: string
@@ -37,10 +37,31 @@ export function RoommateCard({
   const [showGuestModal, setShowGuestModal] = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = `${window.location.origin}/roommates/${data.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Roommate Profile on HousePlug`,
+          text: `Check out ${data.profile?.full_name?.split(' ')[0] || "this student"}'s roommate profile on HousePlug!`,
+          url: url,
+        });
+      } catch (err) {
+        console.log("Error sharing:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }
 
   const isVerified = data.profile?.verification_status === "verified"
 
@@ -73,12 +94,15 @@ export function RoommateCard({
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
       {/* Top Banner indicating Intent */}
-      <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest text-white ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
+      <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
         {data.intent === 'have_room' ? (
           <span className="flex items-center gap-2"><Home className="h-4 w-4" /> Has a Room</span>
         ) : (
           <span className="flex items-center gap-2"><User className="h-4 w-4" /> Looking to Team Up</span>
         )}
+        <button onClick={handleShare} className="hover:opacity-80 transition-opacity p-1 bg-white/20 rounded-full" aria-label="Share">
+          {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
+        </button>
       </div>
 
       <div className="p-6 flex-1 flex flex-col">
