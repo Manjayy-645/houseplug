@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("title, price_yearly, room_type, area, university, video_url")
+    .select("title, price_yearly, room_type, area, university, video_url, photos")
     .eq("id", listingId)
     .single()
 
@@ -49,6 +49,18 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
   const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/year | HousePlug`
   const description = `Verified student housing near ${campus}. Contact the landlord directly on WhatsApp.`
 
+  let ogImageUrl = ""
+  if (listing.video_url && listing.video_url.includes("/upload/")) {
+    const parts = listing.video_url.split("/upload/")
+    // extract frame at 2s (so_2.0), convert to jpg (f_jpg)
+    // overlay play button svg (l_i8nqd8bpufwenh48ypin), width 200px (w_200), center (g_center)
+    ogImageUrl = `${parts[0]}/upload/so_2.0,f_jpg/l_i8nqd8bpufwenh48ypin,w_200,g_center/${parts[1]}`
+  } else if (listing.photos && listing.photos.length > 0) {
+    ogImageUrl = listing.photos[0]
+  } else {
+    ogImageUrl = "https://houseplug.ng/roommates/opengraph-image"
+  }
+
   const metadata: Metadata = {
     title,
     description,
@@ -56,11 +68,19 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
       title,
       description,
       type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+        }
+      ]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImageUrl],
     }
   }
 
