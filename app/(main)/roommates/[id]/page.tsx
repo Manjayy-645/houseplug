@@ -5,9 +5,30 @@ import Link from "next/link"
 import { RoommateContactButton } from "./contact-button"
 import { ShareButton } from "./share-button"
 
-export const metadata = {
-  title: "Roommate Profile | HousePlug",
-  description: "View roommate profile on HousePlug.",
+import { Metadata } from "next"
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const supabase = createServiceClient()
+  
+  const { data: roommate } = await supabase
+    .from("roommate_profiles")
+    .select("intent, university, budget_min, budget_max")
+    .eq("id", params.id)
+    .single()
+
+  if (!roommate) {
+    return {
+      title: "Roommate Profile | HousePlug",
+      description: "View roommate profile on HousePlug.",
+    }
+  }
+
+  const intentText = roommate.intent === "have_room" ? "Room available" : "Roommate wanted"
+  
+  return {
+    title: `${intentText} near ${roommate.university} | HousePlug`,
+    description: `Budget: ₦${roommate.budget_min.toLocaleString()} - ₦${roommate.budget_max.toLocaleString()}/yr. Connect with verified students on HousePlug.`,
+  }
 }
 
 export default async function RoommateProfilePage({ params }: { params: { id: string } }) {
