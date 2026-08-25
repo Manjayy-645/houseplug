@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Star, Flame, Users, Info, Check, EyeOff } from "lucide-react"
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Listing, Review } from "@/types"
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils"
@@ -126,15 +126,17 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   try {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)
     
+    const isGuest = !(await supabase.auth.getUser().catch(() => ({ data: { user: null } }))).data.user
+
     const results = await Promise.all([
       supabase.auth.getUser().catch(() => ({ data: { user: null } })),
       isUuid 
-        ? supabase
+        ? (isGuest ? createServiceClient() : supabase)
             .from("listings")
-            .select(`
-              *,
-              landlord:profiles!landlord_id(id, full_name, phone, avatar_url, verification_status, role, username, created_at)
-            `)
+            .select(isGuest 
+              ? `*, landlord:profiles!landlord_id(id, full_name, avatar_url, verification_status, role, username, created_at)`
+              : `*, landlord:profiles!landlord_id(id, full_name, phone, avatar_url, verification_status, role, username, created_at)`
+            )
             .eq("id", listingId)
             .single()
         : Promise.resolve({ data: null }),
@@ -230,8 +232,8 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
   // Fetch real landlord profile and user profile if needed if not already set by fallback
   const [{ data: dbLandlordRow }, { data: userProfile }, { data: existingReview }] = await Promise.all([
-    !landlordRowData && listingRowData
-      ? supabase.from("profiles").select("id, full_name, phone, avatar_url, role, username, created_at").eq("id", listingRowData.landlord_id).single()
+    !landlordRowData && listingRowData && !listingRowData.landlord
+      ? (!user ? createServiceClient() : supabase).from("profiles").select(!user ? "id, full_name, avatar_url, role, username, created_at" : "id, full_name, phone, avatar_url, role, username, created_at").eq("id", listingRowData.landlord_id).single()
       : Promise.resolve({ data: null }),
     user 
       ? supabase.from("profiles").select("id, role, full_name").eq("id", user.id).single() 
