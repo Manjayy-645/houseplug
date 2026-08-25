@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BadgeCheck, User, Info, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react"
+import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { RoommateContactButton } from "./contact-button"
 import { ShareButton } from "./share-button"
@@ -16,51 +16,16 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
   const { data: { session } } = await supabase.auth.getSession()
   const currentUserId = session?.user?.id
 
-  if (!currentUserId) {
-    // If not signed in, show a sign-in wall
-    return (
-      <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20 flex items-center justify-center px-4">
-        <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-xl text-center border border-gray-100">
-          <div className="mx-auto h-16 w-16 bg-[#1B4332]/10 rounded-full flex items-center justify-center mb-5">
-            <Info className="h-8 w-8 text-[#1B4332]" />
-          </div>
-          <h1 className="text-2xl font-black text-gray-900 mb-2">Sign in to View Profile</h1>
-          <p className="text-gray-500 text-sm mb-8">
-            To protect our users' privacy, you must be logged in to view complete roommate profiles.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Link
-              href={`/signup?next=/roommates/${params.id}`}
-              className="w-full flex items-center justify-center gap-2 bg-[#F59E0B] text-white py-3.5 rounded-xl font-bold hover:brightness-105 transition shadow-sm"
-            >
-              Create Free Account
-            </Link>
-            <Link
-              href={`/login?next=/roommates/${params.id}`}
-              className="w-full bg-[#1B4332] text-white py-3 rounded-xl font-bold hover:brightness-110 transition flex items-center justify-center"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/roommates"
-              className="w-full py-3 text-gray-400 font-semibold hover:bg-gray-50 rounded-xl transition-colors text-sm"
-            >
-              Back to listings
-            </Link>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  // Fetch current user's role
+  // Fetch current user's role (only if logged in)
   let currentUserRole: string | null = null
-  const { data: currentUserProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", currentUserId)
-    .single()
-  currentUserRole = currentUserProfile?.role ?? null
+  if (currentUserId) {
+    const { data: currentUserProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", currentUserId)
+      .single()
+    currentUserRole = currentUserProfile?.role ?? null
+  }
 
   // Fetch roommate profile
   const { data: roommate } = await supabase
@@ -84,6 +49,8 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
     ...roommate,
     profile: userProfile || { full_name: "Student", avatar_url: null, verification_status: "unverified" }
   }
+
+  const isGuest = !currentUserId
 
   const isVerified = data.profile.verification_status === "verified"
 
@@ -193,11 +160,33 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
           
           {/* Action Footer */}
           <div className="p-6 bg-gray-50 border-t border-gray-100">
-            <RoommateContactButton 
-              phoneNumber={data.phone_number} 
-              firstName={data.profile.full_name?.split(" ")[0] || "there"} 
-              currentUserRole={currentUserRole}
-            />
+            {isGuest ? (
+              <div className="text-center space-y-4">
+                <p className="text-sm text-gray-500">
+                  Sign in to contact this roommate on WhatsApp
+                </p>
+                <div className="flex gap-3">
+                  <Link
+                    href={`/login?next=/roommates/${params.id}`}
+                    className="flex-1 py-3.5 rounded-xl bg-[#1B4332] text-white font-bold text-sm hover:brightness-110 transition flex items-center justify-center"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href={`/signup?next=/roommates/${params.id}`}
+                    className="flex-1 py-3.5 rounded-xl bg-[#F59E0B] text-white font-bold text-sm hover:brightness-105 transition shadow-sm flex items-center justify-center"
+                  >
+                    Sign Up Free
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <RoommateContactButton 
+                phoneNumber={data.phone_number} 
+                firstName={data.profile.full_name?.split(" ")[0] || "there"} 
+                currentUserRole={currentUserRole}
+              />
+            )}
           </div>
         </div>
       </div>
