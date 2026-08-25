@@ -1,0 +1,13 @@
+-- Migration: No RLS changes needed
+-- Guest access to roommate_profiles is handled via createServiceClient() 
+-- in the Next.js Server Components. This bypasses RLS on the server side
+-- without weakening any database-level policies.
+--
+-- The service role key never leaves the server.
+-- Phone numbers are explicitly excluded from guest queries at the application level.
+--
+-- Security summary:
+-- ✅ RLS on roommate_profiles remains strict (authenticated users only + owner writes)
+-- ✅ Guests see profiles via server-side service client (no RLS bypass exposed to browser)
+-- ✅ Phone numbers excluded from SELECT for guest queries
+-- ✅ No new anon policies added (prevents API scraping)

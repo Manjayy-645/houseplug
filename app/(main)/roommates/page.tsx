@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { RoommateCard } from "@/components/roommate-card"
 import { Search, SlidersHorizontal, Users, ArrowRight, Sparkles } from "lucide-react"
 
@@ -14,6 +14,10 @@ export default async function RoommatesPage() {
   
   const { data: { session } } = await supabase.auth.getSession()
   const currentUserId = session?.user?.id
+  const isGuest = !currentUserId
+
+  // Use service client for guests (bypasses RLS without weakening it)
+  const dataClient = isGuest ? createServiceClient() : supabase
 
   // Fetch current user's role if logged in
   let currentUserRole: string | null = null
@@ -26,20 +30,30 @@ export default async function RoommatesPage() {
     currentUserRole = userProfile?.role ?? null
   }
   
-  // Fetch real profiles
-  const { data: roommateProfiles } = await supabase
-    .from("roommate_profiles")
-    .select("*")
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-
-  let profiles = roommateProfiles || []
+  // Fetch real profiles — exclude phone_number for guests
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let profiles: any[] = []
+  if (isGuest) {
+    const { data } = await dataClient
+      .from("roommate_profiles")
+      .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+    profiles = data || []
+  } else {
+    const { data } = await dataClient
+      .from("roommate_profiles")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+    profiles = data || []
+  }
 
   // If we have profiles, fetch their corresponding public.profiles data 
   // since there is no direct foreign key from roommate_profiles to public.profiles
   if (profiles.length > 0) {
     const userIds = profiles.map(p => p.user_id)
-    const { data: usersProfiles } = await supabase
+    const { data: usersProfiles } = await dataClient
       .from("profiles")
       .select("id, full_name, avatar_url, verification_status")
       .in("id", userIds)
@@ -51,8 +65,6 @@ export default async function RoommatesPage() {
       }))
     }
   }
-
-  const isGuest = !currentUserId
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">

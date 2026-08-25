@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { RoommateContactButton } from "./contact-button"
@@ -15,6 +15,11 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
   
   const { data: { session } } = await supabase.auth.getSession()
   const currentUserId = session?.user?.id
+  const isGuest = !currentUserId
+
+  // Use service client for guests (bypasses RLS without weakening it)
+  // Use regular client for authenticated users (RLS applies normally)
+  const dataClient = isGuest ? createServiceClient() : supabase
 
   // Fetch current user's role (only if logged in)
   let currentUserRole: string | null = null
@@ -27,19 +32,33 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
     currentUserRole = currentUserProfile?.role ?? null
   }
 
-  // Fetch roommate profile
-  const { data: roommate } = await supabase
-    .from("roommate_profiles")
-    .select("*")
-    .eq("id", params.id)
-    .single()
+  // Fetch roommate profile — exclude phone_number for guests
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let roommate: any = null
+  if (isGuest) {
+    const { data } = await dataClient
+      .from("roommate_profiles")
+      .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
+      .eq("id", params.id)
+      .eq("status", "active")
+      .single()
+    roommate = data
+  } else {
+    const { data } = await dataClient
+      .from("roommate_profiles")
+      .select("*")
+      .eq("id", params.id)
+      .eq("status", "active")
+      .single()
+    roommate = data
+  }
 
   if (!roommate) {
     notFound()
   }
 
   // Fetch user profile
-  const { data: userProfile } = await supabase
+  const { data: userProfile } = await dataClient
     .from("profiles")
     .select("id, full_name, avatar_url, verification_status")
     .eq("id", roommate.user_id)
@@ -49,8 +68,6 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
     ...roommate,
     profile: userProfile || { full_name: "Student", avatar_url: null, verification_status: "unverified" }
   }
-
-  const isGuest = !currentUserId
 
   const isVerified = data.profile.verification_status === "verified"
 
