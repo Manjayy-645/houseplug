@@ -63,7 +63,7 @@ export function MobileNav() {
     return null
   }
 
-  const isLandlord = role === "landlord" || role === "super_admin"
+  const isLandlord = role === "landlord" || role === "agent" || role === "super_admin"
   const isStudent = role === "student"
 
   const navItems = [
