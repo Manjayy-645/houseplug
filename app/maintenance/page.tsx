@@ -7,7 +7,7 @@ export default function MaintenancePage() {
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-12">
-        <Image src="/logo.png" alt="HousePlug Logo" width={64} height={64} className="rounded-2xl shadow-xl shadow-[#1B4332]/10" />
+        <Image src="/logo.jpg" alt="HousePlug Logo" width={64} height={64} className="rounded-2xl shadow-xl shadow-[#1B4332]/10" />
         <span className="text-3xl font-black text-[#1B4332]">HousePlug</span>
       </div>
 

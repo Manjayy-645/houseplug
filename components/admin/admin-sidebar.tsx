@@ -52,7 +52,7 @@ export function AdminSidebar({ role, pendingCount = 0 }: { role?: string; pendin
         <div className="flex flex-col h-full">
           <div className="p-8 flex items-center gap-3">
             <Link href="/admin" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="HousePlug Logo" width={40} height={40} className="rounded-xl bg-white p-0.5" />
+              <Image src="/logo.jpg" alt="HousePlug Logo" width={40} height={40} className="rounded-xl bg-white p-0.5" />
               <div className="flex flex-col">
                 <span className="text-xl font-bold leading-none">HousePlug</span>
                 <span className="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Admin Panel</span>
@@ -130,7 +130,7 @@ export function AdminSidebar({ role, pendingCount = 0 }: { role?: string; pendin
       {/* ── Mobile Top Bar ────────────────────────────────────── */}
       <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/admin" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
+          <Image src="/logo.jpg" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
           <span className="font-bold text-[#1B4332]">Admin Panel</span>
         </Link>
         <div className="flex items-center gap-2">

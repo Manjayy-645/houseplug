@@ -36,34 +36,60 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/auth")
 
   if (!maintenanceExempt) {
-    const { data: maintenance } = await supabase
-      .from("platform_settings")
-      .select("value")
-      .eq("key", "maintenance_mode")
-      .single()
+    try {
+      const { data: maintenance } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "maintenance_mode")
+        .maybeSingle()
 
-    if (maintenance?.value === "true" || maintenance?.value === true) {
-      // Only fetch the user/role when we actually need to decide who bypasses.
-      const { data: { user } } = await supabase.auth.getUser()
-      let isAdmin = false
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single()
-        isAdmin = ["admin", "super_admin"].includes(profile?.role ?? "")
+      if (maintenance?.value === "true" || maintenance?.value === true) {
+        // Only fetch the user/role when we actually need to decide who bypasses.
+        const { data: { user } } = await supabase.auth.getUser()
+        let isAdmin = false
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single()
+          isAdmin = ["admin", "super_admin"].includes(profile?.role ?? "")
+        }
+        if (!isAdmin) {
+          return NextResponse.redirect(new URL("/maintenance", request.url))
+        }
       }
-      if (!isAdmin) {
-        return NextResponse.redirect(new URL("/maintenance", request.url))
-      }
+    } catch {
+      // If the maintenance check fails (DB timeout, table missing, etc.),
+      // let the request through rather than crashing the entire page.
     }
   }
 
+  // --- Refresh auth session on every request --------------------------------
+  // This ensures tokens stay fresh even on public pages. Without this, users
+  // browsing public pages accumulate stale sessions and get unexpected
+  // redirects to /login when they navigate to a protected route.
+  await supabase.auth.getUser()
+
   // --- Auth + role gating (protected areas only) ---------------------------
-  // Public routes are done once the maintenance gate passes; avoid the extra
-  // auth/profile lookups on them.
-  const isProtected = path.startsWith("/landlord") || path.startsWith("/admin")
+  // Determine which landlord sub-paths are actually the private dashboard.
+  // /landlord/[username] is a PUBLIC profile page and must NOT be gated.
+  const landlordProtectedPrefixes = [
+    "/landlord/dashboard",
+    "/landlord/listings",
+    "/landlord/analytics",
+    "/landlord/billing",
+    "/landlord/profile",
+    "/landlord/reviews",
+    "/landlord/subscription",
+    "/landlord/verification",
+    "/landlord/loading",
+  ]
+  const isLandlordProtected =
+    path === "/landlord" ||
+    landlordProtectedPrefixes.some(prefix => path.startsWith(prefix))
+
+  const isProtected = isLandlordProtected || path.startsWith("/admin")
   if (!isProtected) return response
 
   const {
@@ -109,7 +135,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (
-    path.startsWith("/landlord") &&
+    isLandlordProtected &&
     !["landlord", "agent", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
     return NextResponse.redirect(new URL("/", request.url))

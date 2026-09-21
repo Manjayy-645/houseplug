@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   title: "HousePlug | Find Student Housing Near Your Campus",
   description: "Verified rooms and apartments for students across Nigerian universities. Secure your next home with confidence.",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo.jpg",
+    apple: "/logo.jpg",
   },
 }
 

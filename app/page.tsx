@@ -1,5 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Suspense } from "react"
 import { Header } from "@/components/header"
 import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
@@ -16,37 +17,43 @@ export const revalidate = 3600 // revalidate once per hour
 export default async function LandingPage() {
   const supabase = createClient()
   
-  // Fetch real listings pinned to home page, or fallback to latest featured/active listings
-  const { data: homeListings } = await supabase
-    .from("listings")
-    .select(`
-      *,
-      landlord:profiles(full_name, verification_status, role)
-    `)
-    .eq("status", "active")
-    .eq("show_on_home", true)
-    .order("created_at", { ascending: false })
-    .limit(3)
+  let featuredListings: Listing[] = []
 
-  let featuredListings: Listing[] = (homeListings ?? []) as Listing[]
-
-  // Fallback if no listings are explicitly pinned to home
-  if (featuredListings.length < 3) {
-    const { data: fallbackListings } = await supabase
+  try {
+    // Fetch real listings pinned to home page, or fallback to latest featured/active listings
+    const { data: homeListings } = await supabase
       .from("listings")
       .select(`
         *,
         landlord:profiles(full_name, verification_status, role)
       `)
       .eq("status", "active")
-      .eq("show_on_home", false) // Don't duplicate if already picked
-      .order("is_featured", { ascending: false })
+      .eq("show_on_home", true)
       .order("created_at", { ascending: false })
-      .limit(3 - featuredListings.length)
-    
-    if (fallbackListings) {
-      featuredListings = [...featuredListings, ...(fallbackListings as Listing[])]
+      .limit(3)
+
+    featuredListings = (homeListings ?? []) as Listing[]
+
+    // Fallback if no listings are explicitly pinned to home
+    if (featuredListings.length < 3) {
+      const { data: fallbackListings } = await supabase
+        .from("listings")
+        .select(`
+          *,
+          landlord:profiles(full_name, verification_status, role)
+        `)
+        .eq("status", "active")
+        .eq("show_on_home", false) // Don't duplicate if already picked
+        .order("is_featured", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(3 - featuredListings.length)
+      
+      if (fallbackListings) {
+        featuredListings = [...featuredListings, ...(fallbackListings as Listing[])]
+      }
     }
+  } catch {
+    // If queries fail, continue with empty listings — the page still renders
   }
 
   return (
@@ -164,7 +171,9 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <TrendingStrip />
+        <Suspense fallback={null}>
+          <TrendingStrip />
+        </Suspense>
 
         {/* Featured Listings */}
         <section className="py-10 sm:py-16 md:py-24 max-w-7xl mx-auto px-5 sm:px-6 md:px-20">
@@ -312,7 +321,7 @@ export default async function LandingPage() {
         <div className="flex flex-col md:flex-row justify-between items-start gap-8 sm:gap-12 max-w-7xl mx-auto">
           <div className="max-w-xs">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
+              <Image src="/logo.jpg" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
               <span className="text-lg font-bold text-primary">HousePlug</span>
             </div>
             <p className="text-sm text-gray-500 mb-4 sm:mb-6">Student housing, simplified. We connect students with reliable accommodation across Nigerian Universities.</p>
