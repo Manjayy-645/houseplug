@@ -16,6 +16,7 @@ const baseNavItems = [
   { name: "Pending Listings", href: "/admin/listings?status=pending", icon: Clock },
   { name: "All Listings", href: "/admin/listings", icon: Home },
   { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Roommates", href: "/admin/roommates", icon: Users },
   { name: "Reviews", href: "/admin/reviews", icon: Star },
   { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
 ]
