@@ -203,7 +203,7 @@ export function TopMatches({ myProfile }: { myProfile: any }) {
 
     const { data, error } = await supabase
       .from("roommate_profiles")
-      .select(`*, profile:profiles(full_name, avatar_url, verification_status)`)
+      .select(`*, profile:profiles!roommate_profiles_user_id_profiles_fkey(full_name, avatar_url, verification_status)`)
       .eq("status", "active")
       .eq("university", myProfile.university)
       .neq("user_id", user.id)

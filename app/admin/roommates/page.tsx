@@ -15,10 +15,11 @@ export default async function AdminRoommatesPage({
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  // Build query — join with profiles to get user info
+  // Build query — fetch roommate_profiles without FK join
+  // (user_id references auth.users, not profiles, so PostgREST can't auto-join)
   let query = supabase
     .from("roommate_profiles")
-    .select("*, profile:profiles!roommate_profiles_user_id_fkey(id, full_name, email, avatar_url, verification_status)", { count: "exact" })
+    .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
@@ -28,11 +29,21 @@ export default async function AdminRoommatesPage({
 
   const { data: roommates, count, error } = await query
 
-  // If the FK join fails, fall back to a manual approach
-  let profiles: Record<string, any> = {}
-  let finalRoommates = roommates || []
+  // Handle error early before attempting profile lookup
+  if (error) {
+    console.error("[ADMIN_ROOMMATES] Error:", error)
+    return (
+      <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+        <h2 className="text-lg font-bold">Error loading roommate profiles</h2>
+        <p className="text-sm opacity-90">{error.message}</p>
+      </div>
+    )
+  }
 
-  if (roommates && roommates.length > 0 && !roommates[0]?.profile) {
+  // Fetch associated profiles separately and merge
+  let finalRoommates: any[] = roommates || []
+
+  if (roommates && roommates.length > 0) {
     const userIds = roommates.map((r: any) => r.user_id)
     const { data: profilesData } = await supabase
       .from("profiles")
@@ -40,10 +51,11 @@ export default async function AdminRoommatesPage({
       .in("id", userIds)
 
     if (profilesData) {
-      profilesData.forEach((p: any) => { profiles[p.id] = p })
+      const profileMap: Record<string, any> = {}
+      profilesData.forEach((p: any) => { profileMap[p.id] = p })
       finalRoommates = roommates.map((r: any) => ({
         ...r,
-        profile: profiles[r.user_id] || null,
+        profile: profileMap[r.user_id] || null,
       }))
     }
   }
@@ -75,17 +87,9 @@ export default async function AdminRoommatesPage({
     .select("*", { count: "exact", head: true })
     .eq("status", "found")
 
+
   const totalPages = Math.ceil((count || 0) / pageSize)
 
-  if (error) {
-    console.error("[ADMIN_ROOMMATES] Error:", error)
-    return (
-      <div className="p-8 bg-red-50 border border-red-200 rounded-2xl text-red-700">
-        <h2 className="text-lg font-bold">Error loading roommate profiles</h2>
-        <p className="text-sm opacity-90">{error.message}</p>
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
