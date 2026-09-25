@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   
   const { data: roommate } = await supabase
     .from("roommate_profiles")
-    .select("intent, university, budget_min, budget_max")
+    .select("intent, university, budget_min, budget_max, user_id")
     .eq("id", params.id)
     .single()
 
@@ -23,11 +23,24 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     }
   }
 
-  const intentText = roommate.intent === "have_room" ? "Room available" : "Roommate wanted"
+  // Fetch user's name for a personal share preview
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", roommate.user_id)
+    .single()
+
+  const firstName = userProfile?.full_name?.split(" ")[0] || "A student"
+  
+  const title = roommate.intent === "have_room"
+    ? `${firstName} has a room near ${roommate.university} — wanna move in? | HousePlug`
+    : `${firstName} needs a roommate near ${roommate.university} — wanna team up? | HousePlug`
+
+  const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
   
   return {
-    title: `${intentText} near ${roommate.university} | HousePlug`,
-    description: `Budget: ₦${roommate.budget_min.toLocaleString()} - ₦${roommate.budget_max.toLocaleString()}/yr. Connect with verified students on HousePlug.`,
+    title,
+    description,
   }
 }
 
@@ -99,7 +112,7 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
           <Link href="/roommates" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-semibold transition-colors">
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
-          <ShareButton url={`https://houseplug.ng/roommates/${params.id}`} />
+          <ShareButton url={`https://houseplug.ng/roommates/${params.id}`} firstName={data.profile.full_name?.split(" ")[0]} intent={data.intent} />
         </div>
         
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">

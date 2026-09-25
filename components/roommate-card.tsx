@@ -46,11 +46,15 @@ export function RoommateCard({
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     const url = `${window.location.origin}/roommates/${data.id}`;
+    const name = data.profile?.full_name?.split(' ')[0] || "this student"
+    const shareText = data.intent === "have_room"
+      ? `Check out ${name}'s roommate profile on HousePlug — they have a room available! 🏠`
+      : `Check out ${name}'s roommate profile on HousePlug — wanna team up? 🤝`
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Roommate Profile on HousePlug`,
-          text: `Check out ${data.profile?.full_name?.split(' ')[0] || "this student"}'s roommate profile on HousePlug!`,
+          title: `${name}'s Roommate Profile — HousePlug`,
+          text: shareText,
           url: url,
         });
       } catch (err) {

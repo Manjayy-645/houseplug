@@ -3,15 +3,20 @@
 import { Share2, Check } from "lucide-react"
 import { useState } from "react"
 
-export function ShareButton({ url }: { url: string }) {
+export function ShareButton({ url, firstName, intent }: { url: string; firstName?: string; intent?: string }) {
   const [copied, setCopied] = useState(false)
+
+  const name = firstName || "this student"
+  const shareText = intent === "have_room"
+    ? `Check out ${name}'s roommate profile on HousePlug — they have a room available! 🏠`
+    : `Check out ${name}'s roommate profile on HousePlug — wanna team up? 🤝`
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "HousePlug Roommate Profile",
-          text: "Check out this roommate profile on HousePlug!",
+          title: `${name}'s Roommate Profile — HousePlug`,
+          text: shareText,
           url: url,
         })
       } catch (err) {
@@ -42,3 +47,4 @@ export function ShareButton({ url }: { url: string }) {
     </button>
   )
 }
+
