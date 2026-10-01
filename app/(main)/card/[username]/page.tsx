@@ -29,7 +29,20 @@ export async function generateMetadata({ params }: { params: { username: string 
       url: `https://houseplug.ng/card/${params.username}`,
       siteName: 'HousePlug',
       type: 'profile',
+      images: [
+        {
+          url: 'https://houseplug.ng/logo.png',
+          width: 800,
+          height: 800,
+        }
+      ]
     },
+    twitter: {
+      card: "summary",
+      title: `${profile.full_name} has rooms on HousePlug`,
+      description: `${activeCount || 0} listings available · ${profile.verification_status === 'verified' ? 'Verified landlord' : 'Landlord'} · houseplug.ng`,
+      images: ['https://houseplug.ng/logo.png'],
+    }
   }
 }
 

@@ -54,11 +54,12 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
     const parts = listing.video_url.split("/upload/")
     // extract frame at 2s (so_2.0), convert to jpg (f_jpg)
     // overlay play button svg (l_i8nqd8bpufwenh48ypin), width 200px (w_200), center (g_center)
-    ogImageUrl = `${parts[0]}/upload/so_2.0,f_jpg/l_i8nqd8bpufwenh48ypin,w_200,g_center/${parts[1]}`
+    const urlWithFormat = parts[1].replace(/\.[^/.]+$/, "") + ".jpg"
+    ogImageUrl = `${parts[0]}/upload/so_2.0,f_jpg/l_i8nqd8bpufwenh48ypin,w_200,g_center/${urlWithFormat}`
   } else if (listing.photos && listing.photos.length > 0) {
     ogImageUrl = listing.photos[0]
   } else {
-    ogImageUrl = "https://houseplug.ng/roommates/opengraph-image"
+    ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"}/roommates/opengraph-image`
   }
 
   const metadata: Metadata = {

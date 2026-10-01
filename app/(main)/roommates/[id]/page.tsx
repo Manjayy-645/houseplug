@@ -38,9 +38,30 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
   
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
+  const imageUrl = `${baseUrl}/roommates/${params.id}/opengraph-image`
+
   return {
     title,
     description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    }
   }
 }
 
