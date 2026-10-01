@@ -59,7 +59,7 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
       {/* Desktop Sidebar */}
       <aside className="hidden w-[220px] flex-col bg-[#1B4332] text-white lg:flex sticky top-0 h-screen">
         <div className="border-b border-white/15 px-4 py-5 flex items-center gap-2">
-          <Image src="/logo.jpg" alt="HousePlug Logo" width={32} height={32} className="rounded-lg bg-white p-0.5" />
+          <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg bg-white p-0.5" />
           <div>
             <Link href="/landlord/dashboard" className="text-xl font-bold hover:text-[#F59E0B] transition">
               HousePlug
@@ -134,7 +134,7 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/landlord/dashboard" className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
+          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
           <span className="font-bold text-[#1B4332]">Landlord Console</span>
         </Link>
         <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-gray-600 active:bg-gray-50 rounded-lg">

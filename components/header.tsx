@@ -152,7 +152,7 @@ export function Header() {
         {/* Logo + desktop nav links */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary">
-            <Image src="/logo.jpg" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
+            <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
             HousePlug
           </Link>
           <div className="hidden md:flex gap-6 items-center">

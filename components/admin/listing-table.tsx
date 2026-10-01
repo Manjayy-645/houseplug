@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Listing, Profile } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { formatDate } from "@/lib/utils"
-import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil, Play } from "lucide-react"
+import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil, Play, Phone } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -209,6 +209,17 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                     >
                       <Pencil className="w-5 h-5" />
                     </Link>
+                    {(listing.landlord?.phone || listing.whatsapp_number) && (
+                      <a
+                        href={`https://wa.me/${(listing.landlord?.phone || listing.whatsapp_number)?.replace(/\D/g, "").replace(/^0/, "234")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title="Contact Landlord on WhatsApp"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </a>
+                    )}
                     {listing.status === "active" && (
                       <button
                         onClick={() => handleToggleHome(listing.id, !!listing.show_on_home)}

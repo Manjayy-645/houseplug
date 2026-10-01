@@ -321,7 +321,7 @@ export default async function LandingPage() {
         <div className="flex flex-col md:flex-row justify-between items-start gap-8 sm:gap-12 max-w-7xl mx-auto">
           <div className="max-w-xs">
             <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <Image src="/logo.jpg" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
+              <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg" />
               <span className="text-lg font-bold text-primary">HousePlug</span>
             </div>
             <p className="text-sm text-gray-500 mb-4 sm:mb-6">Student housing, simplified. We connect students with reliable accommodation across Nigerian Universities.</p>

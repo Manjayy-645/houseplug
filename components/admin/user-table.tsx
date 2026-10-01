@@ -694,6 +694,20 @@ export default function UserTable({
                         </a>
                       )}
 
+                      {/* WhatsApp — all admins, landlord/agent only */}
+                      {isLandlordOrAgent(user.role) && user.phone && (
+                        <a
+                          href={`https://wa.me/${user.phone.replace(/\D/g, "").replace(/^0/, "234")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 text-green-600 hover:bg-green-50 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors border border-green-200"
+                          title="Contact on WhatsApp"
+                        >
+                          <Phone className="w-3.5 h-3.5" />
+                          WhatsApp
+                        </a>
+                      )}
+
                       {/* Ban / Unban */}
                       <button
                         onClick={() => user.banned ? handleToggleBan(user.id, true) : setUserToBan(user)}

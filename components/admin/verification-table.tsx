@@ -11,7 +11,8 @@ import {
   ShieldAlert, 
   Clock, 
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Phone
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -119,7 +120,21 @@ export function VerificationTable({ landlords, currentStatus }: VerificationTabl
                 </div>
               </td>
               <td className="px-6 py-5">
-                <p className="text-sm font-semibold text-gray-600">{landlord.phone}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-gray-600">{landlord.phone}</p>
+                  {landlord.phone && (
+                    <a
+                      href={`https://wa.me/${landlord.phone.replace(/\D/g, "").replace(/^0/, "234")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2 py-0.5 rounded text-xs text-green-700 bg-green-50 hover:bg-green-100 transition-colors inline-flex items-center gap-1"
+                      title="Contact on WhatsApp"
+                    >
+                      <Phone className="h-3 w-3" />
+                      WhatsApp
+                    </a>
+                  )}
+                </div>
               </td>
               <td className="px-6 py-5">
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-gray-100 px-2 py-1 rounded-md">

@@ -173,7 +173,20 @@ export default function AdminVerificationDetailPage() {
                       <Mail className="h-4 w-4" /> {landlord.email}
                    </div>
                    <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
-                      <Phone className="h-4 w-4" /> {landlord.phone}
+                      <Phone className="h-4 w-4" /> 
+                      {landlord.phone}
+                      {landlord.phone && (
+                        <a
+                          href={`https://wa.me/${landlord.phone.replace(/\D/g, "").replace(/^0/, "234")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 px-2 py-0.5 rounded text-xs text-green-700 bg-green-50 hover:bg-green-100 transition-colors inline-flex items-center gap-1"
+                          title="Contact on WhatsApp"
+                        >
+                          <Phone className="h-3 w-3" />
+                          WhatsApp
+                        </a>
+                      )}
                    </div>
                    <div className="flex items-center gap-1.5 text-sm font-bold text-gray-400">
                       <Calendar className="h-4 w-4" /> Joined {new Date(landlord.created_at).toLocaleDateString()}

@@ -31,7 +31,7 @@ export function StudentNav() {
       {/* ── Mobile Top Bar ────────────────────────────────────── */}
       <header className="sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/student/dashboard" className="flex items-center gap-2">
-          <Image src="/logo.jpg" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
+          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
           <div>
             <span className="font-bold text-[#1B4332]">HousePlug</span>
             <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none">Student</p>

@@ -1,8 +1,6 @@
 import { ImageResponse } from "next/og"
 import { createServiceClient } from "@/lib/supabase/server"
 
-export const runtime = "edge"
-
 export const alt = "HousePlug Roommate Profile"
 export const size = {
   width: 1200,
