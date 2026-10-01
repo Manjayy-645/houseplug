@@ -1,1 +1,11 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="75" fill="#F59E0B" /><path d="M60 45 L105 75 L60 105 Z" fill="#ffffff" /></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150" fill="none">
+  <circle cx="75" cy="75" r="75" fill="url(#amberGradient)" />
+  <circle cx="75" cy="75" r="73" stroke="white" stroke-opacity="0.2" stroke-width="4" />
+  <path d="M64 50 L102 75 L64 100 Z" fill="white" stroke="white" stroke-width="8" stroke-linejoin="round" />
+  <defs>
+    <linearGradient id="amberGradient" x1="0" y1="0" x2="150" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24" />
+      <stop offset="1" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+</svg>
