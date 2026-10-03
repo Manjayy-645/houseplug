@@ -256,11 +256,35 @@ export async function hasProAccess(landlord_id: string): Promise<boolean> {
 }
 
 export async function getListingLimit(plan: string): Promise<number> {
-  return Infinity
+  if (plan === 'business') return Infinity
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  const supabase = createSupabaseClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false }
+  })
+
+  const key = plan === 'pro' ? 'max_pro_listings' : 'max_free_listings'
+
+  const { data } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', key)
+    .maybeSingle()
+
+  if (data?.value) {
+    const num = parseInt(data.value, 10)
+    if (!isNaN(num)) return num
+  }
+  
+  // Fallbacks if not configured in DB
+  return plan === 'pro' ? Infinity : Infinity 
 }
 
 export async function formatListingLimit(plan: string): Promise<string> {
-  return 'Unlimited'
+  if (plan === 'business') return 'Unlimited'
+  const limit = await getListingLimit(plan)
+  return limit === Infinity ? 'Unlimited' : limit.toString()
 }
 
 import { isSubscriptionExpiringSoon as isSubscriptionExpiringSoonUtil, formatExpiryDate as formatExpiryDateUtil } from './billing-utils'

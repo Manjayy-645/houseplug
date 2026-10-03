@@ -50,9 +50,9 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
   const activeListings = listings.filter((l) => l.status === "active")
   const activeListingsCount = activeListings.length
   
-  // All plans have unlimited listings now.
-  const listingLimit = Infinity
-  const canAddListing = true
+  const effectivePlan = subscription.expired ? 'free' : subscription.plan
+  const listingLimit = isAdmin ? Infinity : await getListingLimit(effectivePlan)
+  const canAddListing = activeListingsCount < listingLimit
   const expiringSoon = subscription.expires_at
     ? isSubscriptionExpiringSoon(subscription.expires_at)
     : false
@@ -254,7 +254,7 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
           { 
             label: "Active Listings", 
             value: `${activeListingsCount} listings`, 
-            sub: "No limit on any plan"
+            sub: listingLimit === Infinity ? "No limit" : `${listingLimit} max limit`
           },
           { label: "Avg Rating", value: avgRating ? avgRating.toFixed(1) : "0.0", sub: `${reviews.length} reviews` }
         ].map((stat) => (
@@ -281,12 +281,22 @@ export default async function LandlordDashboardPage({ searchParams }: { searchPa
       <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">My Listings</h2>
-          <Link
-            href="/landlord/listings/new"
-            className="rounded-lg bg-[#1B4332] text-white px-4 py-2 text-sm font-bold transition hover:brightness-110"
-          >
-            + Add New Listing
-          </Link>
+          {canAddListing ? (
+            <Link
+              href="/landlord/listings/new"
+              className="rounded-lg bg-[#1B4332] text-white px-4 py-2 text-sm font-bold transition hover:brightness-110"
+            >
+              + Add New Listing
+            </Link>
+          ) : (
+            <button
+              disabled
+              className="rounded-lg bg-gray-300 text-gray-500 px-4 py-2 text-sm font-bold cursor-not-allowed"
+              title={`You have reached your limit of ${listingLimit} active listings.`}
+            >
+              + Add New Listing (Limit Reached)
+            </button>
+          )}
         </div>
 
         <div className="space-y-3">

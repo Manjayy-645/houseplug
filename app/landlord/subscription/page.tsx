@@ -75,6 +75,8 @@ export default function SubscriptionPage() {
         featured_30: Number(settings.boost_featured_30 ?? 400000),
         urgent: Number(settings.boost_urgent ?? 50000),
         refresh: Number(settings.boost_refresh ?? 30000),
+        max_free_listings: settings.max_free_listings ? Number(settings.max_free_listings) : Infinity,
+        max_pro_listings: settings.max_pro_listings ? Number(settings.max_pro_listings) : Infinity,
       })
 
       const sub = subscriptionData ? {
@@ -346,7 +348,13 @@ export default function SubscriptionPage() {
               id: "free",
               name: "Free",
               price: "₦0",
-              features: ["Unlimited listings", "Standard placement", "WhatsApp inquiries", "Basic analytics (views count only)", "Community support"],
+              features: [
+                prices.max_free_listings === Infinity ? "Unlimited listings" : `Up to ${prices.max_free_listings} active listings`, 
+                "Standard placement", 
+                "WhatsApp inquiries", 
+                "Basic analytics", 
+                "Community support"
+              ],
               color: "border-gray-200",
             },
             {
@@ -354,7 +362,13 @@ export default function SubscriptionPage() {
               name: "Pro",
               price: billingCycle === "monthly" ? formatNaira(prices.pro_monthly / 100) : formatNaira(prices.pro_annual / 100),
               subtext: billingCycle === "annual" ? "billed annually" : "billed monthly",
-              features: ["Everything in Free, plus:", "Featured badge + priority placement", "AI listing descriptions", "Full analytics dashboard", "Priority support"],
+              features: [
+                "Everything in Free, plus:", 
+                prices.max_pro_listings === Infinity ? "Unlimited listings" : `Up to ${prices.max_pro_listings} active listings`, 
+                "Featured badge & placement", 
+                "AI descriptions", 
+                "Priority support"
+              ],
               color: "border-[#F59E0B] border-2",
               recommended: true,
             },
@@ -363,7 +377,13 @@ export default function SubscriptionPage() {
               name: "Business",
               price: billingCycle === "monthly" ? formatNaira(prices.business_monthly / 100) : formatNaira(prices.business_annual / 100),
               subtext: billingCycle === "annual" ? "billed annually" : "billed monthly",
-              features: ["Everything in Pro, plus:", "Always top of search", "Full analytics + CSV export", "Dedicated account manager", "Bulk listing upload"],
+              features: [
+                "Everything in Pro, plus:", 
+                "Unlimited listings forever", 
+                "Always top of search", 
+                "Account manager", 
+                "Bulk listing upload"
+              ],
               color: "border-gray-900",
             }
           ].map((plan) => {
