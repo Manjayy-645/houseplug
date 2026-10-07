@@ -61,3 +61,56 @@ export function getSafariCompatibleVideoUrl(url: string | null | undefined): str
   )
 }
 
+
+/**
+ * Generates a WhatsApp-compatible Open Graph preview image URL from a Cloudinary source.
+ * WhatsApp requires absolute URLs, strictly <300KB, image/jpeg format, and no dynamic WebP negotiation.
+ */
+export function getWhatsAppListingOgImage(url?: string | null, isVideo?: boolean): string {
+  const fallback = "https://houseplug.ng/icons/og-default.jpg"
+
+  if (!url) return fallback
+
+  // Ensure absolute HTTPS protocol
+  if (url.startsWith("http://")) {
+    url = url.replace("http://", "https://")
+  } else if (!url.startsWith("http")) {
+    // If it's a relative URL, we return it absolute to HousePlug (for safety)
+    url = "https://houseplug.ng" + (url.startsWith("/") ? url : "/" + url)
+  }
+
+  // Only transform known Cloudinary URLs
+  if (!url.includes("res.cloudinary.com")) {
+    return url
+  }
+
+  try {
+    if (isVideo) {
+      // For videos: capture frame at 1s, crop, limit quality to 75, force JPEG.
+      // E.g., /video/upload/v1234/file.mp4 -> /video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/v1234/file.jpg
+      let out = url.replace(
+        /\/video\/upload\/(?:v\d+\/)?/,
+        (match) => match.includes("v")
+          ? "/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/" + match.split("/").pop() + "/"
+          : "/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/"
+      )
+      // Strip any existing extensions like .mp4, .mov, etc and force .jpg
+      out = out.replace(/\.(mp4|mov|webm|mkv|avi|hevc|3gp|m4v)$/i, ".jpg")
+      return out
+    } else {
+      // For images: resize, fill, limit quality to 75, force JPEG.
+      let out = url.replace(
+        /\/image\/upload\/(?:v\d+\/)?/,
+        (match) => match.includes("v")
+          ? "/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/" + match.split("/").pop() + "/"
+          : "/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/"
+      )
+      // Force jpg extension if it ends in standard formats
+      out = out.replace(/\.(png|webp|avif|heic|gif)$/i, ".jpg")
+      return out
+    }
+  } catch (err) {
+    // Failsafe
+    return fallback
+  }
+}

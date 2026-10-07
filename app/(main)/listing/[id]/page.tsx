@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("title, price_yearly, room_type, area, university, video_url, photos")
+    .select("id, title, price_yearly, room_type, area, university, video_url, photos")
     .eq("id", listingId)
     .single()
 
@@ -43,72 +43,54 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
   const roomTypeStr = formatRoomType(listing.room_type)
   const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(listing.price_yearly)
-
   const campus = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
 
   const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/year | HousePlug`
   const description = `Verified student housing near ${campus}. Contact the landlord directly on WhatsApp.`
 
-  let ogImageUrl = ""
-  if (listing.video_url && listing.video_url.includes("/upload/")) {
-    const parts = listing.video_url.split("/upload/")
-    // extract frame at 2s (so_2.0), convert to jpg (f_jpg)
-    // overlay play button svg (l_i8nqd8bpufwenh48ypin), width 200px (w_200), center (g_center)
-    const urlWithFormat = parts[1].replace(/\.[^/.]+$/, "") + ".jpg"
-    ogImageUrl = `${parts[0]}/upload/so_2.0,f_jpg/l_i8nqd8bpufwenh48ypin,w_200,g_center/${urlWithFormat}`
+  const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary")
+  
+  let isVideo = false
+  let mediaUrl = null
+  
+  if (listing.video_url) {
+    isVideo = true
+    mediaUrl = listing.video_url
   } else if (listing.photos && listing.photos.length > 0) {
-    ogImageUrl = listing.photos[0]
-  } else {
-    ogImageUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"}/roommates/opengraph-image`
+    mediaUrl = listing.photos[0]
   }
+  
+  const ogImageUrl = getWhatsAppListingOgImage(mediaUrl, isVideo)
+  const ogTitle = `${listing.title} — ₦${formattedPriceRaw}/yr`
+  const ogDescription = `Verified lodge in ${listing.area}, ${campus} on HousePlug.`
+  const listingUrl = `https://houseplug.ng/listing/${listing.id}`
 
   const metadata: Metadata = {
     title,
     description,
     openGraph: {
-      title,
-      description,
+      title: ogTitle,
+      description: ogDescription,
+      url: listingUrl,
+      siteName: "HousePlug",
+      locale: "en_NG",
       type: "website",
       images: [
         {
           url: ogImageUrl,
+          secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
+          type: "image/jpeg",
+          alt: listing.title,
         }
       ]
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: ogTitle,
+      description: `Verified lodge in ${listing.area}, ${campus}.`,
       images: [ogImageUrl],
-    }
-  }
-
-  if (listing.video_url) {
-    // Add video metadata for WhatsApp/iMessage/Telegram previews
-    metadata.openGraph!.videos = [
-      {
-        url: listing.video_url,
-        secureUrl: listing.video_url,
-        type: "video/mp4",
-        width: 1280,
-        height: 720,
-      }
-    ]
-    // Add twitter player card for Twitter previews
-    metadata.twitter = {
-      card: "player",
-      title,
-      description,
-      players: [
-        {
-          playerUrl: listing.video_url,
-          streamUrl: listing.video_url,
-          width: 1280,
-          height: 720,
-        }
-      ]
     }
   }
 
