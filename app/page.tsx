@@ -366,7 +366,7 @@ export default async function LandingPage() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto border-t border-gray-100 mt-8 sm:mt-12 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
-          <p className="text-sm text-gray-500">© 2025 HousePlug. Built for Nigerian students.</p>
+          <p className="text-sm text-gray-500">© 2026 HousePlug. Built for Nigerian students.</p>
           <div className="flex items-center gap-2 text-gray-400">
             <MapPin className="h-4 w-4" />
             <span className="text-xs">Port Harcourt, Nigeria</span>

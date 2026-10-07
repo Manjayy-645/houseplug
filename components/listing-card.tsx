@@ -114,7 +114,9 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
       <div className="p-5">
         <Link href={`/listing/${listing.id}`} className="block">
           <div className="flex justify-between items-start mb-2 gap-2">
-            <h3 className="font-title-md text-primary truncate flex-1">{listing.title}</h3>
+            <h3 className="font-title-md text-primary flex-1">
+              {formatNaira(listing.price_yearly)} <span className="text-gray-400 text-xs font-normal">/yr</span>
+            </h3>
             {isVerified && (
               <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1 shrink-0">
                 <BadgeCheck className="h-3 w-3" />
@@ -140,17 +142,15 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
         </div>
         
         <div className="flex justify-between items-center pt-4 border-t border-gray-50">
-          <div>
-            <span className="text-primary font-bold text-xl">{formatNaira(listing.price_yearly)}</span>
-            <span className="text-gray-400 text-xs">/yr</span>
+          <div className="flex flex-col">
+            <span className="text-gray-500 text-[10px] font-medium truncate max-w-[150px]">{landlordName}</span>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-gray-500 text-[10px] font-medium truncate max-w-[100px]">{landlordName}</span>
             {reviewCount > 0 && (
               <div className="flex items-center gap-1 mt-0.5">
                 <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                 <span className="text-[10px] font-bold text-gray-700">{averageRating.toFixed(1)}</span>
-                <span className="text-[10px] text-gray-500">· {reviewCount}</span>
+                <span className="text-[10px] text-gray-500">• {reviewCount}</span>
               </div>
             )}
           </div>

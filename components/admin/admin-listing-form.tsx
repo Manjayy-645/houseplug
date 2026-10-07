@@ -49,7 +49,7 @@ const listingSchema = z.object({
   floor: z.enum(["ground", "upper"]),
   description: z
     .string()
-    .min(80, "Description must be at least 80 characters")
+    .min(20, "Description must be at least 20 characters")
     .max(600),
 })
 
@@ -414,6 +414,9 @@ export function AdminListingForm({
                   </button>
                 ))}
               </div>
+              {errors.room_type && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.room_type.message}</p>
+              )}
             </div>
 
             <div>
@@ -448,6 +451,9 @@ export function AdminListingForm({
                 <option value="15_to_30">15–30 mins walk</option>
                 <option value="above_30">30+ mins walk</option>
               </select>
+              {errors.distance_from_gate && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.distance_from_gate.message}</p>
+              )}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -504,6 +510,9 @@ export function AdminListingForm({
                 placeholder="e.g. Behind Choba park"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/30"
               />
+              {errors.landmark && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.landmark.message}</p>
+              )}
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -584,6 +593,9 @@ export function AdminListingForm({
                 {...register("occupancy", { valueAsNumber: true })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/30"
               />
+              {errors.occupancy && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.occupancy.message}</p>
+              )}
             </div>
           </div>
 
@@ -612,6 +624,9 @@ export function AdminListingForm({
                   </button>
                 ))}
               </div>
+              {errors.furnishing && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.furnishing.message}</p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">Floor</label>
@@ -636,6 +651,9 @@ export function AdminListingForm({
                   </button>
                 ))}
               </div>
+              {errors.floor && (
+                <p className="text-xs text-red-600 mt-0.5">{errors.floor.message}</p>
+              )}
             </div>
           </div>
 
@@ -704,7 +722,7 @@ export function AdminListingForm({
               placeholder="Describe the room, compound, security, and proximity to campus..."
             />
             <div className="mt-1 flex justify-between">
-              <p className="text-xs text-gray-400">{descriptionLength}/600 (min 80)</p>
+              <p className="text-xs text-gray-400">{descriptionLength}/600 (min 20)</p>
               {errors.description && (
                 <p className="text-xs text-red-600">{errors.description.message}</p>
               )}

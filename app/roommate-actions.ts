@@ -91,6 +91,42 @@ export async function createRoommateProfile(raw: unknown) {
     return { error: "Failed to save profile. Please try again." }
   }
 
+  // 4. Find matches and send email
+  try {
+    const { data: profile } = await supabase.from('profiles').select('email, full_name').eq('id', user.id).single()
+    if (profile?.email) {
+      const { data: matchesData } = await supabase
+        .from("roommate_profiles")
+        .select(`*, profile:profiles!roommate_profiles_user_id_profiles_fkey(full_name)`)
+        .eq("status", "active")
+        .eq("university", data.university)
+        .neq("user_id", user.id)
+      
+      if (matchesData) {
+        const filtered = matchesData.filter((p: any) => {
+          const theyWantMe =
+            p.preferred_gender === "Any" ||
+            p.preferred_gender.toLowerCase() === data.gender.toLowerCase()
+          const iWantThem =
+            data.preferred_gender === "Any" ||
+            data.preferred_gender.toLowerCase() === p.gender.toLowerCase()
+          return theyWantMe && iWantThem
+        })
+
+        if (filtered.length > 0) {
+          const { sendRoommateMatchEmail } = await import('@/lib/email')
+          await sendRoommateMatchEmail({
+            studentEmail: profile.email,
+            studentName: profile.full_name || 'Student',
+            matchesCount: filtered.length
+          })
+        }
+      }
+    }
+  } catch(e) {
+    console.error("Failed to process matches for email:", e)
+  }
+
   revalidatePath("/roommates")
   revalidatePath("/student/roommate")
   revalidatePath("/student/dashboard")

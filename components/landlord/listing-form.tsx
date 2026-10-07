@@ -48,7 +48,7 @@ const listingSchema = z.object({
   occupancy: z.number().min(1).max(4),
   furnishing: z.enum(["furnished", "semi_furnished", "unfurnished"]),
   floor: z.enum(["ground", "upper"]),
-  description: z.string().min(80, "Description must be at least 80 characters").max(600)
+  description: z.string().min(20, "Description must be at least 20 characters").max(600)
 })
 
 type ListingFormValues = z.infer<typeof listingSchema>
@@ -408,6 +408,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   </button>
                 ))}
               </div>
+              {errors.room_type ? <p className="mt-1 text-xs text-red-600">{errors.room_type.message}</p> : null}
             </div>
 
             <div>
@@ -420,6 +421,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   className="w-full bg-transparent px-2 py-2 text-sm outline-none"
                 />
               </div>
+              {errors.price_yearly ? <p className="mt-1 text-xs text-red-600">{errors.price_yearly.message}</p> : null}
             </div>
           </div>
 
@@ -432,10 +434,12 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                 <option value="15_to_30">15-30 mins walk</option>
                 <option value="above_30">30+ mins walk</option>
               </select>
+              {errors.distance_from_gate ? <p className="mt-1 text-xs text-red-600">{errors.distance_from_gate.message}</p> : null}
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Available from</label>
               <input type="date" {...register("available_from")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              {errors.available_from ? <p className="mt-1 text-xs text-red-600">{errors.available_from.message}</p> : null}
             </div>
           </div>
         </section>
@@ -444,38 +448,44 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
       {currentStep === 1 ? (
         <section className="space-y-4">
           <h3 className="text-lg font-semibold">Step 2 - Location</h3>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Street / compound name</label>
-            <input {...register("address")} placeholder="e.g. No 12, Scholar Street" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Area</label>
-              <input 
-                {...register("area")} 
-                placeholder="e.g. Choba, Rumuola, Nkpolu, Woji" 
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" 
-              />
-              <p className="mt-1 text-[10px] text-gray-500 font-medium italic">Enter the area/neighbourhood your property is in</p>
-              {errors.area ? <p className="text-xs text-red-600">{errors.area.message}</p> : null}
+              <label className="mb-1 block text-sm font-medium">Street / compound name</label>
+              <input {...register("address")} placeholder="e.g. No 12, Scholar Street" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              {errors.address ? <p className="mt-1 text-xs text-red-600">{errors.address.message}</p> : null}
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Landmark (optional)</label>
-              <input
-                {...register("landmark")}
-                placeholder="e.g. Behind Choba park"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">Area</label>
+                <input 
+                  {...register("area")} 
+                  placeholder="e.g. Choba, Rumuola, Nkpolu, Woji" 
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" 
+                />
+                <p className="mt-1 text-[10px] text-gray-500 font-medium italic">Enter the area/neighbourhood your property is in</p>
+                {errors.area ? <p className="text-xs text-red-600">{errors.area.message}</p> : null}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Landmark (optional)</label>
+                <input
+                  {...register("landmark")}
+                  placeholder="e.g. Behind Choba park"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                {errors.landmark ? <p className="mt-1 text-xs text-red-600">{errors.landmark.message}</p> : null}
+              </div>
             </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">WhatsApp number</label>
-              <input {...register("whatsapp_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Phone number (optional)</label>
-              <input {...register("phone_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium">WhatsApp number</label>
+                <input {...register("whatsapp_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                {errors.whatsapp_number ? <p className="mt-1 text-xs text-red-600">{errors.whatsapp_number.message}</p> : null}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Phone number (optional)</label>
+                <input {...register("phone_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                {errors.phone_number ? <p className="mt-1 text-xs text-red-600">{errors.phone_number.message}</p> : null}
+              </div>
             </div>
           </div>
         </section>
@@ -638,7 +648,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
               placeholder="Describe the room, compound, security, and proximity to campus..."
             />
             <div className="mt-1 flex justify-between">
-              <p className="text-xs text-gray-500">{descriptionLength}/600 (min 80)</p>
+              <p className="text-xs text-gray-500">{descriptionLength}/600 (min 20)</p>
               {errors.description ? <p className="text-xs text-red-600">{errors.description.message}</p> : null}
             </div>
           </div>

@@ -495,3 +495,32 @@ export async function sendNewReviewEmail({
     actionLabel: "View Listing",
   })
 }
+
+export async function sendRoommateMatchEmail({
+  studentEmail,
+  studentName,
+  matchesCount,
+}: {
+  studentEmail: string,
+  studentName: string,
+  matchesCount: number
+}): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://houseplug.ng'
+  const subject = `You have ${matchesCount} suggested roommate${matchesCount > 1 ? 's' : ''} on HousePlug!`
+  const message = `
+    <div style="background-color:#F0FDF4; border-left:4px solid #22C55E; padding:16px 20px; border-radius:0 8px 8px 0; margin:0 0 28px;">
+      <p style="margin:0; font-size:17px; font-weight:700; color:#166534; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">&#10003;&nbsp; Suggested Roommates Found</p>
+    </div>
+    <p style="margin:0 0 16px;">Hi ${studentName},</p>
+    <p style="margin:0 0 16px;">We found <strong>${matchesCount} suggested roommate${matchesCount > 1 ? 's' : ''}</strong> that match your university and preferences.</p>
+    <p style="margin:0 0 16px;">Log in to your student dashboard to view their profiles and reach out before they find someone else.</p>
+  `
+
+  await sendEmail({
+    to: studentEmail,
+    subject,
+    message,
+    actionUrl: `${baseUrl}/student/roommate`,
+    actionLabel: 'View Matches'
+  })
+}

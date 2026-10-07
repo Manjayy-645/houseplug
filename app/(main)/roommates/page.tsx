@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { RoommateCard } from "@/components/roommate-card"
-import { Search, SlidersHorizontal, Users, ArrowRight, Sparkles } from "lucide-react"
+import { Users, ArrowRight, Sparkles } from "lucide-react"
+import { RoommateFilters } from "@/components/roommate-filters"
 
 export const metadata = {
   title: "Find a Roommate | HousePlug",
@@ -9,7 +10,11 @@ export const metadata = {
 }
 
 
-export default async function RoommatesPage() {
+export default async function RoommatesPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
   const supabase = createClient()
   
   const { data: { session } } = await supabase.auth.getSession()
@@ -30,24 +35,26 @@ export default async function RoommatesPage() {
     currentUserRole = userProfile?.role ?? null
   }
   
-  // Fetch real profiles — exclude phone_number for guests
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let profiles: any[] = []
-  if (isGuest) {
-    const { data } = await dataClient
-      .from("roommate_profiles")
-      .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-    profiles = data || []
-  } else {
-    const { data } = await dataClient
-      .from("roommate_profiles")
-      .select("*")
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-    profiles = data || []
-  }
+  // Build query
+  let query = isGuest
+    ? dataClient.from("roommate_profiles").select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
+    : dataClient.from("roommate_profiles").select("*")
+  
+  query = query.eq("status", "active").order("created_at", { ascending: false })
+
+  // Apply filters
+  const intent = typeof searchParams.intent === 'string' ? searchParams.intent : null
+  const gender = typeof searchParams.gender === 'string' ? searchParams.gender : null
+  const q = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() : null
+  const verifiedOnly = searchParams.verified === "true"
+
+  if (intent) query = query.eq("intent", intent)
+  if (gender) query = query.ilike("gender", gender)
+  // Text search on university or bio
+  if (q) query = query.or(`university.ilike.%${q}%,bio.ilike.%${q}%`)
+
+  const { data } = await query
+  let profiles = data || []
 
   // If we have profiles, fetch their corresponding public.profiles data 
   // since there is no direct foreign key from roommate_profiles to public.profiles
@@ -63,6 +70,11 @@ export default async function RoommatesPage() {
         ...p,
         profile: usersProfiles.find(up => up.id === p.user_id) || null
       }))
+    }
+    
+    // Filter out unverified if verifiedOnly is true
+    if (verifiedOnly) {
+      profiles = profiles.filter(p => p.profile?.verification_status === "verified")
     }
   }
 
@@ -134,37 +146,7 @@ export default async function RoommatesPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-5 py-12">
         {/* Filters Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center w-full md:w-auto gap-4 flex-1">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search university or keyword..." 
-                className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-gray-50 border-transparent focus:bg-white focus:border-[#1B4332] focus:ring-2 focus:ring-[#1B4332]/20 transition-all outline-none text-sm"
-              />
-            </div>
-            <button className="md:hidden flex shrink-0 items-center justify-center h-12 w-12 bg-gray-50 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors border border-gray-100">
-              <SlidersHorizontal className="h-5 w-5" />
-            </button>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-3">
-            <select className="bg-gray-50 border-transparent rounded-xl px-4 py-3 text-gray-700 font-medium focus:ring-2 focus:ring-[#1B4332]/20 outline-none cursor-pointer">
-              <option value="">Any Intent</option>
-              <option value="have_room">Has a Room</option>
-              <option value="teaming_up">Looking to Team Up</option>
-            </select>
-            <select className="bg-gray-50 border-transparent rounded-xl px-4 py-3 text-gray-700 font-medium focus:ring-2 focus:ring-[#1B4332]/20 outline-none cursor-pointer">
-              <option value="">Any Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-            </select>
-            <button className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 rounded-xl px-5 py-3 text-gray-700 font-bold transition-colors">
-              <SlidersHorizontal className="h-4 w-4" /> Filters
-            </button>
-          </div>
-        </div>
+        <RoommateFilters />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {profiles.map((profile: any) => (
