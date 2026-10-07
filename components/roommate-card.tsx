@@ -114,8 +114,8 @@ export function RoommateCard({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0">
-              {data.profile.avatar_url ? (
-                <img src={data.profile.avatar_url} alt={data.profile.full_name} className="h-full w-full object-cover" />
+              {data.profile?.avatar_url ? (
+                <img src={data.profile.avatar_url} alt={data.profile.full_name || "User"} className="h-full w-full object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
                   <User className="h-6 w-6" />
@@ -149,14 +149,14 @@ export function RoommateCard({
 
         {/* Lifestyle Tags */}
         <div className="flex flex-wrap gap-2 mb-6">
-          {data.lifestyle_tags.slice(0, 3).map((tag, i) => (
+          {(data.lifestyle_tags || []).slice(0, 3).map((tag, i) => (
             <span key={i} className="px-3 py-1 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-600">
               {tag}
             </span>
           ))}
-          {data.lifestyle_tags.length > 3 && (
+          {(data.lifestyle_tags || []).length > 3 && (
             <span className="px-3 py-1 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-400">
-              +{data.lifestyle_tags.length - 3} more
+              +{(data.lifestyle_tags || []).length - 3} more
             </span>
           )}
         </div>
