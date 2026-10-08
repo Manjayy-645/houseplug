@@ -20,8 +20,8 @@ export default async function UniversityRequestsAdminPage() {
     .eq("id", user.id)
     .single()
 
-  if (profile?.role !== "admin") {
-    redirect("/dashboard")
+  if (!["admin", "super_admin"].includes(profile?.role || "")) {
+    redirect("/admin")
   }
 
   return (
