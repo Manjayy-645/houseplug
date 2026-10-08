@@ -76,6 +76,9 @@ export async function GET(request: Request) {
       (roleParam === "landlord" || roleParam === "agent" ? roleParam : "student") as "student" | "landlord" | "agent"
     const fullName = user.user_metadata?.full_name || user.user_metadata?.name || "User"
 
+    const marketingOptInStr = cookies().get("marketing_opt_in")?.value
+    const marketingOptIn = marketingOptInStr === "true"
+
     const { error: insertError } = await service.from("profiles").insert({
       id: user.id,
       email: user.email,
@@ -83,6 +86,9 @@ export async function GET(request: Request) {
       phone: "",
       role: userRole,
       created_at: new Date().toISOString(),
+      ndpa_consent: true,
+      ndpa_consent_at: new Date().toISOString(),
+      marketing_opt_in: marketingOptIn,
     })
     
     if (insertError) {
@@ -116,6 +122,9 @@ export async function GET(request: Request) {
     phone: meta.phone || "",
     role: userRole,
     created_at: new Date().toISOString(),
+    ndpa_consent: meta.ndpa_consent ?? true,
+    ndpa_consent_at: meta.ndpa_consent_at || new Date().toISOString(),
+    marketing_opt_in: meta.marketing_opt_in ?? false,
   })
 
   if (insertError) {

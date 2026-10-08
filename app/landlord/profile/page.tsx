@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
 import { MarketingCardPreview } from "@/components/landlord/marketing-card-preview"
-import { Mail, Phone, Calendar, Shield, ShieldCheck, Loader2, Pencil } from "lucide-react"
+import { Mail, Phone, Calendar, Shield, ShieldCheck, Loader2, Pencil, Bell, FileText } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 const phoneRegex = /^(070|080|081|090)\d{8}$/
@@ -25,7 +25,20 @@ export default function LandlordProfilePage() {
   const [phoneInput, setPhoneInput] = useState("")
   const [savingPhone, setSavingPhone] = useState(false)
   const [phoneError, setPhoneError] = useState("")
+  const [savingMarketing, setSavingMarketing] = useState(false)
   const router = useRouter()
+
+  async function handleToggleMarketing() {
+    if (!userId || savingMarketing) return
+    const newValue = !profile.marketing_opt_in
+    setSavingMarketing(true)
+    const supabase = createClient()
+    const { error } = await supabase.from("profiles").update({ marketing_opt_in: newValue }).eq("id", userId)
+    setSavingMarketing(false)
+    if (!error) {
+      setProfile({ ...profile, marketing_opt_in: newValue })
+    }
+  }
 
   // Deep-link from the dashboard "Add Number" banner: ?edit=phone opens the
   // phone field straight into edit mode.
@@ -262,6 +275,35 @@ export default function LandlordProfilePage() {
                     {profile.verification_status || "Unverified"}
                   </p>
                 )}
+              </div>
+
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5 text-[#F59E0B]" /> Legal Consent
+                </label>
+                <p className="text-sm font-medium text-gray-900">
+                  {profile.ndpa_consent_at ? `Agreed on ${formatDate(profile.ndpa_consent_at)}` : "Not explicitly recorded"}
+                </p>
+              </div>
+
+              <div className="space-y-1.5 p-4 rounded-xl bg-gray-50 border border-gray-100 flex flex-col justify-between">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
+                    <Bell className="h-3.5 w-3.5 text-[#F59E0B]" /> Marketing Updates
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">Receive platform updates and tips.</p>
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-900">{profile.marketing_opt_in ? "Subscribed" : "Unsubscribed"}</span>
+                  <button
+                    onClick={handleToggleMarketing}
+                    disabled={savingMarketing}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-[#1B4332] focus:ring-offset-2 disabled:opacity-50 transition-colors ${profile.marketing_opt_in ? 'bg-[#1B4332]' : 'bg-gray-200'}`}
+                  >
+                    <span className="sr-only">Toggle marketing</span>
+                    <span aria-hidden="true" className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${profile.marketing_opt_in ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { GraduationCap, Home, CreditCard, ChevronDown } from "lucide-react"
 import { UNIVERSITIES, ROOM_TYPES } from "@/lib/constants"
+import { UniversityCombobox } from "@/components/search/UniversityCombobox"
 
 export function HeroSearch() {
   const router = useRouter()
@@ -30,18 +31,14 @@ export function HeroSearch() {
         <div className="bg-primary/5 p-2.5 rounded-full shrink-0">
           <GraduationCap className="h-5 w-5 text-primary" />
         </div>
-        <div className="text-left flex-1 min-w-0 pr-6">
-          <span className="block text-[10px] sm:text-xs tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">University</span>
-          <select 
+        <div className="text-left flex-1 min-w-0 pr-6 relative">
+          <span className="block text-[10px] sm:text-xs tracking-wider uppercase font-extrabold text-gray-500 mb-0.5 pointer-events-none">University</span>
+          <UniversityCombobox 
             value={university}
-            onChange={(e) => setUniversity(e.target.value)}
-            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm sm:text-base outline-none cursor-pointer truncate"
-          >
-            <option value="">Select your university</option>
-            {UNIVERSITIES.map((u) => (
-              <option key={u.id} value={u.id}>{u.shortName}</option>
-            ))}
-          </select>
+            onChange={setUniversity}
+            placeholder="Select your university"
+            className="w-full text-sm sm:text-base outline-none cursor-pointer"
+          />
         </div>
         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
       </div>

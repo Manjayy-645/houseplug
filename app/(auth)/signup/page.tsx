@@ -45,6 +45,8 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [resendCooldown, setResendCooldown] = useState(0)
   const [redirect, setRedirect] = useState("/browse")
+  const [ndpaConsent, setNdpaConsent] = useState(false)
+  const [marketingOptIn, setMarketingOptIn] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -78,9 +80,14 @@ export default function SignupPage() {
   }
 
   async function handleGoogleSignUp() {
+    if (!ndpaConsent) {
+      setError("You must accept the Terms of Service and Privacy Policy to create an account.")
+      return
+    }
     if (!selectedRole) return
     setError("")
     persistRedirect()
+    document.cookie = "marketing_opt_in=" + marketingOptIn + "; path=/; max-age=3600"
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -115,7 +122,14 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { full_name: fullName, phone, role: selectedRole },
+        data: { 
+          full_name: fullName, 
+          phone, 
+          role: selectedRole,
+          ndpa_consent: true,
+          ndpa_consent_at: new Date().toISOString(),
+          marketing_opt_in: marketingOptIn
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -280,9 +294,27 @@ export default function SignupPage() {
           <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
           <p className="text-sm text-gray-500 mt-1">How would you like to sign up?</p>
 
+          <div className="space-y-4 my-6">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input type="checkbox" checked={ndpaConsent} onChange={(e) => { setNdpaConsent(e.target.checked); setError("") }} className="mt-1 w-4 h-4 accent-[#1B4332] rounded border-gray-300 flex-shrink-0" />
+              <span className="text-sm text-gray-600 leading-snug">
+                I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[#1B4332] font-medium underline hover:text-[#1B4332]/80" onClick={e => e.stopPropagation()}>Terms of Service</a> and acknowledge the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[#1B4332] font-medium underline hover:text-[#1B4332]/80" onClick={e => e.stopPropagation()}>Privacy Policy</a> in accordance with the Nigeria Data Protection Act (NDPA).
+              </span>
+            </label>
+            
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} className="mt-1 w-4 h-4 accent-[#1B4332] rounded border-gray-300 flex-shrink-0" />
+              <span className="text-sm text-gray-600 leading-snug">
+                Send me updates on new verified lodges, roommate matching alerts, and campus housing tips.
+              </span>
+            </label>
+          </div>
+
+          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
           <button
             onClick={handleGoogleSignUp}
-            className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all mt-6"
+            className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all"
           >
             <GoogleIcon />
             Continue with Google
@@ -408,6 +440,10 @@ export default function SignupPage() {
   )
 
   function goToDetails() {
+    if (!ndpaConsent) {
+      setError("You must accept the Terms of Service and Privacy Policy to create an account.")
+      return
+    }
     if (!email || !email.includes("@")) {
       setError("Enter a valid email address")
       return

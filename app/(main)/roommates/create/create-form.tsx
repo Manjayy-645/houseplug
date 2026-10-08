@@ -7,8 +7,9 @@ import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { createRoommateProfile } from "@/app/roommate-actions"
 import { UNIVERSITIES } from "@/lib/constants"
-import { Check, Loader2, Home, User, ChevronRight, ChevronLeft } from "lucide-react"
+import { Check, Loader2, Home, User, ChevronRight, ChevronLeft, Info } from "lucide-react"
 import { fireCelebrationConfetti } from "@/lib/confetti"
+import { SuggestUniversityModal } from "@/components/university/SuggestUniversityModal"
 
 const LIFESTYLE_TAGS = [
   "Neat freak", "Relaxed", "Night owl", "Early bird", 
@@ -37,6 +38,7 @@ export default function CreateRoommateForm() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1)
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false)
 
   const {
     register,
@@ -214,6 +216,22 @@ export default function CreateRoommateForm() {
                     ))}
                   </select>
                   {errors.university && <p className="text-red-500 text-xs mt-2 font-bold">{errors.university.message}</p>}
+                  
+                  <div className="mt-3 flex items-start gap-2 bg-amber-50 p-3 rounded-xl border border-amber-100">
+                    <Info className="w-4 h-4 text-[#F59E0B] shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-medium text-amber-900 leading-snug">
+                        Roommate matching is currently restricted to Rivers State institutions.
+                      </p>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsSuggestModalOpen(true)}
+                        className="text-xs font-bold text-[#F59E0B] hover:text-amber-600 underline mt-1"
+                      >
+                        Want HousePlug at your school? Let us know.
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -358,6 +376,10 @@ export default function CreateRoommateForm() {
           </div>
         </form>
       </div>
+      <SuggestUniversityModal 
+        isOpen={isSuggestModalOpen}
+        onClose={() => setIsSuggestModalOpen(false)}
+      />
     </div>
   )
 }

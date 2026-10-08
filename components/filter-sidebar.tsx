@@ -6,7 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { SlidersHorizontal, X } from "lucide-react"
 
 import { UNIVERSITIES, ROOM_TYPES, DISTANCE_OPTIONS, AMENITIES } from "@/lib/constants"
-import { UniversityLogo } from "@/components/university-logo"
+import { UniversityCombobox } from "@/components/search/UniversityCombobox"
 
 function SidebarContent({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname()
@@ -95,31 +95,12 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         <section>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">University</h3>
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="radio"
-                name={`university-${id}`}
-                value=""
-                checked={university === ""}
-                onChange={() => setUniversity("")}
-                className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
-              />
-              All Universities
-            </label>
-            {UNIVERSITIES.map((option) => (
-              <label key={option.id} className="flex items-center gap-2 text-sm text-gray-700">
-                <input
-                  type="radio"
-                  name={`university-${id}`}
-                  value={option.id}
-                  checked={university === option.id}
-                  onChange={() => setUniversity(option.id)}
-                  className="h-4 w-4 border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
-                />
-                <UniversityLogo university={option} size={20} />
-                {option.shortName} — {option.name}
-              </label>
-            ))}
+            <UniversityCombobox 
+              value={university}
+              onChange={setUniversity}
+              placeholder="All Universities"
+              className="w-full text-sm outline-none cursor-pointer p-2 border border-gray-200 rounded-lg"
+            />
           </div>
         </section>
 
