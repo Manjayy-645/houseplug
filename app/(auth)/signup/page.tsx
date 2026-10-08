@@ -53,6 +53,12 @@ export default function SignupPage() {
     if (emailParam) {
       setEmail(emailParam)
     }
+    const errorParam = params.get("error")
+    if (errorParam === "no_account") {
+      setError("User not found. Please sign up to continue.")
+    } else if (errorParam) {
+      setError(errorParam)
+    }
   }, [])
 
   useEffect(() => {
@@ -166,6 +172,12 @@ export default function SignupPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Join HousePlug</h1>
           <p className="text-sm text-gray-500 mt-1">Who are you?</p>
+
+          {error && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 text-center font-medium animate-in fade-in">
+              {error}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 mt-6">
             <button

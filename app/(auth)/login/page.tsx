@@ -33,7 +33,7 @@ export default function LoginPage() {
     // simply log in and redirect by role.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?source=signup` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?source=login` },
     })
     if (error) setError("Failed to sign in with Google. Try again.")
   }
