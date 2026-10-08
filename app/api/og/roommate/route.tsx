@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     // Resolve avatar to base64 data URL (handles .webp transparently)
     let avatarSrc: string | null = null
-    if (userProfile?.avatar_url) {
+    if (userProfile?.avatar_url && userProfile.avatar_url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
       try {
         const avatarRes = await fetch(userProfile.avatar_url)
         if (avatarRes.ok) {
