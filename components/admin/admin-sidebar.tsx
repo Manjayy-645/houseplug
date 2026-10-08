@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard, Home, Users, Star, CreditCard, LogOut, Menu, X,
   ShieldCheck, BarChart2, DollarSign, UserCog, Settings, ScrollText,
-  Download, Clock, MessageCircle
+  Download, Clock, MessageCircle, School
 } from "lucide-react"
 
 const baseNavItems = [
@@ -24,6 +24,7 @@ const baseNavItems = [
 const superAdminNavItems = [
   { name: "Analytics", href: "/admin/analytics", icon: BarChart2 },
   { name: "WhatsApp Clicks", href: "/admin/whatsapp-analytics", icon: MessageCircle },
+  { name: "Campus Demand", href: "/admin/university-requests", icon: School },
   { name: "Revenue", href: "/admin/revenue", icon: DollarSign },
   { name: "Admin Accounts", href: "/admin/admins", icon: UserCog },
   { name: "Platform Settings", href: "/admin/settings", icon: Settings },
