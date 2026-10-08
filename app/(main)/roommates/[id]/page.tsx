@@ -39,7 +39,15 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
   
   const baseUrl = "https://www.houseplug.ng"
-  const ogImageUrl = userProfile?.avatar_url || `${baseUrl}/icons/og-default.jpg`
+  const defaultOgImage = `${baseUrl}/icons/og-default.jpg`
+  // WhatsApp's crawler drops .webp OG images — always use JPEG/PNG
+  const avatarUrl = userProfile?.avatar_url
+  const ogImageUrl =
+    avatarUrl && !avatarUrl.toLowerCase().endsWith(".webp")
+      ? avatarUrl
+      : defaultOgImage
+
+  const displayName = userProfile?.full_name || "Student"
 
   return {
     title,
@@ -57,7 +65,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
           secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: `${userProfile?.full_name || 'Student'} Roommate Profile`,
+          type: "image/jpeg",
+          alt: `${displayName} Roommate Profile`,
         }
       ]
     },
