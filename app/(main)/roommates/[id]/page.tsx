@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   // Fetch user's name for a personal share preview
   const { data: userProfile } = await supabase
     .from("profiles")
-    .select("full_name")
+    .select("full_name, avatar_url")
     .eq("id", roommate.user_id)
     .single()
 
@@ -38,8 +38,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
   
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
-  const ogImageUrl = `${baseUrl}/roommates/${params.id}/opengraph-image`
+  const baseUrl = "https://www.houseplug.ng"
+  const ogImageUrl = userProfile?.avatar_url || `${baseUrl}/icons/og-default.jpg`
 
   return {
     title,
@@ -57,8 +57,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
           secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
-          type: "image/png",
-          alt: `${firstName} Roommate Profile`,
+          alt: `${userProfile?.full_name || 'Student'} Roommate Profile`,
         }
       ]
     },
