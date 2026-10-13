@@ -37,6 +37,7 @@
     "recharts": "^3.8.1",
     "resend": "^6.12.4",
     "shadcn-ui": "latest",
+    "sharp": "^0.35.5",
     "tailwind-merge": "latest",
     "tailwindcss": "^3.4.17",
     "zod": "latest"

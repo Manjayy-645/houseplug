@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og"
 import { NextRequest } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import sharp from "sharp"
 
-export const runtime = "edge"
+export const runtime = "nodejs"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -13,9 +14,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const supabaseKey =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      supabaseKey
     )
 
     // Fetch roommate profile
@@ -44,6 +48,7 @@ export async function GET(request: NextRequest) {
 
     // Build display values with safe fallbacks
     const displayName = userProfile?.full_name || "Student"
+    const name = displayName
     const university = roommate?.university || "University"
     const isVerified = userProfile?.verification_status === "verified"
     const initial = displayName.charAt(0).toUpperCase()
@@ -56,20 +61,22 @@ export async function GET(request: NextRequest) {
     const intentLabel =
       roommate?.intent === "have_room" ? "Has a Room" : "Looking for a Room"
 
-    // Resolve avatar to base64 data URL (handles .webp transparently)
-    let avatarSrc: string | null = null
-    if (userProfile?.avatar_url && userProfile.avatar_url.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL!)) {
+    // Fetch and convert avatar to PNG base64 via sharp (Satori does not support WebP)
+    let avatarBase64: string | null = null
+    if (userProfile?.avatar_url) {
       try {
-        const avatarRes = await fetch(userProfile.avatar_url)
-        if (avatarRes.ok) {
-          const contentType =
-            avatarRes.headers.get("content-type") || "image/png"
-          const buffer = await avatarRes.arrayBuffer()
-          const base64 = Buffer.from(buffer).toString("base64")
-          avatarSrc = `data:${contentType};base64,${base64}`
+        const res = await fetch(userProfile.avatar_url)
+        if (res.ok) {
+          const arrayBuffer = await res.arrayBuffer()
+          const inputBuffer = Buffer.from(arrayBuffer)
+          const pngBuffer = await sharp(inputBuffer)
+            .resize(360, 360, { fit: "cover" })
+            .png()
+            .toBuffer()
+          avatarBase64 = `data:image/png;base64,${pngBuffer.toString("base64")}`
         }
       } catch {
-        // Avatar fetch failed — fall through to letter avatar
+        avatarBase64 = null
       }
     }
 
@@ -155,15 +162,16 @@ export async function GET(request: NextRequest) {
             }}
           >
             {/* Avatar */}
-            {avatarSrc ? (
+            {avatarBase64 ? (
               <img
-                src={avatarSrc}
-                width={180}
-                height={180}
+                src={avatarBase64}
+                alt={name}
                 style={{
+                  width: "180px",
+                  height: "180px",
                   borderRadius: "999px",
-                  border: "6px solid #1B4332",
                   objectFit: "cover",
+                  border: "6px solid #1B4332",
                 }}
               />
             ) : (
