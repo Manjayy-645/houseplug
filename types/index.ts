@@ -128,3 +128,36 @@ export type SavedListing = {
   created_at: string
   listing?: Listing
 }
+
+export type ServiceCategory =
+  | 'moving'
+  | 'cleaning'
+  | 'gas_refill'
+  | 'repairs'
+  | 'painting'
+  | 'laundry'
+  | 'other'
+
+export type ServicePricingType = 'negotiable' | 'starting_from' | 'fixed'
+
+export type ServiceProvider = {
+  id: string
+  user_id: string
+  business_name: string
+  category: ServiceCategory | string
+  university: string
+  pricing_type: ServicePricingType | string
+  price_amount?: number | null
+  price_unit?: string | null
+  whatsapp_number: string
+  is_student_owned: boolean
+  description: string
+  image_url?: string | null
+  status: 'active' | 'paused' | string
+  whatsapp_clicks: number
+  vouch_count: number
+  is_verified?: boolean
+  created_at: string
+  updated_at?: string
+}
+

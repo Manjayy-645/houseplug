@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
+import { MyCampusService } from "@/components/services/my-campus-service"
 import { X, Check } from "lucide-react"
 import type { Profile } from "@/types"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -107,84 +108,91 @@ export default function StudentProfilePage() {
   if (!profile || !user) return null
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-20">
-      <div className="max-w-lg mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-[#F9FAFB] pt-20 pb-16">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your account details</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your account details and campus services</p>
         </div>
 
-        {/* Avatar */}
-        <div className="flex flex-col items-center">
-          <AvatarUpload
-            currentAvatarUrl={profile.avatar_url}
-            userId={user.id}
-            fullName={profile.full_name}
-            onUploadComplete={(url) => setProfile({ ...profile, avatar_url: url })}
-          />
-          <p className="text-xs text-gray-400 text-center mt-2">Tap photo to change</p>
+        {/* 1. My Campus Service Module */}
+        <MyCampusService userId={user.id} defaultPhone={profile.phone || ""} />
+
+        {/* 2. Personal Information */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900 text-base">Personal Information</h2>
+          </div>
+
+          {/* Avatar */}
+          <div className="flex flex-col items-center">
+            <AvatarUpload
+              currentAvatarUrl={profile.avatar_url}
+              userId={user.id}
+              fullName={profile.full_name}
+              onUploadComplete={(url) => setProfile({ ...profile, avatar_url: url })}
+            />
+            <p className="text-xs text-gray-400 text-center mt-2">Tap photo to change</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={profile.full_name}
+                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={profile.phone ?? ""}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                placeholder="e.g. 08012345678"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Email
+              </label>
+              <input
+                type="email"
+                value={profile.email}
+                disabled
+                className="w-full border border-gray-100 rounded-xl px-3.5 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400">Contact support to change email</p>
+            </div>
+
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white rounded-xl py-3 text-sm font-semibold hover:bg-[#2D5A47] disabled:opacity-60 transition-colors"
+            >
+              {saving ? "Saving…" : saveSuccess ? (
+                <><Check className="h-4 w-4" /> Saved!</>
+              ) : "Save Profile Changes"}
+            </button>
+          </div>
         </div>
 
-        {/* Profile Info */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-5">
-          <h2 className="font-semibold text-gray-900">Personal Information</h2>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Full Name
-            </label>
-            <input
-              type="text"
-              value={profile.full_name}
-              onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332]"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Phone
-            </label>
-            <input
-              type="tel"
-              value={profile.phone ?? ""}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              placeholder="e.g. 08012345678"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332]"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Email
-            </label>
-            <input
-              type="email"
-              value={profile.email}
-              disabled
-              className="w-full border border-gray-100 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
-            />
-            <p className="text-xs text-gray-400">Contact support to change email</p>
-          </div>
-
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#2D5A47] disabled:opacity-60 transition-colors"
-          >
-            {saving ? "Saving…" : saveSuccess ? (
-              <><Check className="h-4 w-4" /> Saved!</>
-            ) : "Save Changes"}
-          </button>
-        </div>
-
-        {/* Account */}
+        {/* 3. Account Settings */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Account</h2>
+          <h2 className="font-semibold text-gray-900 text-base">Account Settings</h2>
 
           <button
             onClick={() => setShowPasswordModal(true)}
-            className="w-full border border-gray-200 rounded-lg py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="w-full border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Change Password
           </button>
@@ -192,7 +200,7 @@ export default function StudentProfilePage() {
           <div className="pt-2 border-t border-gray-100">
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="text-sm text-red-400 hover:text-red-500 transition-colors"
+              className="text-sm text-red-500 hover:text-red-600 transition-colors"
             >
               Delete Account
             </button>

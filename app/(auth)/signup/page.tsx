@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { GraduationCap, Home, ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
+import { User, Home, Wrench, ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { GoogleIcon } from "@/components/auth/google-icon"
 
 type SignupStep = "role" | "method" | "details" | "confirm"
-type Role = "student" | "landlord" | "agent"
+type Role = "student" | "landlord" | "agent" | "service_provider"
 
 const stepOrder: SignupStep[] = ["role", "method", "details"]
 const phoneRegex = /^(070|080|081|090)\d{8}$/
@@ -33,7 +33,7 @@ export default function SignupPage() {
   const supabase = createClient()
 
   const [step, setStep] = useState<SignupStep>("role")
-  const [primaryRole, setPrimaryRole] = useState<"student" | "property_owner" | null>(null)
+  const [primaryRole, setPrimaryRole] = useState<"student" | "property_owner" | "service_provider" | null>(null)
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [email, setEmail] = useState("")
   const [fullName, setFullName] = useState("")
@@ -50,7 +50,20 @@ export default function SignupPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    setRedirect(params.get("redirect") || "/browse")
+    const roleParam = params.get("role")
+    const redirectParam = params.get("redirect")
+
+    if (roleParam === "service_provider") {
+      setPrimaryRole("service_provider")
+      setSelectedRole("service_provider")
+      setRedirect("/profile?setup=service")
+      setStep("method")
+    } else if (redirectParam) {
+      setRedirect(redirectParam)
+    } else {
+      setRedirect("/browse")
+    }
+
     const emailParam = params.get("email")
     if (emailParam) {
       setEmail(emailParam)
@@ -72,10 +85,11 @@ export default function SignupPage() {
   // Persist the post-auth destination so it survives the OAuth / email-link
   // round trips (cookie is read server-side by the callback; localStorage is
   // read client-side by the login redirect).
-  function persistRedirect() {
+  function persistRedirect(customRedirect?: string) {
+    const target = customRedirect || redirect
     if (typeof document !== "undefined") {
-      document.cookie = `signup_redirect=${redirect}; path=/; max-age=3600`
-      window.localStorage.setItem("signup_redirect", redirect)
+      document.cookie = `signup_redirect=${target}; path=/; max-age=3600`
+      window.localStorage.setItem("signup_redirect", target)
     }
   }
 
@@ -86,12 +100,19 @@ export default function SignupPage() {
     }
     if (!selectedRole) return
     setError("")
-    persistRedirect()
+
+    const isServiceProvider = selectedRole === "service_provider"
+    const targetRedirect = isServiceProvider ? "/profile?setup=service" : redirect
+    persistRedirect(targetRedirect)
     document.cookie = "marketing_opt_in=" + marketingOptIn + "; path=/; max-age=3600"
+
+    const actualRole = isServiceProvider ? "student" : selectedRole
+    const intentParam = isServiceProvider ? "&user_intent=service_provider" : ""
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?source=signup&role=${selectedRole}`,
+        redirectTo: `${window.location.origin}/auth/callback?source=signup&role=${actualRole}${intentParam}`,
         queryParams: { access_type: "offline", prompt: "consent" },
       },
     })
@@ -118,14 +139,21 @@ export default function SignupPage() {
     }
 
     setLoading(true)
-    const { error } = await supabase.auth.signUp({
+    const isServiceProvider = selectedRole === "service_provider"
+    const targetRedirect = isServiceProvider ? "/profile?setup=service" : redirect
+    persistRedirect(targetRedirect)
+
+    const actualRole = isServiceProvider ? "student" : selectedRole
+
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { 
           full_name: fullName, 
           phone, 
-          role: selectedRole,
+          role: actualRole,
+          ...(isServiceProvider ? { user_intent: "service_provider" } : {}),
           ndpa_consent: true,
           ndpa_consent_at: new Date().toISOString(),
           marketing_opt_in: marketingOptIn
@@ -139,7 +167,12 @@ export default function SignupPage() {
       setError(error.message.toLowerCase().includes("already") ? "This email is already in use." : error.message)
       return
     }
-    persistRedirect()
+
+    if (signUpData?.session) {
+      window.location.href = targetRedirect
+      return
+    }
+
     setStep("confirm")
   }
 
@@ -193,81 +226,123 @@ export default function SignupPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mt-6">
+          <div className="flex flex-col gap-3 mt-6">
+            {/* 1. Student / Renter */}
             <button
+              type="button"
               onClick={() => {
                 setPrimaryRole("student")
                 setSelectedRole("student")
                 setStep("method")
               }}
-              className="flex flex-col items-center gap-3 rounded-2xl border-2 border-gray-200 p-6 hover:border-[#1B4332] hover:bg-[#1B4332]/5 transition-all"
+              className={`flex items-center gap-4 rounded-2xl border-2 p-4 sm:p-5 text-left transition-all ${
+                selectedRole === "student"
+                  ? "border-[#1B4332] bg-[#1B4332]/5 shadow-sm"
+                  : "border-gray-200 hover:border-[#1B4332] hover:bg-[#1B4332]/5"
+              }`}
             >
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                <User className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="text-center">
-                <p className="font-semibold text-gray-900">Student</p>
-                <p className="text-xs text-gray-500 mt-0.5">Looking for housing</p>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">Student / Renter</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  Find verified housing, roommates & campus services
+                </p>
               </div>
             </button>
 
+            {/* 2. Property Owner */}
             <button
+              type="button"
               onClick={() => {
                 setPrimaryRole("property_owner")
                 setSelectedRole(null)
               }}
-              className={`flex flex-col items-center gap-3 rounded-2xl border-2 p-6 transition-all ${
+              className={`flex items-center gap-4 rounded-2xl border-2 p-4 sm:p-5 text-left transition-all ${
                 primaryRole === "property_owner"
-                  ? "border-[#1B4332] bg-[#1B4332]/5"
+                  ? "border-[#1B4332] bg-[#1B4332]/5 shadow-sm"
                   : "border-gray-200 hover:border-[#1B4332] hover:bg-[#1B4332]/5"
               }`}
             >
-              <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
                 <Home className="w-6 h-6 text-[#1B4332]" />
               </div>
-              <div className="text-center">
+              <div className="flex-1">
                 <p className="font-semibold text-gray-900">Property Owner</p>
-                <p className="text-xs text-gray-500 mt-0.5">List a property</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  List a lodge or manage properties
+                </p>
+              </div>
+            </button>
+
+            {/* Sub-choice for Property Owner */}
+            {primaryRole === "property_owner" && (
+              <div className="pl-4 pr-1 py-1 space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("landlord")}
+                    className={`rounded-xl border-2 py-3 px-3 text-sm font-semibold transition-all ${
+                      selectedRole === "landlord"
+                        ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    Landlord
+                    <p className="text-xs font-normal mt-0.5">I own the property</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedRole("agent")}
+                    className={`rounded-xl border-2 py-3 px-3 text-sm font-semibold transition-all ${
+                      selectedRole === "agent"
+                        ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                  >
+                    Agent
+                    <p className="text-xs font-normal mt-0.5">I manage properties</p>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStep("method")}
+                  disabled={!selectedRole}
+                  className="w-full bg-[#1B4332] text-white rounded-xl py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#143728] transition-all"
+                >
+                  Continue
+                </button>
+              </div>
+            )}
+
+            {/* 3. Service Provider */}
+            <button
+              type="button"
+              onClick={() => {
+                setPrimaryRole("service_provider")
+                setSelectedRole("service_provider")
+                setRedirect("/profile?setup=service")
+                setStep("method")
+              }}
+              className={`flex items-center gap-4 rounded-2xl border-2 p-4 sm:p-5 text-left transition-all ${
+                selectedRole === "service_provider"
+                  ? "border-[#1B4332] bg-[#1B4332]/5 shadow-sm"
+                  : "border-gray-200 hover:border-[#1B4332] hover:bg-[#1B4332]/5"
+              }`}
+            >
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                <Wrench className="w-6 h-6 text-[#F59E0B]" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">Service Provider</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  Offer moving, cleaning, gas delivery, or repairs
+                </p>
               </div>
             </button>
           </div>
-
-          {primaryRole === "property_owner" && (
-            <>
-              <div className="mt-3 grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2">
-                <button
-                  onClick={() => setSelectedRole("landlord")}
-                  className={`rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
-                    selectedRole === "landlord"
-                      ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
-                      : "border-gray-200 text-gray-500"
-                  }`}
-                >
-                  Landlord
-                  <p className="text-xs font-normal mt-0.5">I own the property</p>
-                </button>
-                <button
-                  onClick={() => setSelectedRole("agent")}
-                  className={`rounded-xl border-2 py-3 text-sm font-semibold transition-all ${
-                    selectedRole === "agent"
-                      ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
-                      : "border-gray-200 text-gray-500"
-                  }`}
-                >
-                  Agent
-                  <p className="text-xs font-normal mt-0.5">I manage properties</p>
-                </button>
-              </div>
-
-              <button
-                onClick={() => setStep("method")}
-                disabled={!selectedRole}
-                className="w-full mt-4 bg-[#1B4332] text-white rounded-xl py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue
-              </button>
-            </>
-          )}
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?{" "}

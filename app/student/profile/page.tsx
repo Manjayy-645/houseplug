@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import Link from "next/link"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
-import { Mail, Phone, Calendar, ShieldCheck, Shield, Loader2, Pencil, Bell, FileText } from "lucide-react"
+import { Mail, Phone, Calendar, ShieldCheck, Shield, Loader2, Pencil, Bell, FileText, Wrench } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 
 const phoneRegex = /^(070|080|081|090)\d{8}$/
@@ -212,6 +213,27 @@ export default function StudentProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Campus Service Banner */}
+      <div className="max-w-2xl rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shrink-0">
+            <Wrench className="w-5 h-5 text-[#F59E0B]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 text-sm">Offer a Campus Service</h3>
+            <p className="text-xs text-gray-600 mt-0.5">
+              List your moving, cleaning, laundry, or repair business on the Campus Services marketplace.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/profile?setup=service"
+          className="shrink-0 bg-[#1B4332] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-[#143728] transition-colors"
+        >
+          Manage Service →
+        </Link>
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User, Heart } from "lucide-react"
+import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User, Heart, Wrench } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { getInitials } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types"
@@ -177,6 +177,16 @@ export function Header() {
               Find Roommate
             </Link>
             <Link
+              href="/services"
+              className={`text-sm font-semibold py-1 transition-colors ${
+                isActive("/services")
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-gray-600 hover:text-primary"
+              }`}
+            >
+              Services
+            </Link>
+            <Link
               href="/signup"
               className={`text-sm font-medium transition-colors ${
                 isActive("/signup")
@@ -280,6 +290,13 @@ export function Header() {
                         </Link>
                       )}
                       <Link
+                        href="/services"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
+                      >
+                        <Wrench className="h-4 w-4 shrink-0 text-[#F59E0B]" /> Campus Services
+                      </Link>
+                      <Link
                         href={getProfileHref(role)}
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
@@ -354,6 +371,13 @@ export function Header() {
                 className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
               >
                 <span className="text-gray-700 font-bold">Find Roommate</span>
+              </Link>
+              <Link
+                href="/services"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
+              >
+                <span className="text-gray-700 font-bold">Campus Services</span>
               </Link>
               <Link
                 href="/signup"

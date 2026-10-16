@@ -12,9 +12,11 @@ export async function GET(request: Request) {
   const type = searchParams.get("type")
   const source = searchParams.get("source") // 'login' | 'signup' (Google OAuth)
   const roleParam = searchParams.get("role")
+  const userIntent = searchParams.get("user_intent")
   // Set during signup/login when the user came from a listing's "Sign Up to
-  // Contact" button. Only students are sent back to the listing.
-  const redirectTo = cookies().get("signup_redirect")?.value
+  // Contact" button or service provider signup.
+  const cookieRedirect = cookies().get("signup_redirect")?.value
+  const redirectTo = cookieRedirect || (userIntent === "service_provider" || roleParam === "service_provider" ? "/profile?setup=service" : undefined)
 
   const supabase = createClient()
 
