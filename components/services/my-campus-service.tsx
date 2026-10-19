@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Wrench,
@@ -21,6 +21,25 @@ import {
   X,
   GraduationCap,
   ShieldCheck,
+  Star,
+  Zap,
+  CreditCard,
+  Calendar,
+  AlertTriangle,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  HelpCircle,
+  ChevronRight,
+  Clock,
+  ArrowRight,
 } from "lucide-react"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/client"
@@ -29,10 +48,28 @@ import {
   SERVICE_CATEGORIES,
   SERVICE_UNIVERSITIES,
   PRICE_UNIT_SUGGESTIONS,
+  CUSTOM_SERVICE_ICONS,
+  CUSTOM_SERVICE_COLORS,
   formatServicePrice,
   getCategoryLabel,
 } from "@/lib/service-utils"
-import type { ServiceProvider, ServiceCategory, ServicePricingType } from "@/types"
+import type { ServiceProvider, ServiceCategory, ServicePricingType, BoostType } from "@/types"
+
+const iconComponents: Record<string, any> = {
+  Camera,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Wrench,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  HelpCircle,
+}
 
 const serviceSchema = z.object({
   business_name: z
@@ -51,6 +88,9 @@ const serviceSchema = z.object({
     ],
     { message: "Please select a category" }
   ),
+  custom_category_name: z.string().optional().nullable(),
+  custom_category_icon: z.string().optional().nullable(),
+  custom_category_color: z.string().optional().nullable(),
   university: z.enum(
     ["University of Port Harcourt", "Rivers State University"],
     { message: "Please select a campus" }
@@ -79,7 +119,18 @@ const serviceSchema = z.object({
     .trim()
     .min(10, "Description must be at least 10 characters"),
   image_url: z.string().optional().nullable(),
-})
+}).refine(
+  (data) => {
+    if (data.category === "other") {
+      return !!data.custom_category_name && data.custom_category_name.trim().length >= 2
+    }
+    return true
+  },
+  {
+    message: "Please specify your custom service category (min 2 characters)",
+    path: ["custom_category_name"],
+  }
+)
 
 interface MyCampusServiceProps {
   userId: string
@@ -88,18 +139,30 @@ interface MyCampusServiceProps {
 
 export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServiceProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [service, setService] = useState<ServiceProvider | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [togglingStatus, setTogglingStatus] = useState(false)
+  const [payingAction, setPayingAction] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Prices from platform_settings
+  const [listingPrice, setListingPrice] = useState<number>(3000)
+  const [boostPrices, setBoostPrices] = useState<{ featured_7: number; featured_30: number }>({
+    featured_7: 1500,
+    featured_30: 4000,
+  })
+
   // Form State
   const [businessName, setBusinessName] = useState("")
   const [category, setCategory] = useState<ServiceCategory>("moving")
+  const [customCategoryName, setCustomCategoryName] = useState("")
+  const [customCategoryIcon, setCustomCategoryIcon] = useState("HelpCircle")
+  const [customCategoryColor, setCustomCategoryColor] = useState("from-gray-600 to-slate-800")
   const [university, setUniversity] = useState<string>("University of Port Harcourt")
   const [pricingType, setPricingType] = useState<ServicePricingType>("negotiable")
   const [priceAmount, setPriceAmount] = useState<string>("")
@@ -113,32 +176,65 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
-    setTimeout(() => setToastMessage(null), 3000)
+    setTimeout(() => setToastMessage(null), 3500)
   }
 
-  // Fetch the user's service
+  // Handle URL callback notifications
   useEffect(() => {
-    async function loadService() {
+    const payment = searchParams.get("payment")
+    const error = searchParams.get("error")
+
+    if (payment === "success") {
+      showToast("Payment received successfully! Your service listing is updated.")
+    } else if (error === "payment_failed") {
+      showToast("Payment was not completed. Please try again.")
+    }
+  }, [searchParams])
+
+  // Fetch user's service and platform pricing
+  useEffect(() => {
+    async function loadData() {
       try {
         const supabase = createClient()
-        const { data, error } = await supabase
-          .from("service_providers")
-          .select("*")
-          .eq("user_id", userId)
-          .maybeSingle()
 
-        if (!error && data) {
-          setService(data as ServiceProvider)
-        } else if (searchParams.get("setup") === "service") {
+        const [{ data: serviceData }, { data: settingsData }] = await Promise.all([
+          supabase
+            .from("service_providers")
+            .select("*")
+            .eq("user_id", userId)
+            .maybeSingle(),
+          supabase
+            .from("platform_settings")
+            .select("key, value")
+            .in("key", ["service_listing_price", "boost_featured_7", "boost_featured_30"]),
+        ])
+
+        if (serviceData) {
+          setService(serviceData as ServiceProvider)
+        } else if (searchParams.get("setup") === "service" || searchParams.get("create") === "true") {
           setIsEditing(true)
         }
+
+        if (settingsData) {
+          const map = Object.fromEntries(settingsData.map((s) => [s.key, Number(s.value)]))
+          if (map.service_listing_price) {
+            setListingPrice(Math.round(map.service_listing_price / 100))
+          }
+          if (map.boost_featured_7 || map.boost_featured_30) {
+            setBoostPrices({
+              featured_7: Math.round((map.boost_featured_7 ?? 150000) / 100),
+              featured_30: Math.round((map.boost_featured_30 ?? 400000) / 100),
+            })
+          }
+        }
       } catch (err) {
-        console.error("Failed to load service provider profile", err)
+        console.error("Failed to load service provider data", err)
       } finally {
         setLoading(false)
       }
     }
-    loadService()
+
+    loadData()
   }, [userId, searchParams])
 
   // Populate form when editing an existing service
@@ -146,6 +242,9 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     if (service) {
       setBusinessName(service.business_name || "")
       setCategory((service.category as ServiceCategory) || "moving")
+      setCustomCategoryName(service.custom_category_name || "")
+      setCustomCategoryIcon(service.custom_category_icon || "HelpCircle")
+      setCustomCategoryColor(service.custom_category_color || "from-gray-600 to-slate-800")
       setUniversity(service.university || "University of Port Harcourt")
       setPricingType((service.pricing_type as ServicePricingType) || "negotiable")
       setPriceAmount(service.price_amount ? String(service.price_amount) : "")
@@ -246,7 +345,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
         })
         return
       } catch (err) {
-        // Fallback to clipboard if share was cancelled or failed
+        // Fallback to clipboard
       }
     }
 
@@ -258,6 +357,55 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     }
   }
 
+  // Paystack Listing Fee / Renewal Checkout
+  const handlePayListingFee = async () => {
+    if (!service) return
+    setPayingAction("listing")
+    try {
+      const res = await fetch("/api/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "service_listing",
+          service_id: service.id,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to initialize payment")
+
+      window.location.href = data.authorization_url
+    } catch (err: any) {
+      alert(err.message || "Failed to launch Paystack payment")
+      setPayingAction(null)
+    }
+  }
+
+  // Paystack Boost Checkout
+  const handleBoostService = async (boostType: "featured_7" | "featured_30") => {
+    if (!service) return
+    setPayingAction(boostType)
+    try {
+      const res = await fetch("/api/payments/initiate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "service_boost",
+          boost_type: boostType,
+          service_id: service.id,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to initialize boost payment")
+
+      window.location.href = data.authorization_url
+    } catch (err: any) {
+      alert(err.message || "Failed to launch Paystack payment")
+      setPayingAction(null)
+    }
+  }
+
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormErrors({})
@@ -265,6 +413,9 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     const rawData = {
       business_name: businessName,
       category,
+      custom_category_name: category === "other" ? customCategoryName : null,
+      custom_category_icon: category === "other" ? customCategoryIcon : null,
+      custom_category_color: category === "other" ? customCategoryColor : null,
       university,
       pricing_type: pricingType,
       price_amount:
@@ -304,7 +455,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
       }
 
       if (service) {
-        // Update
+        // Update existing service
         const { data, error } = await supabase
           .from("service_providers")
           .update(payload)
@@ -315,14 +466,16 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
         if (error) throw error
         setService(data as ServiceProvider)
         showToast("Service updated successfully!")
+        setIsEditing(false)
       } else {
-        // Insert
+        // Insert new service (pending payment)
         const { data, error } = await supabase
           .from("service_providers")
           .insert({
             ...payload,
             user_id: userId,
             status: "active",
+            listing_paid: false,
             whatsapp_clicks: 0,
             vouch_count: 0,
             is_verified: false,
@@ -331,11 +484,30 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
           .single()
 
         if (error) throw error
-        setService(data as ServiceProvider)
-        showToast("Campus service listed successfully!")
-      }
+        const createdService = data as ServiceProvider
+        setService(createdService)
+        setIsEditing(false)
 
-      setIsEditing(false)
+        // Automatically prompt to pay ₦3,000 to activate
+        showToast("Service created! Proceeding to activate your listing...")
+        try {
+          const res = await fetch("/api/payments/initiate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "service_listing",
+              service_id: createdService.id,
+            }),
+          })
+          const payData = await res.json()
+          if (res.ok && payData.authorization_url) {
+            window.location.href = payData.authorization_url
+            return
+          }
+        } catch (payErr) {
+          console.error("Auto-redirect error", payErr)
+        }
+      }
     } catch (err: any) {
       console.error("Save service error:", err)
       showToast(err.message || "Failed to save service")
@@ -344,79 +516,104 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     }
   }
 
+  // Check subscription expiry logic
+  const isExpired = Boolean(
+    service?.listing_expires_at && new Date(service.listing_expires_at) < new Date()
+  )
+  const isPaidActive = Boolean(
+    service?.listing_paid &&
+      service?.listing_expires_at &&
+      new Date(service.listing_expires_at) >= new Date()
+  )
+  const daysLeft = service?.listing_expires_at
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(service.listing_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0
+
+  // Boost active check
+  const isBoostActive = Boolean(
+    service?.is_boosted &&
+      (!service.boost_expires_at || new Date(service.boost_expires_at) >= new Date())
+  )
+  const boostDaysLeft = service?.boost_expires_at
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(service.boost_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0
+
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-center min-h-[140px]">
-        <div className="w-6 h-6 rounded-full border-2 border-[#1B4332] border-t-transparent animate-spin" />
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-12 flex flex-col items-center justify-center min-h-[300px] space-y-3">
+        <div className="w-8 h-8 rounded-full border-3 border-[#1B4332] border-t-transparent animate-spin" />
+        <p className="text-xs font-semibold text-gray-500">Loading your campus service...</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6 relative">
-      {/* Toast popup */}
+    <div className="space-y-6">
+      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1B4332] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-          <Check className="w-4 h-4 text-emerald-400" />
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
           {toastMessage}
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-[#1B4332]/10 flex items-center justify-center text-[#1B4332]">
-            <Wrench className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-gray-900 text-base">My Campus Service</h2>
-            <p className="text-xs text-gray-500">Provide services to students in Port Harcourt</p>
-          </div>
-        </div>
-
-        {service && !isEditing && (
-          <span
-            className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-              service.status === "active"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-gray-100 text-gray-600 border border-gray-200"
-            }`}
-          >
-            {service.status === "active" ? "Active" : "Paused"}
-          </span>
-        )}
-      </div>
-
       {/* STATE 1: Empty state (No service yet and not editing) */}
       {!service && !isEditing && (
-        <div className="text-center py-6 px-4 space-y-4">
-          <div className="w-14 h-14 rounded-full bg-amber-50 text-[#F59E0B] flex items-center justify-center mx-auto">
-            <Sparkles className="w-7 h-7" />
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#1B4332] flex items-center justify-center mx-auto">
+            <Sparkles className="w-8 h-8 text-[#F59E0B]" />
           </div>
-          <div className="max-w-sm mx-auto space-y-1">
-            <h3 className="font-bold text-gray-900 text-lg">Offer a Campus Service</h3>
-            <p className="text-sm text-gray-500">
-              Provide moving, room cleaning, gas delivery, painting, or repairs to students across UniPort and RSU.
+          <div className="max-w-md mx-auto space-y-2">
+            <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+              List Your Campus Service
+            </h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Connect directly with thousands of students in UniPort and RSU for moving, lodge cleaning, gas refills, repairs, laundry, and custom student services.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={startEdit}
-            className="inline-flex items-center gap-2 bg-[#1B4332] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#143728] transition-all shadow-sm shadow-[#1B4332]/20"
-          >
-            <Plus className="w-4 h-4" />
-            List Your Service
-          </button>
+
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
+            <CreditCard className="w-4 h-4 text-amber-600" />
+            Monthly Listing Fee: ₦{listingPrice.toLocaleString("en-NG")} / month
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={startEdit}
+              className="inline-flex items-center gap-2 bg-[#1B4332] text-white px-7 py-3.5 rounded-2xl font-bold text-sm hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg active:scale-[0.98]"
+            >
+              <Plus className="w-4 h-4" />
+              Set Up Your Service
+            </button>
+          </div>
         </div>
       )}
 
       {/* STATE 2: Form (Creating or Editing) */}
       {isEditing && (
-        <form onSubmit={handleSubmitForm} className="space-y-5 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-sm">
-              {service ? "Edit Your Campus Service" : "Set Up Your Service"}
-            </h3>
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">
+                {service ? "Edit Your Campus Service" : "Set Up Your Campus Service"}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {service
+                  ? "Update your service details anytime at no extra charge."
+                  : `First month listing fee of ₦${listingPrice.toLocaleString("en-NG")} payable via Paystack upon publishing.`}
+              </p>
+            </div>
             {service && (
               <button
                 type="button"
@@ -428,240 +625,317 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
             )}
           </div>
 
-          {/* Photo Upload */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
-              Service Cover Photo (Optional)
-            </label>
-            <div className="flex items-center gap-4">
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#1B4332] bg-gray-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group transition-colors shrink-0"
-              >
-                {imageUrl ? (
-                  <>
-                    <img src={imageUrl} alt="Service cover" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
-                      <Camera className="w-5 h-5" />
-                    </div>
-                  </>
-                ) : uploadingImage ? (
-                  <Loader2 className="w-6 h-6 text-[#1B4332] animate-spin" />
-                ) : (
-                  <>
-                    <Camera className="w-6 h-6 text-gray-400 group-hover:text-[#1B4332] mb-1 transition-colors" />
-                    <span className="text-[10px] text-gray-500 font-medium">Add Photo</span>
-                  </>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 space-y-1">
-                <p className="font-medium text-gray-700">Upload business logo or work photo</p>
-                <p>Recommended: 1200x630 or square JPG, PNG, or WebP.</p>
-                {imageUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setImageUrl("")}
-                    className="text-red-500 hover:underline text-xs font-medium block pt-1"
-                  >
-                    Remove photo
-                  </button>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-          </div>
-
-          {/* Business Name */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Business / Service Name *
-            </label>
-            <input
-              type="text"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="e.g. Sparkle Lodge Cleaners"
-              className={`w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
-                formErrors.business_name ? "border-red-400 bg-red-50/30" : "border-gray-200"
-              }`}
-            />
-            {formErrors.business_name && (
-              <p className="text-xs text-red-500">{formErrors.business_name}</p>
-            )}
-          </div>
-
-          {/* Category & Campus grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Category *
+          <form onSubmit={handleSubmitForm} className="space-y-6">
+            {/* Photo Upload */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block">
+                Cover Photo or Business Logo
               </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white"
-              >
-                {SERVICE_CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Campus Base *
-              </label>
-              <select
-                value={university}
-                onChange={(e) => setUniversity(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white"
-              >
-                {SERVICE_UNIVERSITIES.map((uni) => (
-                  <option key={uni} value={uni}>
-                    {uni}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Pricing Type Selector (3 Pill Toggles) */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
-              Pricing Model *
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setPricingType("negotiable")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold border-2 transition-all ${
-                  pricingType === "negotiable"
-                    ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                Negotiable / Quote
-              </button>
-              <button
-                type="button"
-                onClick={() => setPricingType("starting_from")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold border-2 transition-all ${
-                  pricingType === "starting_from"
-                    ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                Starting From
-              </button>
-              <button
-                type="button"
-                onClick={() => setPricingType("fixed")}
-                className={`py-2 px-3 rounded-xl text-xs font-bold border-2 transition-all ${
-                  pricingType === "fixed"
-                    ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
-                    : "border-gray-200 text-gray-600 hover:border-gray-300"
-                }`}
-              >
-                Fixed Rate
-              </button>
-            </div>
-          </div>
-
-          {/* Conditional Price Inputs */}
-          {pricingType !== "negotiable" && (
-            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3 animate-in fade-in slide-in-from-top-1">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-600">
-                    Price Amount (₦) *
-                  </label>
-                  <input
-                    type="number"
-                    value={priceAmount}
-                    onChange={(e) => setPriceAmount(e.target.value)}
-                    placeholder="e.g. 3000"
-                    min="100"
-                    className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white ${
-                      formErrors.price_amount ? "border-red-400 bg-red-50/40" : "border-gray-300"
-                    }`}
-                  />
-                  {formErrors.price_amount && (
-                    <p className="text-xs text-red-500">{formErrors.price_amount}</p>
+              <div className="flex items-center gap-4">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#1B4332] bg-gray-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group transition-colors shrink-0"
+                >
+                  {imageUrl ? (
+                    <>
+                      <img src={imageUrl} alt="Service cover" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity">
+                        <Camera className="w-5 h-5" />
+                      </div>
+                    </>
+                  ) : uploadingImage ? (
+                    <Loader2 className="w-6 h-6 text-[#1B4332] animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-6 h-6 text-gray-400 group-hover:text-[#1B4332] mb-1 transition-colors" />
+                      <span className="text-[10px] text-gray-500 font-medium">Add Photo</span>
+                    </>
                   )}
                 </div>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <p className="font-semibold text-gray-700">Upload business logo or photo of your work</p>
+                  <p>Recommended: 1200x630 or square JPG, PNG, or WebP.</p>
+                  {imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="text-red-500 hover:underline text-xs font-medium block pt-1"
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </div>
+            </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-600">
-                    Rate Unit (Optional)
+            {/* Business Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Business / Service Name *
+              </label>
+              <input
+                type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="e.g. Sparkle Lodge Cleaners"
+                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                  formErrors.business_name ? "border-red-400 bg-red-50/30" : "border-gray-200"
+                }`}
+              />
+              {formErrors.business_name && (
+                <p className="text-xs text-red-500">{formErrors.business_name}</p>
+              )}
+            </div>
+
+            {/* Category & Campus grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Category *
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as ServiceCategory)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
+                >
+                  {SERVICE_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Campus Base *
+                </label>
+                <select
+                  value={university}
+                  onChange={(e) => setUniversity(e.target.value)}
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
+                >
+                  {SERVICE_UNIVERSITIES.map((uni) => (
+                    <option key={uni} value={uni}>
+                      {uni}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* FLEXIBLE "OTHER" SERVICE CATEGORY BUILDER */}
+            {category === "other" && (
+              <div className="p-5 rounded-3xl bg-amber-50/50 border border-amber-200 space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#F59E0B]" />
+                  <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    Custom Service Details
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700">
+                    What is your specific service? *
                   </label>
                   <input
                     type="text"
-                    value={priceUnit}
-                    onChange={(e) => setPriceUnit(e.target.value)}
-                    placeholder="e.g. per trip, per room"
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white"
+                    value={customCategoryName}
+                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    placeholder="e.g. Photography & Studio, Hair Styling & Braiding, Tech Repairs..."
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 ${
+                      formErrors.custom_category_name ? "border-red-400 bg-red-50/40" : "border-gray-200"
+                    }`}
                   />
+                  {formErrors.custom_category_name && (
+                    <p className="text-xs text-red-500">{formErrors.custom_category_name}</p>
+                  )}
+                </div>
+
+                {/* Icon Picker */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700">Choose an Icon</label>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {CUSTOM_SERVICE_ICONS.map((ic) => {
+                      const IconComp = iconComponents[ic.id] || HelpCircle
+                      const isSelected = customCategoryIcon === ic.id
+                      return (
+                        <button
+                          key={ic.id}
+                          type="button"
+                          onClick={() => setCustomCategoryIcon(ic.id)}
+                          className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                            isSelected
+                              ? "border-[#1B4332] bg-[#1B4332] text-white shadow-sm"
+                              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          <IconComp className="w-4 h-4" />
+                          <span className="text-[10px] truncate max-w-full font-medium">
+                            {ic.label.split("/")[0].trim()}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Color Theme Picker */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700">Badge & Header Color</label>
+                  <div className="flex flex-wrap gap-2">
+                    {CUSTOM_SERVICE_COLORS.map((col) => {
+                      const isSelected = customCategoryColor === col.id
+                      return (
+                        <button
+                          key={col.id}
+                          type="button"
+                          onClick={() => setCustomCategoryColor(col.id)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                            isSelected
+                              ? "border-gray-900 ring-2 ring-gray-900/20 bg-white"
+                              : "border-gray-200 bg-white hover:border-gray-300"
+                          }`}
+                        >
+                          <span className={`w-3 h-3 rounded-full ${col.preview}`} />
+                          <span className="text-gray-700">{col.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Quick suggestion chips */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[11px] text-gray-500 font-medium">Suggestions:</span>
-                {PRICE_UNIT_SUGGESTIONS.map((sug) => (
-                  <button
-                    key={sug}
-                    type="button"
-                    onClick={() => setPriceUnit(sug)}
-                    className="text-[11px] bg-white border border-gray-300 hover:border-[#1B4332] text-gray-700 px-2 py-0.5 rounded-full transition-colors font-medium"
-                  >
-                    {sug}
-                  </button>
-                ))}
-              </div>
-
-              {/* Preview */}
-              <div className="pt-2 text-xs text-[#1B4332] font-semibold flex items-center gap-1.5 border-t border-gray-200">
-                <span>Display Preview:</span>
-                <span className="font-bold underline">
-                  {formatServicePrice(pricingType, Number(priceAmount) || 0, priceUnit)}
-                </span>
+            {/* Pricing Model Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                Pricing Model *
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPricingType("negotiable")}
+                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                    pricingType === "negotiable"
+                      ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  Negotiable / Quote
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPricingType("starting_from")}
+                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                    pricingType === "starting_from"
+                      ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  Starting From
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPricingType("fixed")}
+                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                    pricingType === "fixed"
+                      ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  Fixed Rate
+                </button>
               </div>
             </div>
-          )}
 
-          {/* WhatsApp Number */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              WhatsApp Contact Number *
-            </label>
-            <input
-              type="tel"
-              value={whatsappNumber}
-              onChange={(e) => setWhatsappNumber(e.target.value)}
-              placeholder="e.g. 08012345678"
-              className={`w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
-                formErrors.whatsapp_number ? "border-red-400 bg-red-50/30" : "border-gray-200"
-              }`}
-            />
-            {formErrors.whatsapp_number && (
-              <p className="text-xs text-red-500">{formErrors.whatsapp_number}</p>
+            {/* Conditional Price Inputs */}
+            {pricingType !== "negotiable" && (
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3 animate-in fade-in slide-in-from-top-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-600">Price Amount (₦) *</label>
+                    <input
+                      type="number"
+                      value={priceAmount}
+                      onChange={(e) => setPriceAmount(e.target.value)}
+                      placeholder="e.g. 3000"
+                      min="100"
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white ${
+                        formErrors.price_amount ? "border-red-400 bg-red-50/40" : "border-gray-300"
+                      }`}
+                    />
+                    {formErrors.price_amount && (
+                      <p className="text-xs text-red-500">{formErrors.price_amount}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-600">Rate Unit (Optional)</label>
+                    <input
+                      type="text"
+                      value={priceUnit}
+                      onChange={(e) => setPriceUnit(e.target.value)}
+                      placeholder="e.g. per trip, per room"
+                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] text-gray-500 font-medium">Suggestions:</span>
+                  {PRICE_UNIT_SUGGESTIONS.map((sug) => (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => setPriceUnit(sug)}
+                      className="text-[11px] bg-white border border-gray-300 hover:border-[#1B4332] text-gray-700 px-2 py-0.5 rounded-full transition-colors font-medium"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="pt-2 text-xs text-[#1B4332] font-semibold flex items-center gap-1.5 border-t border-gray-200">
+                  <span>Display Preview:</span>
+                  <span className="font-bold underline">
+                    {formatServicePrice(pricingType, Number(priceAmount) || 0, priceUnit)}
+                  </span>
+                </div>
+              </div>
             )}
-            <p className="text-[11px] text-gray-400">
-              Students will click to message this number directly on WhatsApp.
-            </p>
-          </div>
 
-          {/* Student Entrepreneur Checkbox */}
-          <div className="pt-1">
-            <label className="flex items-start gap-3 p-3.5 rounded-xl border border-amber-200 bg-amber-50/50 cursor-pointer hover:bg-amber-50 transition-colors">
+            {/* WhatsApp Number */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                WhatsApp Contact Number *
+              </label>
+              <input
+                type="tel"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                placeholder="e.g. 08012345678"
+                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                  formErrors.whatsapp_number ? "border-red-400 bg-red-50/30" : "border-gray-200"
+                }`}
+              />
+              {formErrors.whatsapp_number && (
+                <p className="text-xs text-red-500">{formErrors.whatsapp_number}</p>
+              )}
+              <p className="text-[11px] text-gray-400">
+                Students will tap to chat directly with this number on WhatsApp.
+              </p>
+            </div>
+
+            {/* Student-Owned Checkbox */}
+            <label className="flex items-start gap-3 p-4 rounded-2xl border border-amber-200 bg-amber-50/50 cursor-pointer hover:bg-amber-50 transition-colors">
               <input
                 type="checkbox"
                 checked={isStudentOwned}
@@ -674,184 +948,379 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                   I am a student entrepreneur
                 </span>
                 <p className="text-gray-500 mt-0.5">
-                  Adds a prominent amber "🎓 Student-Owned" badge to your card to boost trust with peers.
+                  Adds an amber "🎓 Student-Owned" badge to build trust with student customers.
                 </p>
               </div>
             </label>
-          </div>
 
-          {/* Description */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Service Description *
-            </label>
-            <textarea
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what you offer, operating hours, delivery process, and pricing notes..."
-              className={`w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
-                formErrors.description ? "border-red-400 bg-red-50/30" : "border-gray-200"
-              }`}
-            />
-            {formErrors.description && (
-              <p className="text-xs text-red-500">{formErrors.description}</p>
-            )}
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 bg-[#1B4332] text-white py-3 px-4 rounded-xl text-sm font-semibold hover:bg-[#143728] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving Service...
-                </>
-              ) : service ? (
-                "Save Changes"
-              ) : (
-                "Publish Service"
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Service Description *
+              </label>
+              <textarea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your service, experience, coverage areas, pricing details..."
+                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                  formErrors.description ? "border-red-400 bg-red-50/30" : "border-gray-200"
+                }`}
+              />
+              {formErrors.description && (
+                <p className="text-xs text-red-500">{formErrors.description}</p>
               )}
-            </button>
-            {service && (
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3 pt-2">
               <button
-                type="button"
-                onClick={cancelEdit}
+                type="submit"
                 disabled={submitting}
-                className="px-4 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                className="flex-1 bg-[#1B4332] text-white py-3.5 px-6 rounded-2xl text-sm font-bold hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Cancel
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving Service...
+                  </>
+                ) : service ? (
+                  "Save Changes"
+                ) : (
+                  `Pay ₦${listingPrice.toLocaleString("en-NG")} & Publish Service`
+                )}
               </button>
-            )}
-          </div>
-        </form>
+              {service && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  disabled={submitting}
+                  className="px-5 py-3.5 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
       )}
 
-      {/* STATE 3: Vendor Dashboard View (When service exists and not editing) */}
+      {/* STATE 3: Dashboard View (When service exists and not editing) */}
       {service && !isEditing && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          {/* Card Preview Header */}
-          <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {service.image_url ? (
-                <img
-                  src={service.image_url}
-                  alt={service.business_name}
-                  className="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-[#1B4332] text-white font-extrabold text-2xl flex items-center justify-center shrink-0">
-                  {service.business_name.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-bold text-gray-900 text-base">{service.business_name}</h3>
-                  {service.is_verified && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <ShieldCheck className="w-3 h-3" /> Verified
-                    </span>
-                  )}
-                  {service.is_student_owned && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200">
-                      🎓 Student-Owned
-                    </span>
+          {/* 1. Monthly Listing Fee & Subscription Status Card */}
+          <div className={`p-6 rounded-3xl border ${
+            isExpired
+              ? "bg-red-50/80 border-red-200"
+              : isPaidActive
+              ? "bg-emerald-50/60 border-emerald-200"
+              : "bg-amber-50/80 border-amber-200"
+          }`}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                  isExpired
+                    ? "bg-red-100 text-red-700"
+                    : isPaidActive
+                    ? "bg-emerald-100 text-emerald-800"
+                    : "bg-amber-100 text-amber-800"
+                }`}>
+                  {isExpired ? (
+                    <AlertTriangle className="w-5 h-5" />
+                  ) : isPaidActive ? (
+                    <Calendar className="w-5 h-5" />
+                  ) : (
+                    <CreditCard className="w-5 h-5" />
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {getCategoryLabel(service.category)} • {service.university}
-                </p>
-                <p className="text-sm font-bold text-[#1B4332] mt-1">
-                  {formatServicePrice(service.pricing_type, service.price_amount, service.price_unit)}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-900 text-base">
+                      {isExpired
+                        ? "Listing Subscription Expired"
+                        : isPaidActive
+                        ? "Monthly Listing Active"
+                        : "Listing Payment Pending"}
+                    </h3>
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                      isExpired
+                        ? "bg-red-100 text-red-700"
+                        : isPaidActive
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}>
+                      {isExpired ? "Expired" : isPaidActive ? `${daysLeft} Days Left` : "Unpaid"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {isExpired
+                      ? "Your service is currently hidden from public student searches. Renew to reactivate."
+                      : isPaidActive
+                      ? `Active until ${new Date(service.listing_expires_at!).toLocaleDateString("en-NG", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}. Visible to all students.`
+                      : `Pay ₦${listingPrice.toLocaleString("en-NG")} monthly fee to publish and keep your service live.`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 w-full sm:w-auto">
+                {isExpired ? (
+                  <button
+                    type="button"
+                    onClick={handlePayListingFee}
+                    disabled={payingAction === "listing"}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-red-600/20"
+                  >
+                    {payingAction === "listing" ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-4 h-4" />
+                    )}
+                    Renew for ₦{listingPrice.toLocaleString("en-NG")}
+                  </button>
+                ) : !isPaidActive ? (
+                  <button
+                    type="button"
+                    onClick={handlePayListingFee}
+                    disabled={payingAction === "listing"}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#143728] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-[#1B4332]/20"
+                  >
+                    {payingAction === "listing" ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-4 h-4" />
+                    )}
+                    Pay ₦{listingPrice.toLocaleString("en-NG")} & Activate
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePayListingFee}
+                    disabled={payingAction === "listing"}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm"
+                  >
+                    {payingAction === "listing" ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="w-3.5 h-3.5" />
+                    )}
+                    Extend 30 Days (₦{listingPrice.toLocaleString("en-NG")})
+                  </button>
+                )}
               </div>
             </div>
-
-            <Link
-              href={`/services/${service.id}`}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#1B4332] hover:underline shrink-0"
-            >
-              Public Page <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
           </div>
 
-          {/* Description snippet */}
-          <div className="space-y-1">
-            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
-              About Your Service
-            </label>
-            <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-              {service.description}
-            </p>
-          </div>
-
-          {/* Live Analytics Dashboard */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <MessageCircle className="w-5 h-5" />
+          {/* 2. Spotlight & Boost Section */}
+          <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-3xl border border-amber-200/80 p-6 sm:p-8 space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+                  <Star className="w-6 h-6 fill-white" />
+                </div>
+                <div>
+                  <h3 className="font-black text-gray-900 text-lg">Spotlight & Boost Your Listing</h3>
+                  <p className="text-xs text-gray-600">
+                    Appear in the top "Featured Services" carousel on the Services page for maximum visibility.
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-black text-gray-900">{service.whatsapp_clicks || 0}</p>
-                <p className="text-xs font-medium text-gray-500">WhatsApp Bookings</p>
-              </div>
-            </div>
 
-            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-100 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 text-[#F59E0B] flex items-center justify-center shrink-0">
-                <ThumbsUp className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-black text-gray-900">{service.vouch_count || 0}</p>
-                <p className="text-xs font-medium text-gray-500">Student Vouches</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons: Edit, Pause/Activate, Share My Service Card */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={startEdit}
-              className="flex items-center justify-center gap-1.5 border border-gray-200 hover:border-gray-300 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-700 transition-colors bg-white hover:bg-gray-50"
-            >
-              <Pencil className="w-4 h-4 text-gray-500" />
-              Edit
-            </button>
-
-            <button
-              type="button"
-              onClick={handleToggleStatus}
-              disabled={togglingStatus}
-              className={`flex items-center justify-center gap-1.5 border py-2.5 px-4 rounded-xl text-sm font-semibold transition-colors ${
-                service.status === "active"
-                  ? "border-amber-200 text-amber-700 bg-amber-50/50 hover:bg-amber-50"
-                  : "border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50"
-              }`}
-            >
-              {service.status === "active" ? (
-                <>
-                  <Pause className="w-4 h-4" /> Pause
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" /> Activate
-                </>
+              {isBoostActive && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-sm">
+                  <Zap className="w-3.5 h-3.5 fill-white" />
+                  Boosted ({boostDaysLeft}d left)
+                </span>
               )}
-            </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={handleShare}
-              className="flex items-center justify-center gap-1.5 bg-[#1B4332] text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:bg-[#143728] transition-colors shadow-sm shadow-[#1B4332]/20"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Card
-            </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div className="p-5 rounded-2xl bg-white border border-amber-200/60 shadow-sm flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700">7-Day Boost</span>
+                    <span className="text-lg font-black text-gray-900">
+                      ₦{boostPrices.featured_7.toLocaleString("en-NG")}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Featured placement at the very top of the Campus Services marketplace for one full week.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleBoostService("featured_7")}
+                  disabled={payingAction === "featured_7"}
+                  className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:bg-[#143728] transition-all disabled:opacity-50"
+                >
+                  {payingAction === "featured_7" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Zap className="w-3.5 h-3.5" />
+                  )}
+                  Boost for 7 Days
+                </button>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-white border border-amber-200/60 shadow-sm flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-orange-700">30-Day Boost</span>
+                    <span className="text-lg font-black text-gray-900">
+                      ₦{boostPrices.featured_30.toLocaleString("en-NG")}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Full month priority spotlight + featured badge on your card. Best value for ongoing bookings.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleBoostService("featured_30")}
+                  disabled={payingAction === "featured_30"}
+                  className="w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:brightness-105 transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {payingAction === "featured_30" ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Star className="w-3.5 h-3.5 fill-white" />
+                  )}
+                  Boost for 30 Days
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Service Card Preview & Details */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-gray-100 gap-4">
+              <div className="flex items-center gap-3.5">
+                {service.image_url ? (
+                  <img
+                    src={service.image_url}
+                    alt={service.business_name}
+                    className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-[#1B4332] text-white font-extrabold text-2xl flex items-center justify-center shrink-0">
+                    {service.business_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-black text-gray-900 text-lg">{service.business_name}</h3>
+                    {isBoostActive && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> Featured
+                      </span>
+                    )}
+                    {service.is_verified && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <ShieldCheck className="w-3 h-3" /> Verified
+                      </span>
+                    )}
+                    {service.is_student_owned && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200">
+                        🎓 Student-Owned
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {getCategoryLabel(service.category, service.custom_category_name)} • {service.university}
+                  </p>
+                  <p className="text-sm font-black text-[#1B4332] mt-1">
+                    {formatServicePrice(service.pricing_type, service.price_amount, service.price_unit)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/services/${service.id}`}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-[#1B4332] bg-[#1B4332]/5 hover:bg-[#1B4332]/10 px-3.5 py-2 rounded-xl transition-colors"
+                >
+                  View Public Page <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                About Your Service
+              </label>
+              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                {service.description}
+              </p>
+            </div>
+
+            {/* Live Analytics Dashboard */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-gray-900">{service.whatsapp_clicks || 0}</p>
+                  <p className="text-xs font-semibold text-gray-500">WhatsApp Bookings</p>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-[#F59E0B] flex items-center justify-center shrink-0">
+                  <ThumbsUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-2xl font-black text-gray-900">{service.vouch_count || 0}</p>
+                  <p className="text-xs font-semibold text-gray-500">Student Vouches</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons: Edit, Pause/Activate, Share My Service Card */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={startEdit}
+                className="flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-300 py-3 px-4 rounded-xl text-sm font-bold text-gray-700 transition-colors bg-white hover:bg-gray-50"
+              >
+                <Pencil className="w-4 h-4 text-gray-500" />
+                Edit Details
+              </button>
+
+              <button
+                type="button"
+                onClick={handleToggleStatus}
+                disabled={togglingStatus}
+                className={`flex items-center justify-center gap-2 border py-3 px-4 rounded-xl text-sm font-bold transition-colors ${
+                  service.status === "active"
+                    ? "border-amber-200 text-amber-700 bg-amber-50/50 hover:bg-amber-50"
+                    : "border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50"
+                }`}
+              >
+                {service.status === "active" ? (
+                  <>
+                    <Pause className="w-4 h-4" /> Pause Listing
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4" /> Activate Listing
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 px-4 rounded-xl text-sm font-bold hover:bg-[#143728] transition-colors shadow-sm shadow-[#1B4332]/20"
+              >
+                <Share2 className="w-4 h-4" />
+                Share Service
+              </button>
+            </div>
           </div>
         </div>
       )}

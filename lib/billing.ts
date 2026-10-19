@@ -212,6 +212,73 @@ export async function processSuccessfulPayment(transaction: any) {
       console.log('[BILLING] Success fee applied successfully, listing marked unavailable:', listing_id)
     }
   }
+
+  if (type === 'service_listing') {
+    const serviceId = metadata.service_id
+    if (!serviceId) {
+      console.error('[BILLING] Service listing payment missing service_id:', metadata)
+      return
+    }
+
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 30)
+
+    const { error: serviceError } = await supabase
+      .from('service_providers')
+      .update({
+        listing_paid: true,
+        listing_expires_at: expiresAt.toISOString(),
+        listing_payment_ref: reference,
+        status: 'active',
+      })
+      .eq('id', serviceId)
+
+    if (serviceError) {
+      console.error('[BILLING] Service listing update error:', serviceError)
+    } else {
+      console.log('[BILLING] Service listing activated successfully:', serviceId)
+    }
+  }
+
+  if (type === 'service_boost') {
+    const serviceId = metadata.service_id
+    if (!serviceId || !boost_type) {
+      console.error('[BILLING] Service boost missing service_id or boost_type:', metadata)
+      return
+    }
+
+    const now = new Date()
+    let expiresAt: Date | null = null
+    const updateData: Record<string, any> = { is_boosted: true }
+
+    if (boost_type === 'featured_7') {
+      expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      updateData.boost_type = 'featured_7'
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'featured_30') {
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      updateData.boost_type = 'featured_30'
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'urgent') {
+      expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      updateData.boost_type = 'urgent'
+      updateData.boost_expires_at = expiresAt.toISOString()
+    } else if (boost_type === 'refresh') {
+      updateData.created_at = now.toISOString()
+      updateData.is_boosted = false
+    }
+
+    const { error: boostError } = await supabase
+      .from('service_providers')
+      .update(updateData)
+      .eq('id', serviceId)
+
+    if (boostError) {
+      console.error('[BILLING] Service boost update error:', boostError)
+    } else {
+      console.log('[BILLING] Service boost applied successfully:', serviceId)
+    }
+  }
 }
 
 export async function getLandlordSubscription(landlord_id: string) {

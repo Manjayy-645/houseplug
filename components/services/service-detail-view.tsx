@@ -20,6 +20,18 @@ import {
   HelpCircle,
   Clock,
   ArrowRight,
+  Camera,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  Star,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -29,7 +41,7 @@ import {
 } from "@/lib/service-utils"
 import type { ServiceProvider, ServiceCategory } from "@/types"
 
-const categoryIconMap: Record<ServiceCategory, any> = {
+const categoryIconMap: Record<string, any> = {
   moving: Truck,
   cleaning: Sparkles,
   gas_refill: Flame,
@@ -37,6 +49,18 @@ const categoryIconMap: Record<ServiceCategory, any> = {
   painting: Paintbrush,
   laundry: Shirt,
   other: HelpCircle,
+  Camera,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Wrench,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
 }
 
 interface ServiceDetailViewProps {
@@ -133,7 +157,15 @@ export function ServiceDetailView({ service }: ServiceDetailViewProps) {
   }
 
   const CategoryIcon =
-    categoryIconMap[service.category as ServiceCategory] || HelpCircle
+    service.category === "other" && service.custom_category_icon
+      ? categoryIconMap[service.custom_category_icon] || HelpCircle
+      : categoryIconMap[service.category as ServiceCategory] || HelpCircle
+
+  const categoryLabel = getCategoryLabel(service.category, service.custom_category_name)
+  const categoryColor =
+    service.category === "other" && service.custom_category_color
+      ? service.custom_category_color
+      : "from-[#1B4332] via-[#245742] to-[#123124]"
 
   const formattedPrice = formatServicePrice(
     service.pricing_type,
@@ -181,18 +213,23 @@ export function ServiceDetailView({ service }: ServiceDetailViewProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#1B4332] via-[#245742] to-[#123124] flex flex-col items-center justify-center text-white p-6">
+              <div className={`w-full h-full bg-gradient-to-br ${categoryColor} flex flex-col items-center justify-center text-white p-6`}>
                 <div className="w-20 h-20 rounded-3xl bg-white/10 backdrop-blur-md flex items-center justify-center mb-3">
                   <CategoryIcon className="w-10 h-10 text-[#F59E0B]" />
                 </div>
-                <h2 className="text-xl font-bold tracking-tight text-white/95">
-                  {getCategoryLabel(service.category)}
+                <h2 className="text-xl font-bold tracking-tight text-white/95 text-center">
+                  {categoryLabel}
                 </h2>
               </div>
             )}
 
             {/* Badges in top left */}
             <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+              {service.is_boosted && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                  <Star className="w-4 h-4 fill-white text-white" /> Featured
+                </span>
+              )}
               {service.is_verified && (
                 <span className="inline-flex items-center gap-1 bg-[#10B981] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
                   <ShieldCheck className="w-4 h-4" /> Verified Vendor
@@ -211,7 +248,7 @@ export function ServiceDetailView({ service }: ServiceDetailViewProps) {
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
               <div className="space-y-1.5">
                 <span className="text-xs font-bold text-[#F59E0B] uppercase tracking-wider block">
-                  {getCategoryLabel(service.category)}
+                  {categoryLabel}
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
                   {service.business_name}

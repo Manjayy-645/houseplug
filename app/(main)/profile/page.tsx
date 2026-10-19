@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { AvatarUpload } from "@/components/profile/avatar-upload"
-import { MyCampusService } from "@/components/services/my-campus-service"
 import { X, Check } from "lucide-react"
 import type { Profile } from "@/types"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
@@ -112,13 +111,10 @@ export default function StudentProfilePage() {
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your account details and campus services</p>
+          <p className="text-sm text-gray-500 mt-1">Manage your account details</p>
         </div>
 
-        {/* 1. My Campus Service Module */}
-        <MyCampusService userId={user.id} defaultPhone={profile.phone || ""} />
-
-        {/* 2. Personal Information */}
+        {/* 1. Personal Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900 text-base">Personal Information</h2>

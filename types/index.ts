@@ -32,7 +32,7 @@ export type BillingCycle = 'monthly' | 'annual'
 
 export type BoostType = 'featured_7' | 'featured_30' | 'urgent' | 'refresh'
 
-export type PaymentType = 'subscription' | 'boost' | 'verification'
+export type PaymentType = 'subscription' | 'boost' | 'verification' | 'service_listing' | 'service_boost'
 
 export type Payment = {
   id: string
@@ -145,6 +145,9 @@ export type ServiceProvider = {
   user_id: string
   business_name: string
   category: ServiceCategory | string
+  custom_category_name?: string | null    // custom name when category='other'
+  custom_category_icon?: string | null    // icon name from lucide-react
+  custom_category_color?: string | null   // tailwind gradient color
   university: string
   pricing_type: ServicePricingType | string
   price_amount?: number | null
@@ -153,10 +156,16 @@ export type ServiceProvider = {
   is_student_owned: boolean
   description: string
   image_url?: string | null
-  status: 'active' | 'paused' | string
+  status: 'active' | 'paused' | 'expired' | string
   whatsapp_clicks: number
   vouch_count: number
   is_verified?: boolean
+  is_boosted?: boolean
+  boost_type?: BoostType | null
+  boost_expires_at?: string | null
+  listing_paid?: boolean
+  listing_expires_at?: string | null
+  listing_payment_ref?: string | null
   created_at: string
   updated_at?: string
 }

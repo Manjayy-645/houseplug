@@ -20,7 +20,8 @@ export async function getPlanPrices() {
       'boost_featured_7',
       'boost_featured_30',
       'boost_urgent',
-      'boost_refresh'
+      'boost_refresh',
+      'service_listing_price'
     ])
 
   const settings = Object.fromEntries(
@@ -37,6 +38,7 @@ export async function getPlanPrices() {
     featured_30: settings.boost_featured_30 ?? 400000,
     urgent: settings.boost_urgent ?? 50000,
     refresh: settings.boost_refresh ?? 30000,
+    service_listing: settings.service_listing_price ?? 300000,
   }
 }
 

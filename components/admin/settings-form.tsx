@@ -121,6 +121,37 @@ export function SettingsForm({ settings: initialSettings }: { settings: Record<s
         </div>
       </section>
 
+      {/* SERVICE LISTING PRICING */}
+      <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-8 border-b border-gray-50">
+           <h3 className="text-lg font-bold text-gray-900">Service Provider Pricing</h3>
+           <p className="text-sm text-gray-500 mt-1 font-medium">Monthly listing fee for campus service providers (in Kobo, e.g. 300000 = ₦3,000)</p>
+        </div>
+        <div className="p-8 space-y-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PriceInput 
+                label="Service Listing Fee (Monthly)" 
+                value={settings.service_listing_price} 
+                name="service_listing_price" 
+                onChange={handleInputChange} 
+              />
+              <div className="flex items-center bg-blue-50/50 p-4 rounded-2xl gap-3 border border-blue-100">
+                 <AlertTriangle className="h-5 w-5 text-blue-500 shrink-0" />
+                 <p className="text-[11px] font-bold text-blue-700 leading-relaxed uppercase tracking-wider">
+                    Service providers must pay this fee monthly to keep their listing visible on the platform.
+                 </p>
+              </div>
+           </div>
+           <div className="pt-4 flex justify-end">
+              <SaveButton 
+                loading={loading === 'service_pricing'} 
+                success={success === 'service_pricing'}
+                onClick={() => handleSave('service_pricing', ['service_listing_price'])}
+              />
+           </div>
+        </div>
+      </section>
+
       {/* LISTING LIMITS */}
       <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-gray-50">

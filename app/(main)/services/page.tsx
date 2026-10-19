@@ -11,6 +11,8 @@ import {
   Building,
   GraduationCap,
   Sparkles,
+  Star,
+  Zap,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { ServiceCard } from "@/components/services/service-card"
@@ -21,6 +23,7 @@ export default function ServicesPage() {
   const [services, setServices] = useState<ServiceProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [hasService, setHasService] = useState(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   // Filter States
@@ -33,24 +36,33 @@ export default function ServicesPage() {
     setTimeout(() => setToastMessage(null), 3000)
   }
 
-  // Check user session
+  // Check user session & if they already have a service
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       setIsLoggedIn(!!user)
+      if (user) {
+        const { data } = await supabase
+          .from("service_providers")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle()
+        setHasService(!!data)
+      }
     })
   }, [])
 
-  // Fetch active services
+  // Fetch active services (excluding expired ones)
   useEffect(() => {
     async function fetchServices() {
       setLoading(true)
       try {
         const supabase = createClient()
-        let query = supabase
+        const query = supabase
           .from("service_providers")
           .select("*")
           .eq("status", "active")
+          .order("is_boosted", { ascending: false })
           .order("is_verified", { ascending: false })
           .order("vouch_count", { ascending: false })
           .order("created_at", { ascending: false })
@@ -58,7 +70,15 @@ export default function ServicesPage() {
         const { data, error } = await query
 
         if (!error && data) {
-          setServices(data as ServiceProvider[])
+          // Filter out expired listings if listing_expires_at is set in the past
+          const now = new Date()
+          const activeListings = (data as ServiceProvider[]).filter((srv) => {
+            if (srv.listing_expires_at && new Date(srv.listing_expires_at) < now) {
+              return false
+            }
+            return true
+          })
+          setServices(activeListings)
         }
       } catch (err) {
         console.error("Failed to load services", err)
@@ -69,6 +89,15 @@ export default function ServicesPage() {
 
     fetchServices()
   }, [])
+
+  // Boosted / Spotlight services (active boost)
+  const boostedServices = services.filter((srv) => {
+    if (!srv.is_boosted) return false
+    if (srv.boost_expires_at && new Date(srv.boost_expires_at) < new Date()) {
+      return false
+    }
+    return true
+  })
 
   // Client-side filtering
   const filteredServices = services.filter((srv) => {
@@ -88,7 +117,8 @@ export default function ServicesPage() {
       const matchName = srv.business_name?.toLowerCase().includes(q)
       const matchDesc = srv.description?.toLowerCase().includes(q)
       const matchUni = srv.university?.toLowerCase().includes(q)
-      if (!matchName && !matchDesc && !matchUni) {
+      const matchCustom = srv.custom_category_name?.toLowerCase().includes(q)
+      if (!matchName && !matchDesc && !matchUni && !matchCustom) {
         return false
       }
     }
@@ -96,9 +126,12 @@ export default function ServicesPage() {
     return true
   })
 
+  // Dynamic CTA button destination & text
   const listServiceHref = isLoggedIn
-    ? "/profile?setup=service"
+    ? "/services/manage"
     : "/signup?role=service_provider"
+
+  const listServiceText = hasService ? "Manage My Service" : "+ List Your Service"
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pt-20 pb-20">
@@ -122,17 +155,17 @@ export default function ServicesPage() {
                 Verified Campus Services
               </h1>
               <p className="text-base text-gray-600 leading-relaxed">
-                Trusted movers, lodge cleaners, gas delivery & technicians around UniPort & RSU.
+                Trusted movers, lodge cleaners, gas delivery, technicians & student vendors around UniPort & RSU.
               </p>
             </div>
 
-            <div className="shrink-0">
+            <div className="shrink-0 flex items-center gap-3">
               <Link
                 href={listServiceHref}
                 className="inline-flex items-center gap-2 bg-[#1B4332] text-white font-bold text-sm px-6 py-3.5 rounded-2xl hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg hover:shadow-[#1B4332]/30 active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4" />
-                + List Your Service
+                {listServiceText}
               </Link>
             </div>
           </div>
@@ -144,7 +177,7 @@ export default function ServicesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search services (e.g. gas, cleaner, keke, electrician)..."
+              placeholder="Search services (e.g. gas, cleaner, photography, keke, repairs)..."
               className="w-full bg-white border border-gray-200 pl-11 pr-4 py-3 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] shadow-sm"
             />
             {searchQuery && (
@@ -161,7 +194,46 @@ export default function ServicesPage() {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+        {/* SPOTLIGHT SECTION: Boosted / Featured Services Carousel */}
+        {boostedServices.length > 0 && selectedCategory === "all" && !searchQuery && (
+          <section className="space-y-4 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-3xl p-6 sm:p-8 border border-amber-200/80 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-sm">
+                  <Star className="w-5 h-5 fill-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
+                    Featured Spotlight
+                    <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">
+                      Promoted
+                    </span>
+                  </h2>
+                  <p className="text-xs text-gray-600">Top recommended campus service providers this week</p>
+                </div>
+              </div>
+
+              <Link
+                href="/services/manage"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-amber-800 hover:text-amber-950 transition-colors"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-600" /> Boost your service
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+              {boostedServices.slice(0, 3).map((service) => (
+                <ServiceCard
+                  key={`boosted-${service.id}`}
+                  service={service}
+                  onToast={showToast}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Filters Controls */}
         <div className="space-y-4">
           {/* University Toggle */}
@@ -288,7 +360,7 @@ export default function ServicesPage() {
                 className="inline-flex items-center gap-2 bg-[#1B4332] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#143728] transition-colors"
               >
                 <Plus className="w-4 h-4" />
-                List Your Service
+                {listServiceText}
               </Link>
             </div>
           </div>

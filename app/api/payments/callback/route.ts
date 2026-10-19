@@ -34,6 +34,9 @@ export async function GET(request: Request) {
       if (type === 'success_fee') {
         return NextResponse.redirect(`${base}/landlord/dashboard?success_fee=paid`)
       }
+      if (type === 'service_listing' || type === 'service_boost') {
+        return NextResponse.redirect(`${base}/services/manage?payment=success`)
+      }
       return NextResponse.redirect(`${base}/landlord/subscription?payment=success`)
     }
 
@@ -44,6 +47,9 @@ export async function GET(request: Request) {
     }
     if (failType === 'success_fee') {
       return NextResponse.redirect(`${base}/landlord/dashboard?error=payment_failed`)
+    }
+    if (failType === 'service_listing' || failType === 'service_boost') {
+      return NextResponse.redirect(`${base}/services/manage?error=payment_failed`)
     }
     return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {

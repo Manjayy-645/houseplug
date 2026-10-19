@@ -71,6 +71,34 @@ export const PRICE_UNIT_SUGGESTIONS = [
   "per job",
 ]
 
+/** Available icons for custom "Other" service categories */
+export const CUSTOM_SERVICE_ICONS = [
+  { id: 'Camera', label: 'Camera / Photography' },
+  { id: 'Scissors', label: 'Scissors / Hair & Beauty' },
+  { id: 'Palette', label: 'Palette / Art & Design' },
+  { id: 'ShoppingBag', label: 'Shopping Bag / Delivery' },
+  { id: 'Music', label: 'Music / DJ & Events' },
+  { id: 'BookOpen', label: 'Book / Tutoring' },
+  { id: 'Utensils', label: 'Utensils / Food & Catering' },
+  { id: 'Wrench', label: 'Wrench / Handyman' },
+  { id: 'Monitor', label: 'Monitor / Tech Services' },
+  { id: 'Dumbbell', label: 'Dumbbell / Fitness' },
+  { id: 'Briefcase', label: 'Briefcase / Professional' },
+  { id: 'Heart', label: 'Heart / Health & Wellness' },
+] as const
+
+/** Available badge colors for custom "Other" service categories */
+export const CUSTOM_SERVICE_COLORS = [
+  { id: 'from-gray-600 to-slate-800', label: 'Slate', preview: 'bg-slate-600' },
+  { id: 'from-rose-500 to-pink-700', label: 'Rose', preview: 'bg-rose-500' },
+  { id: 'from-violet-500 to-purple-700', label: 'Violet', preview: 'bg-violet-500' },
+  { id: 'from-sky-500 to-blue-700', label: 'Sky Blue', preview: 'bg-sky-500' },
+  { id: 'from-emerald-500 to-green-700', label: 'Emerald', preview: 'bg-emerald-500' },
+  { id: 'from-amber-500 to-orange-600', label: 'Amber', preview: 'bg-amber-500' },
+  { id: 'from-red-500 to-rose-700', label: 'Red', preview: 'bg-red-500' },
+  { id: 'from-teal-500 to-cyan-700', label: 'Teal', preview: 'bg-teal-500' },
+] as const
+
 /**
  * Format flexible service pricing for cards, detail pages, and OG images.
  *
@@ -103,12 +131,18 @@ export function formatServicePrice(
   return "Negotiable (Contact for Quote)"
 }
 
-export function getCategoryLabel(categoryKey?: string | null): string {
+export function getCategoryLabel(categoryKey?: string | null, customName?: string | null): string {
+  if (categoryKey === 'other' && customName) {
+    return customName
+  }
   const match = SERVICE_CATEGORIES.find((c) => c.id === categoryKey)
   return match ? match.label : "Campus Service"
 }
 
-export function getCategoryShortLabel(categoryKey?: string | null): string {
+export function getCategoryShortLabel(categoryKey?: string | null, customName?: string | null): string {
+  if (categoryKey === 'other' && customName) {
+    return customName
+  }
   const match = SERVICE_CATEGORIES.find((c) => c.id === categoryKey)
   return match ? match.shortLabel : "Service"
 }

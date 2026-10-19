@@ -16,6 +16,18 @@ import {
   Paintbrush,
   Shirt,
   HelpCircle,
+  Camera,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
+  Star,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -25,7 +37,7 @@ import {
 } from "@/lib/service-utils"
 import type { ServiceProvider, ServiceCategory } from "@/types"
 
-const categoryIconMap: Record<ServiceCategory, any> = {
+const categoryIconMap: Record<string, any> = {
   moving: Truck,
   cleaning: Sparkles,
   gas_refill: Flame,
@@ -33,6 +45,18 @@ const categoryIconMap: Record<ServiceCategory, any> = {
   painting: Paintbrush,
   laundry: Shirt,
   other: HelpCircle,
+  Camera,
+  Scissors,
+  Palette,
+  ShoppingBag,
+  Music,
+  BookOpen,
+  Utensils,
+  Wrench,
+  Monitor,
+  Dumbbell,
+  Briefcase,
+  Heart,
 }
 
 interface ServiceCardProps {
@@ -131,7 +155,15 @@ export function ServiceCard({ service, onToast }: ServiceCardProps) {
   }
 
   const CategoryIcon =
-    categoryIconMap[service.category as ServiceCategory] || HelpCircle
+    service.category === "other" && service.custom_category_icon
+      ? categoryIconMap[service.custom_category_icon] || HelpCircle
+      : categoryIconMap[service.category as ServiceCategory] || HelpCircle
+
+  const categoryLabel = getCategoryLabel(service.category, service.custom_category_name)
+  const categoryColor =
+    service.category === "other" && service.custom_category_color
+      ? service.custom_category_color
+      : "from-[#1B4332] to-[#2D5A47]"
 
   const formattedPrice = formatServicePrice(
     service.pricing_type,
@@ -140,7 +172,9 @@ export function ServiceCard({ service, onToast }: ServiceCardProps) {
   )
 
   return (
-    <div className="group rounded-2xl border border-gray-200/80 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
+    <div className={`group rounded-2xl border bg-white shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between ${
+      service.is_boosted ? "border-amber-300 ring-2 ring-amber-400/20" : "border-gray-200/80"
+    }`}>
       <div>
         {/* Card Header / Image */}
         <Link href={`/services/${service.id}`} className="block relative h-48 w-full bg-gray-100 overflow-hidden">
@@ -151,12 +185,12 @@ export function ServiceCard({ service, onToast }: ServiceCardProps) {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#1B4332] to-[#2D5A47] flex flex-col items-center justify-center text-white p-4">
+            <div className={`w-full h-full bg-gradient-to-br ${categoryColor} flex flex-col items-center justify-center text-white p-4`}>
               <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center mb-2">
                 <CategoryIcon className="w-7 h-7 text-[#F59E0B]" />
               </div>
-              <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider">
-                {getCategoryLabel(service.category)}
+              <span className="text-xs font-semibold text-emerald-100 uppercase tracking-wider text-center line-clamp-1 px-2">
+                {categoryLabel}
               </span>
             </div>
           )}
@@ -164,6 +198,11 @@ export function ServiceCard({ service, onToast }: ServiceCardProps) {
           {/* Badges in top corners */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none gap-2">
             <div className="flex flex-wrap gap-1.5">
+              {service.is_boosted && (
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                  <Star className="w-3.5 h-3.5 fill-white text-white" /> Featured
+                </span>
+              )}
               {service.is_verified && (
                 <span className="inline-flex items-center gap-1 bg-[#10B981] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
                   <ShieldCheck className="w-3.5 h-3.5" /> Verified
@@ -176,8 +215,8 @@ export function ServiceCard({ service, onToast }: ServiceCardProps) {
               )}
             </div>
 
-            <span className="text-[11px] font-bold bg-white/90 backdrop-blur-md text-gray-800 px-2.5 py-0.5 rounded-full shadow-sm border border-white/40">
-              {getCategoryLabel(service.category).split(" ")[0]}
+            <span className="text-[11px] font-bold bg-white/90 backdrop-blur-md text-gray-800 px-2.5 py-0.5 rounded-full shadow-sm border border-white/40 max-w-[120px] truncate">
+              {categoryLabel}
             </span>
           </div>
         </Link>

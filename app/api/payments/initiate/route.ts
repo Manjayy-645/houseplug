@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { type, plan, billing_cycle, listing_id, boost_type, verification } = await request.json()
+  const { type, plan, billing_cycle, listing_id, boost_type, verification, service_id } = await request.json()
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -20,7 +20,13 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single()
 
-  if (!profile || !["landlord", "agent", "admin", "super_admin"].includes(profile.role)) {
+  if (!profile) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  // Service payments are open to all users; housing payments require landlord/agent/admin
+  const isServicePayment = type === 'service_listing' || type === 'service_boost'
+  if (!isServicePayment && !['landlord', 'agent', 'admin', 'super_admin'].includes(profile.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
@@ -39,6 +45,10 @@ export async function POST(request: Request) {
     amount = prices.verification
   } else if (type === 'success_fee') {
     amount = 100000 // 1000 Naira in kobo
+  } else if (type === 'service_listing') {
+    amount = prices.service_listing
+  } else if (type === 'service_boost') {
+    amount = prices[boost_type as keyof typeof prices] || 0
   }
 
   if (!amount) {
@@ -51,7 +61,8 @@ export async function POST(request: Request) {
     plan,
     billing_cycle,
     listing_id,
-    boost_type
+    boost_type,
+    service_id
   }
 
   // Carry the (already-uploaded) document URLs through Paystack so the payment
@@ -90,6 +101,7 @@ export async function POST(request: Request) {
       billing_cycle,
       listing_id,
       boost_type,
+      service_id,
       amount,
       paystack_reference: reference,
       status: 'pending'
