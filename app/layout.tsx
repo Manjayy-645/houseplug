@@ -6,6 +6,7 @@ import { ScrollToTop } from "@/components/ui/scroll-to-top"
 import { MobileNav } from "@/components/mobile-nav"
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister"
 import { InstallPrompt } from "@/components/pwa/InstallPrompt"
+import { GlobalServiceBadge } from "@/components/services/global-service-badge"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegister />
         {children}
         <InstallPrompt />
+        <GlobalServiceBadge />
         <MobileNav />
         <ScrollToTop />
         <Analytics />

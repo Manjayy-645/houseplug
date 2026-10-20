@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Users, User, Heart, LayoutDashboard } from "lucide-react"
+import { Home, Search, Users, User, Heart, LayoutDashboard, Wrench } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { UserRole } from "@/types"
@@ -71,10 +71,16 @@ export function MobileNav() {
       ? { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard }
       : { name: "Home", href: "/", icon: Home },
     { name: "Browse", href: "/browse", icon: Search },
+    { 
+      name: "Services", 
+      href: "/services", 
+      icon: Wrench, 
+      badge: "NEW",
+      highlight: true 
+    },
     isLandlord 
       ? { name: "Dashboard", href: "/landlord/dashboard", icon: LayoutDashboard }
-      : { name: "Roommates", href: "/roommates", icon: Users, highlight: true },
-    { name: "Saved", href: isStudent ? "/student/saved" : "/saved", icon: Heart },
+      : { name: "Roommates", href: "/roommates", icon: Users },
     { name: "Profile", href: isLandlord ? "/landlord/profile" : isStudent ? "/student/profile" : "/profile", icon: User },
   ]
 
@@ -89,11 +95,15 @@ export function MobileNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center w-16 h-12 relative ${isActive ? "text-primary" : "text-gray-400 hover:text-gray-600"}`}
             >
-              {(item as any).highlight && !isActive && (
+              {(item as any).badge && !isActive ? (
+                <span className="absolute -top-1 right-1.5 px-1.5 py-0.2 rounded-full bg-[#1B4332] text-[#F59E0B] text-[8px] font-black tracking-wider leading-tight shadow-sm border border-emerald-500/40 animate-pulse">
+                  {(item as any).badge}
+                </span>
+              ) : (item as any).highlight && !isActive ? (
                 <span className="absolute top-0 right-2 w-2.5 h-2.5 bg-[#F59E0B] rounded-full border-2 border-white animate-pulse"></span>
-              )}
-              <item.icon className={`h-5 w-5 mb-1 transition-transform ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? "font-bold" : ""}`}>
+              ) : null}
+              <item.icon className={`h-5 w-5 mb-1 transition-transform ${isActive ? "scale-110 text-primary" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
+              <span className={`text-[10px] font-medium transition-colors ${isActive ? "font-bold text-primary" : ""}`}>
                 {item.name}
               </span>
             </Link>

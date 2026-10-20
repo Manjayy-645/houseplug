@@ -98,6 +98,21 @@ export default async function LandingPage() {
                 View all listings
               </Link>
             </div>
+
+            {/* Global Campus Services Feature Pill */}
+            <div className="mt-5 sm:mt-6 flex justify-center">
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md hover:bg-white/25 border border-white/25 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full transition-all active:scale-95 shadow-lg group"
+              >
+                <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
+                <span>Need campus movers, gas refill, or lodge repairs?</span>
+                <span className="bg-[#F59E0B] text-[#1B4332] text-[10px] font-black uppercase px-2 py-0.5 rounded-full ml-1">
+                  Services
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-amber-300 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -331,6 +346,7 @@ export default async function LandingPage() {
               <h4 className="font-bold text-primary mb-4 sm:mb-6 text-sm uppercase tracking-wider">Navigation</h4>
               <ul className="space-y-3 sm:space-y-4">
                 <li><Link href="/about" className="text-sm text-gray-500 hover:text-primary transition-all">About Us</Link></li>
+                <li><Link href="/services" className="text-sm text-gray-500 hover:text-primary transition-all flex items-center gap-1.5">Campus Services <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-[#1B4332] px-1.5 py-0.2 rounded-full">New</span></Link></li>
                 <li><Link href="/signup" className="text-sm text-gray-500 hover:text-primary transition-all">List Property</Link></li>
                 <li><Link href="/contact" className="text-sm text-gray-500 hover:text-primary transition-all">Contact Support</Link></li>
               </ul>

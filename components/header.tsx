@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User, Heart, Wrench } from "lucide-react"
+import { LogOut, Menu, X, Search, ChevronDown, Home, Settings, Share2, User, Heart, Wrench, Sparkles } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { getInitials } from "@/lib/utils"
 import type { Profile, UserRole } from "@/types"
@@ -178,13 +178,17 @@ export function Header() {
             </Link>
             <Link
               href="/services"
-              className={`text-sm font-semibold py-1 transition-colors ${
+              className={`text-sm font-semibold py-1 transition-colors flex items-center gap-1.5 ${
                 isActive("/services")
                   ? "text-primary border-b-2 border-primary"
                   : "text-gray-600 hover:text-primary"
               }`}
             >
-              Services
+              <span>Services</span>
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-[#1B4332] border border-emerald-200 shadow-xs">
+                <Sparkles className="w-2.5 h-2.5 text-[#F59E0B]" />
+                New
+              </span>
             </Link>
             <Link
               href="/signup"
@@ -292,9 +296,14 @@ export function Header() {
                       <Link
                         href="/services"
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
+                        className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-sm text-gray-700"
                       >
-                        <Wrench className="h-4 w-4 shrink-0 text-[#F59E0B]" /> Campus Services
+                        <span className="flex items-center gap-2">
+                          <Wrench className="h-4 w-4 shrink-0 text-[#F59E0B]" /> Campus Services
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-[#1B4332] px-1.5 py-0.5 rounded-full border border-emerald-200">
+                          New
+                        </span>
                       </Link>
                       <Link
                         href={getProfileHref(role)}
@@ -375,9 +384,20 @@ export function Header() {
               <Link
                 href="/services"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between bg-gray-50/50 hover:bg-gray-100 p-4 rounded-2xl transition-colors"
+                className="flex items-center justify-between bg-emerald-50/70 hover:bg-emerald-100/70 p-4 rounded-2xl transition-colors border border-emerald-200/60"
               >
-                <span className="text-gray-700 font-bold">Campus Services</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <Wrench className="h-4 w-4 text-[#F59E0B]" />
+                  </div>
+                  <div>
+                    <span className="text-gray-900 font-bold block text-sm">Campus Services</span>
+                    <span className="text-[11px] text-gray-500 block">Movers, Gas, Cleaning & Repairs</span>
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-[#1B4332] text-white shadow-sm">
+                  <Sparkles className="w-2.5 h-2.5 text-[#F59E0B]" /> New
+                </span>
               </Link>
               <Link
                 href="/signup"

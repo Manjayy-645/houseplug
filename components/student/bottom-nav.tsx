@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Heart, Users, User } from "lucide-react"
+import { LayoutDashboard, Heart, Users, User, Wrench } from "lucide-react"
 
 const navItems = [
   { href: "/student/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/student/saved", icon: Heart, label: "Saved" },
+  { href: "/services", icon: Wrench, label: "Services", isNew: true },
   { href: "/student/roommate", icon: Users, label: "Roommate" },
+  { href: "/student/saved", icon: Heart, label: "Saved" },
   { href: "/student/profile", icon: User, label: "Profile" },
 ]
 
@@ -23,10 +24,15 @@ export function StudentBottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition active:scale-95 ${
+            className={`relative flex flex-col items-center gap-1 p-2 rounded-lg transition active:scale-95 ${
               active ? "text-[#1B4332]" : "text-gray-400"
             }`}
           >
+            {item.isNew && !active && (
+              <span className="absolute top-1 right-1 px-1 py-0.2 rounded-full bg-[#1B4332] text-[#F59E0B] text-[7px] font-black uppercase tracking-wider leading-none shadow-xs border border-emerald-500/40 animate-pulse">
+                NEW
+              </span>
+            )}
             <Icon className={`h-5 w-5 ${active ? "stroke-[2.5]" : ""}`} />
             <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
             {active && <span className="absolute bottom-0 w-6 h-0.5 bg-[#1B4332] rounded-full" />}
