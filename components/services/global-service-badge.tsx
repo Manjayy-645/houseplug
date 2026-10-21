@@ -24,7 +24,7 @@ export function GlobalServiceBadge() {
     sessionStorage.setItem("hp_services_badge_dismissed", "true")
   }
 
-  // Hide on service pages, auth, and admin routes
+  // Hide on service pages, auth, admin routes, and listing pages
   if (
     dismissed ||
     !pathname ||
@@ -32,7 +32,8 @@ export function GlobalServiceBadge() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
-    pathname.startsWith("/banned")
+    pathname.startsWith("/banned") ||
+    pathname.startsWith("/listing/")
   ) {
     return null
   }

@@ -410,8 +410,6 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             
             {/* Review Section Call to Action - always show form for everyone */}
             <ReviewForm listingId={listing.id} prefillName={userProfile?.full_name} />
-
-            <SimilarListings currentListingId={listing.id} roomType={listing.room_type} />
           </div>
 
           <div className="space-y-6">
@@ -424,6 +422,10 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
               />
             ) : null}
           </div>
+        </div>
+
+        <div className="px-4 lg:px-8 pt-4">
+          <SimilarListings currentListingId={listing.id} roomType={listing.room_type} />
         </div>
       </div>
     </main>

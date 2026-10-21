@@ -33,8 +33,15 @@ export function formatRoomType(type: string): string {
 }
 
 export function buildWhatsAppLink(phone: string, listingTitle: string, listingId?: string): string {
-  const normalized = phone.replace(/^0/, "234")
-  const urlSuffix = listingId ? `\nhttps://houseplug.ng/listing/${listingId}` : ''
+  const digits = (phone || "").replace(/\D/g, "")
+  const normalized = digits.startsWith("0")
+    ? "234" + digits.slice(1)
+    : digits.startsWith("234")
+    ? digits
+    : digits
+    ? "234" + digits
+    : "2348000000000"
+  const urlSuffix = listingId ? `\nhttps://houseplug.ng/listing/${listingId}` : ""
   const message = encodeURIComponent(
     `Hi, I found your listing on HousePlug - ${listingTitle}. Is it still available?${urlSuffix}`
   )

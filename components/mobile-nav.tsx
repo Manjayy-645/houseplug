@@ -51,14 +51,16 @@ export function MobileNav() {
     return () => subscription.unsubscribe()
   }, [])
   
-  // Hide bottom nav on specific auth pages, dashboard routes, and student routes
-  // (student routes use their own StudentBottomNav)
+  // Hide bottom nav on specific auth pages, dashboard routes, student routes,
+  // and listing detail pages (which display their own dedicated sticky contact bar)
   if (
+    !pathname ||
     pathname === "/login" || 
     pathname === "/signup" || 
     pathname.startsWith("/landlord") || 
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/student")
+    pathname.startsWith("/student") ||
+    pathname.startsWith("/listing/")
   ) {
     return null
   }
