@@ -449,19 +449,50 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     setSubmitting(true)
     try {
       const supabase = createClient()
-      const payload = {
-        ...validation.data,
+      const payload: Record<string, any> = {
+        business_name: validation.data.business_name,
+        category: validation.data.category,
+        university: validation.data.university,
+        pricing_type: validation.data.pricing_type,
+        price_amount: validation.data.price_amount,
+        price_unit: validation.data.price_unit,
+        whatsapp_number: validation.data.whatsapp_number,
+        is_student_owned: validation.data.is_student_owned,
+        description: validation.data.description,
+        image_url: validation.data.image_url,
         updated_at: new Date().toISOString(),
+      }
+
+      if (category === "other") {
+        if (customCategoryName) payload.custom_category_name = customCategoryName
+        if (customCategoryIcon) payload.custom_category_icon = customCategoryIcon
+        if (customCategoryColor) payload.custom_category_color = customCategoryColor
       }
 
       if (service) {
         // Update existing service
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("service_providers")
           .update(payload)
           .eq("id", service.id)
           .select()
           .single()
+
+        // Fallback retry if custom category columns do not exist in DB schema yet
+        if (error && (error.message?.includes("custom_category") || error.message?.includes("schema cache"))) {
+          const basePayload = { ...payload }
+          delete basePayload.custom_category_name
+          delete basePayload.custom_category_icon
+          delete basePayload.custom_category_color
+          const fallbackRes = await supabase
+            .from("service_providers")
+            .update(basePayload)
+            .eq("id", service.id)
+            .select()
+            .single()
+          data = fallbackRes.data
+          error = fallbackRes.error
+        }
 
         if (error) throw error
         setService(data as ServiceProvider)
@@ -469,19 +500,37 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
         setIsEditing(false)
       } else {
         // Insert new service (pending payment)
-        const { data, error } = await supabase
+        const insertPayload: Record<string, any> = {
+          ...payload,
+          user_id: userId,
+          status: "active",
+          listing_paid: false,
+          whatsapp_clicks: 0,
+          vouch_count: 0,
+          is_verified: false,
+        }
+
+        let { data, error } = await supabase
           .from("service_providers")
-          .insert({
-            ...payload,
-            user_id: userId,
-            status: "active",
-            listing_paid: false,
-            whatsapp_clicks: 0,
-            vouch_count: 0,
-            is_verified: false,
-          })
+          .insert(insertPayload)
           .select()
           .single()
+
+        // Fallback retry if custom category or listing_paid columns do not exist in DB schema yet
+        if (error && (error.message?.includes("custom_category") || error.message?.includes("listing_paid") || error.message?.includes("schema cache"))) {
+          const baseInsert = { ...insertPayload }
+          delete baseInsert.custom_category_name
+          delete baseInsert.custom_category_icon
+          delete baseInsert.custom_category_color
+          delete baseInsert.listing_paid
+          const fallbackRes = await supabase
+            .from("service_providers")
+            .insert(baseInsert)
+            .select()
+            .single()
+          data = fallbackRes.data
+          error = fallbackRes.error
+        }
 
         if (error) throw error
         const createdService = data as ServiceProvider

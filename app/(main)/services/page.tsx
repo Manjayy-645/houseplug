@@ -58,7 +58,7 @@ export default function ServicesPage() {
       setLoading(true)
       try {
         const supabase = createClient()
-        const query = supabase
+        let query = supabase
           .from("service_providers")
           .select("*")
           .eq("status", "active")
@@ -67,7 +67,20 @@ export default function ServicesPage() {
           .order("vouch_count", { ascending: false })
           .order("created_at", { ascending: false })
 
-        const { data, error } = await query
+        let { data, error } = await query
+
+        if (error && (error.message?.includes("is_boosted") || error.message?.includes("schema cache"))) {
+          const fallbackQuery = supabase
+            .from("service_providers")
+            .select("*")
+            .eq("status", "active")
+            .order("is_verified", { ascending: false })
+            .order("vouch_count", { ascending: false })
+            .order("created_at", { ascending: false })
+          const fallbackRes = await fallbackQuery
+          data = fallbackRes.data
+          error = fallbackRes.error
+        }
 
         if (!error && data) {
           // Filter out expired listings if listing_expires_at is set in the past
