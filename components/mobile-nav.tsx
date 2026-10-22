@@ -60,7 +60,8 @@ export function MobileNav() {
     pathname.startsWith("/landlord") || 
     pathname.startsWith("/admin") ||
     pathname.startsWith("/student") ||
-    pathname.startsWith("/listing/")
+    pathname.startsWith("/listing/") ||
+    pathname.startsWith("/services/")
   ) {
     return null
   }

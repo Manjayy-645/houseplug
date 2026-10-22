@@ -147,7 +147,7 @@ export default function ServicesPage() {
   const listServiceText = hasService ? "Manage My Service" : "+ List Your Service"
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-20 pb-20">
+    <div className="min-h-screen bg-[#F9FAFB] pt-16 sm:pt-20 pb-28 sm:pb-20">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#1B4332] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
@@ -158,16 +158,16 @@ export default function ServicesPage() {
 
       {/* Hero / Header Banner */}
       <section className="bg-gradient-to-b from-white to-[#F9FAFB] border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-14">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
             <div className="max-w-2xl space-y-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B4332] text-xs font-bold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B4332] text-[11px] sm:text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 text-[#F59E0B]" /> Campus Marketplace
               </div>
-              <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
+              <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
                 Verified Campus Services
               </h1>
-              <p className="text-base text-gray-600 leading-relaxed">
+              <p className="text-xs sm:text-base text-gray-600 leading-relaxed">
                 Trusted movers, lodge cleaners, gas delivery, technicians & student vendors around UniPort & RSU.
               </p>
             </div>
@@ -175,7 +175,7 @@ export default function ServicesPage() {
             <div className="shrink-0 flex items-center gap-3">
               <Link
                 href={listServiceHref}
-                className="inline-flex items-center gap-2 bg-[#1B4332] text-white font-bold text-sm px-6 py-3.5 rounded-2xl hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg hover:shadow-[#1B4332]/30 active:scale-[0.98]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4332] text-white font-bold text-xs sm:text-sm px-5 py-3 sm:px-6 sm:py-3.5 rounded-xl sm:rounded-2xl hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg hover:shadow-[#1B4332]/30 active:scale-[0.98]"
               >
                 <Plus className="w-4 h-4" />
                 {listServiceText}
@@ -184,20 +184,20 @@ export default function ServicesPage() {
           </div>
 
           {/* Quick Search Bar */}
-          <div className="mt-8 max-w-xl relative">
+          <div className="mt-5 sm:mt-8 max-w-xl relative">
             <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search services (e.g. gas, cleaner, photography, keke, repairs)..."
-              className="w-full bg-white border border-gray-200 pl-11 pr-4 py-3 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] shadow-sm"
+              className="w-full bg-white border border-gray-200 pl-11 pr-12 py-3 rounded-xl sm:rounded-2xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] shadow-xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 hover:text-gray-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400 hover:text-gray-600 p-1"
               >
                 Clear
               </button>
@@ -207,60 +207,64 @@ export default function ServicesPage() {
       </section>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6 sm:space-y-8">
         {/* SPOTLIGHT SECTION: Boosted / Featured Services Carousel */}
         {boostedServices.length > 0 && selectedCategory === "all" && !searchQuery && (
-          <section className="space-y-4 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-3xl p-6 sm:p-8 border border-amber-200/80 shadow-sm">
+          <section className="space-y-3 sm:space-y-4 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-amber-200/80 shadow-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-sm">
-                  <Star className="w-5 h-5 fill-white" />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-xs">
+                  <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight flex items-center gap-1.5 sm:gap-2">
                     Featured Spotlight
-                    <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">
+                    <span className="text-[9px] sm:text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">
                       Promoted
                     </span>
                   </h2>
-                  <p className="text-xs text-gray-600">Top recommended campus service providers this week</p>
+                  <p className="text-[11px] sm:text-xs text-gray-600">Top recommended campus service providers this week</p>
                 </div>
               </div>
 
               <Link
                 href="/services/manage"
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-amber-800 hover:text-amber-950 transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-amber-800 hover:text-amber-950 transition-colors shrink-0"
               >
-                <Zap className="w-3.5 h-3.5 text-amber-600" /> Boost your service
+                <Zap className="w-3.5 h-3.5 text-amber-600" />
+                <span className="hidden xs:inline">Boost your service</span>
+                <span className="xs:hidden">Boost</span>
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+            {/* Mobile Horizontal Snap Carousel / Desktop Grid */}
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-2 scrollbar-none no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible pt-1">
               {boostedServices.slice(0, 3).map((service) => (
-                <ServiceCard
-                  key={`boosted-${service.id}`}
-                  service={service}
-                  onToast={showToast}
-                />
+                <div key={`boosted-${service.id}`} className="w-[84vw] xs:w-[300px] shrink-0 snap-center sm:w-auto">
+                  <ServiceCard
+                    service={service}
+                    onToast={showToast}
+                  />
+                </div>
               ))}
             </div>
           </section>
         )}
 
         {/* Filters Controls */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* University Toggle */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mr-1 flex items-center gap-1">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0 mr-0.5 flex items-center gap-1">
               <Building className="w-3.5 h-3.5" /> Campus:
             </span>
             <button
               type="button"
               onClick={() => setSelectedUniversity("all")}
-              className={`text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all ${
+              className={`shrink-0 text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
                 selectedUniversity === "all"
-                  ? "bg-[#1B4332] text-white shadow-sm"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
+                  ? "bg-[#1B4332] text-white shadow-xs"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 active:bg-gray-50"
               }`}
             >
               All Campuses
@@ -270,10 +274,10 @@ export default function ServicesPage() {
                 key={uni}
                 type="button"
                 onClick={() => setSelectedUniversity(uni)}
-                className={`text-xs px-3.5 py-1.5 rounded-xl font-bold transition-all ${
+                className={`shrink-0 text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
                   selectedUniversity === uni
-                    ? "bg-[#1B4332] text-white shadow-sm"
-                    : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300"
+                    ? "bg-[#1B4332] text-white shadow-xs"
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 active:bg-gray-50"
                 }`}
               >
                 {uni === "University of Port Harcourt"
@@ -286,13 +290,13 @@ export default function ServicesPage() {
           </div>
 
           {/* Horizontal Category Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 scrollbar-none no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               type="button"
               onClick={() => setSelectedCategory("all")}
-              className={`shrink-0 text-xs px-4 py-2 rounded-full font-bold transition-all ${
+              className={`shrink-0 text-xs px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold transition-all ${
                 selectedCategory === "all"
-                  ? "bg-[#F59E0B] text-white shadow-sm"
+                  ? "bg-[#F59E0B] text-white shadow-xs"
                   : "bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
@@ -305,9 +309,9 @@ export default function ServicesPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`shrink-0 text-xs px-4 py-2 rounded-full font-bold transition-all flex items-center gap-1.5 ${
+                  className={`shrink-0 text-xs px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold transition-all flex items-center gap-1.5 ${
                     active
-                      ? "bg-[#1B4332] text-white shadow-sm"
+                      ? "bg-[#1B4332] text-white shadow-xs"
                       : "bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
@@ -379,7 +383,7 @@ export default function ServicesPage() {
           </div>
         ) : (
           /* Services Grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-1 sm:pt-2">
             {filteredServices.map((service) => (
               <ServiceCard
                 key={service.id}

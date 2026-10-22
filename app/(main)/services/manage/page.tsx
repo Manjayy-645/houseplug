@@ -48,28 +48,28 @@ export default function ManageServicesPage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-20 pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="min-h-screen bg-[#F9FAFB] pt-16 sm:pt-20 pb-16 sm:pb-20">
+      <div className="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
           <Link
             href="/services"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#1B4332] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#1B4332] py-1 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" /> Back to Campus Services
           </Link>
         </div>
 
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-sm">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B4332] text-xs font-bold uppercase tracking-wider">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-xs">
+          <div className="space-y-1 sm:space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B4332] text-[11px] sm:text-xs font-bold uppercase tracking-wider">
               <Wrench className="w-3.5 h-3.5 text-[#F59E0B]" /> Campus Provider Hub
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl sm:text-3xl font-black text-gray-900 tracking-tight">
               Manage Your Service
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
               Manage your service profile, renew your monthly listing, and boost visibility to students across Port Harcourt campuses.
             </p>
           </div>

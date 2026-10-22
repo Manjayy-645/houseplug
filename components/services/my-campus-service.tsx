@@ -618,29 +618,29 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
       {/* STATE 1: Empty state (No service yet and not editing) */}
       {!service && !isEditing && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 sm:p-12 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#1B4332] flex items-center justify-center mx-auto">
-            <Sparkles className="w-8 h-8 text-[#F59E0B]" />
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs p-6 sm:p-12 text-center space-y-5 sm:space-y-6">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-50 text-[#1B4332] flex items-center justify-center mx-auto">
+            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-[#F59E0B]" />
           </div>
           <div className="max-w-md mx-auto space-y-2">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
               List Your Campus Service
             </h2>
-            <p className="text-sm text-gray-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
               Connect directly with thousands of students in UniPort and RSU for moving, lodge cleaning, gas refills, repairs, laundry, and custom student services.
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold">
-            <CreditCard className="w-4 h-4 text-amber-600" />
-            Monthly Listing Fee: ₦{listingPrice.toLocaleString("en-NG")} / month
+          <div className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold max-w-full">
+            <CreditCard className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>Monthly Listing Fee: ₦{listingPrice.toLocaleString("en-NG")} / month</span>
           </div>
 
           <div>
             <button
               type="button"
               onClick={startEdit}
-              className="inline-flex items-center gap-2 bg-[#1B4332] text-white px-7 py-3.5 rounded-2xl font-bold text-sm hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg active:scale-[0.98]"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4332] text-white px-7 py-3.5 rounded-xl sm:rounded-2xl font-bold text-sm hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 hover:shadow-lg active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               Set Up Your Service
@@ -651,13 +651,13 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
       {/* STATE 2: Form (Creating or Editing) */}
       {isEditing && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs p-4 sm:p-8 space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-gray-100">
             <div>
-              <h2 className="text-xl font-black text-gray-900">
+              <h2 className="text-lg sm:text-xl font-black text-gray-900">
                 {service ? "Edit Your Campus Service" : "Set Up Your Campus Service"}
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
                 {service
                   ? "Update your service details anytime at no extra charge."
                   : `First month listing fee of ₦${listingPrice.toLocaleString("en-NG")} payable via Paystack upon publishing.`}
@@ -667,23 +667,23 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="text-gray-400 hover:text-gray-600 text-xs font-semibold flex items-center gap-1"
+                className="text-gray-400 hover:text-gray-600 text-xs font-semibold flex items-center gap-1 p-1 active:scale-95"
               >
                 <X className="w-4 h-4" /> Cancel
               </button>
             )}
           </div>
 
-          <form onSubmit={handleSubmitForm} className="space-y-6">
+          <form onSubmit={handleSubmitForm} className="space-y-5 sm:space-y-6">
             {/* Photo Upload */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block">
                 Cover Photo or Business Logo
               </label>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#1B4332] bg-gray-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group transition-colors shrink-0"
+                  className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#1B4332] bg-gray-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group transition-colors shrink-0 active:scale-95"
                 >
                   {imageUrl ? (
                     <>
@@ -703,12 +703,12 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 </div>
                 <div className="text-xs text-gray-500 space-y-1">
                   <p className="font-semibold text-gray-700">Upload business logo or photo of your work</p>
-                  <p>Recommended: 1200x630 or square JPG, PNG, or WebP.</p>
+                  <p className="text-[11px] text-gray-400">Recommended: 1200x630 or square JPG, PNG, or WebP.</p>
                   {imageUrl && (
                     <button
                       type="button"
                       onClick={() => setImageUrl("")}
-                      className="text-red-500 hover:underline text-xs font-medium block pt-1"
+                      className="text-red-500 hover:underline text-xs font-medium block pt-1 active:scale-95"
                     >
                       Remove photo
                     </button>
@@ -734,7 +734,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="e.g. Sparkle Lodge Cleaners"
-                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                className={`w-full border rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
                   formErrors.business_name ? "border-red-400 bg-red-50/30" : "border-gray-200"
                 }`}
               />
@@ -744,7 +744,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
             </div>
 
             {/* Category & Campus grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">
                   Category *
@@ -752,7 +752,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as ServiceCategory)}
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
+                  className="w-full border border-gray-200 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
                 >
                   {SERVICE_CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -769,7 +769,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 <select
                   value={university}
                   onChange={(e) => setUniversity(e.target.value)}
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
+                  className="w-full border border-gray-200 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] bg-white font-medium"
                 >
                   {SERVICE_UNIVERSITIES.map((uni) => (
                     <option key={uni} value={uni}>
@@ -782,7 +782,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
             {/* FLEXIBLE "OTHER" SERVICE CATEGORY BUILDER */}
             {category === "other" && (
-              <div className="p-5 rounded-3xl bg-amber-50/50 border border-amber-200 space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-amber-50/50 border border-amber-200 space-y-3.5 sm:space-y-4 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#F59E0B]" />
                   <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">
@@ -799,7 +799,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                     value={customCategoryName}
                     onChange={(e) => setCustomCategoryName(e.target.value)}
                     placeholder="e.g. Photography & Studio, Hair Styling & Braiding, Tech Repairs..."
-                    className={`w-full border rounded-xl px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 ${
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-base sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 ${
                       formErrors.custom_category_name ? "border-red-400 bg-red-50/40" : "border-gray-200"
                     }`}
                   />
@@ -811,7 +811,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 {/* Icon Picker */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700">Choose an Icon</label>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-6 gap-2">
                     {CUSTOM_SERVICE_ICONS.map((ic) => {
                       const IconComp = iconComponents[ic.id] || HelpCircle
                       const isSelected = customCategoryIcon === ic.id
@@ -820,9 +820,9 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                           key={ic.id}
                           type="button"
                           onClick={() => setCustomCategoryIcon(ic.id)}
-                          className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                          className={`p-2 sm:p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1 transition-all active:scale-95 ${
                             isSelected
-                              ? "border-[#1B4332] bg-[#1B4332] text-white shadow-sm"
+                              ? "border-[#1B4332] bg-[#1B4332] text-white shadow-xs"
                               : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                           }`}
                         >
@@ -839,7 +839,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 {/* Color Theme Picker */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-gray-700">Badge & Header Color</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2">
                     {CUSTOM_SERVICE_COLORS.map((col) => {
                       const isSelected = customCategoryColor === col.id
                       return (
@@ -847,7 +847,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                           key={col.id}
                           type="button"
                           onClick={() => setCustomCategoryColor(col.id)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 ${
                             isSelected
                               ? "border-gray-900 ring-2 ring-gray-900/20 bg-white"
                               : "border-gray-200 bg-white hover:border-gray-300"
@@ -868,22 +868,22 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
               <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
                 Pricing Model *
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <button
                   type="button"
                   onClick={() => setPricingType("negotiable")}
-                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                  className={`py-2.5 sm:py-3 px-1 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold border-2 transition-all leading-tight text-center active:scale-95 flex items-center justify-center ${
                     pricingType === "negotiable"
                       ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
                       : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}
                 >
-                  Negotiable / Quote
+                  Negotiable
                 </button>
                 <button
                   type="button"
                   onClick={() => setPricingType("starting_from")}
-                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                  className={`py-2.5 sm:py-3 px-1 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold border-2 transition-all leading-tight text-center active:scale-95 flex items-center justify-center ${
                     pricingType === "starting_from"
                       ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
                       : "border-gray-200 text-gray-600 hover:border-gray-300"
@@ -894,7 +894,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 <button
                   type="button"
                   onClick={() => setPricingType("fixed")}
-                  className={`py-3 px-3 rounded-2xl text-xs font-bold border-2 transition-all ${
+                  className={`py-2.5 sm:py-3 px-1 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-bold border-2 transition-all leading-tight text-center active:scale-95 flex items-center justify-center ${
                     pricingType === "fixed"
                       ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332]"
                       : "border-gray-200 text-gray-600 hover:border-gray-300"
@@ -907,7 +907,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
             {/* Conditional Price Inputs */}
             {pricingType !== "negotiable" && (
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3 animate-in fade-in slide-in-from-top-1">
+              <div className="p-3.5 sm:p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3 animate-in fade-in slide-in-from-top-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-600">Price Amount (₦) *</label>
@@ -917,7 +917,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                       onChange={(e) => setPriceAmount(e.target.value)}
                       placeholder="e.g. 3000"
                       min="100"
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white ${
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white ${
                         formErrors.price_amount ? "border-red-400 bg-red-50/40" : "border-gray-300"
                       }`}
                     />
@@ -933,7 +933,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                       value={priceUnit}
                       onChange={(e) => setPriceUnit(e.target.value)}
                       placeholder="e.g. per trip, per room"
-                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white"
+                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 bg-white"
                     />
                   </div>
                 </div>
@@ -945,7 +945,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                       key={sug}
                       type="button"
                       onClick={() => setPriceUnit(sug)}
-                      className="text-[11px] bg-white border border-gray-300 hover:border-[#1B4332] text-gray-700 px-2 py-0.5 rounded-full transition-colors font-medium"
+                      className="text-[11px] bg-white border border-gray-300 hover:border-[#1B4332] text-gray-700 px-2 py-0.5 rounded-full transition-colors font-medium active:scale-95"
                     >
                       {sug}
                     </button>
@@ -971,7 +971,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 value={whatsappNumber}
                 onChange={(e) => setWhatsappNumber(e.target.value)}
                 placeholder="e.g. 08012345678"
-                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                className={`w-full border rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
                   formErrors.whatsapp_number ? "border-red-400 bg-red-50/30" : "border-gray-200"
                 }`}
               />
@@ -984,7 +984,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
             </div>
 
             {/* Student-Owned Checkbox */}
-            <label className="flex items-start gap-3 p-4 rounded-2xl border border-amber-200 bg-amber-50/50 cursor-pointer hover:bg-amber-50 transition-colors">
+            <label className="flex items-start gap-3 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border border-amber-200 bg-amber-50/50 cursor-pointer hover:bg-amber-50 active:scale-[0.99] transition-all">
               <input
                 type="checkbox"
                 checked={isStudentOwned}
@@ -1012,7 +1012,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your service, experience, coverage areas, pricing details..."
-                className={`w-full border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
+                className={`w-full border rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 focus:border-[#1B4332] ${
                   formErrors.description ? "border-red-400 bg-red-50/30" : "border-gray-200"
                 }`}
               />
@@ -1022,11 +1022,21 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
+              {service && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  disabled={submitting}
+                  className="w-full sm:w-auto px-5 py-3.5 border border-gray-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors text-center active:scale-[0.98]"
+                >
+                  Cancel
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 bg-[#1B4332] text-white py-3.5 px-6 rounded-2xl text-sm font-bold hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full flex-1 bg-[#1B4332] text-white py-3.5 px-6 rounded-xl sm:rounded-2xl text-sm font-bold hover:bg-[#143728] transition-all shadow-md shadow-[#1B4332]/20 disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
               >
                 {submitting ? (
                   <>
@@ -1039,16 +1049,6 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                   `Pay ₦${listingPrice.toLocaleString("en-NG")} & Publish Service`
                 )}
               </button>
-              {service && (
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  disabled={submitting}
-                  className="px-5 py-3.5 border border-gray-200 rounded-2xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </form>
         </div>
@@ -1056,18 +1056,18 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
       {/* STATE 3: Dashboard View (When service exists and not editing) */}
       {service && !isEditing && (
-        <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
           {/* 1. Monthly Listing Fee & Subscription Status Card */}
-          <div className={`p-6 rounded-3xl border ${
+          <div className={`p-4 sm:p-6 rounded-2xl sm:rounded-3xl border ${
             isExpired
               ? "bg-red-50/80 border-red-200"
               : isPaidActive
               ? "bg-emerald-50/60 border-emerald-200"
               : "bg-amber-50/80 border-amber-200"
           }`}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 sm:gap-4">
+              <div className="flex items-start gap-3 sm:gap-3.5 min-w-0">
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 ${
                   isExpired
                     ? "bg-red-100 text-red-700"
                     : isPaidActive
@@ -1082,16 +1082,16 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                     <CreditCard className="w-5 h-5" />
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-900 text-base">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h3 className="font-bold text-gray-900 text-sm sm:text-base">
                       {isExpired
                         ? "Listing Subscription Expired"
                         : isPaidActive
                         ? "Monthly Listing Active"
                         : "Listing Payment Pending"}
                     </h3>
-                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                    <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full uppercase tracking-wider ${
                       isExpired
                         ? "bg-red-100 text-red-700"
                         : isPaidActive
@@ -1101,7 +1101,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                       {isExpired ? "Expired" : isPaidActive ? `${daysLeft} Days Left` : "Unpaid"}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 mt-0.5">
+                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
                     {isExpired
                       ? "Your service is currently hidden from public student searches. Renew to reactivate."
                       : isPaidActive
@@ -1121,7 +1121,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                     type="button"
                     onClick={handlePayListingFee}
                     disabled={payingAction === "listing"}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-red-600/20"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-red-600/20"
                   >
                     {payingAction === "listing" ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1135,7 +1135,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                     type="button"
                     onClick={handlePayListingFee}
                     disabled={payingAction === "listing"}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#143728] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-[#1B4332]/20"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#143728] active:scale-[0.98] text-white font-bold text-xs px-5 py-3 rounded-xl transition-all shadow-md shadow-[#1B4332]/20"
                   >
                     {payingAction === "listing" ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1149,7 +1149,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                     type="button"
                     onClick={handlePayListingFee}
                     disabled={payingAction === "listing"}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-white border border-gray-200 hover:border-gray-300 active:scale-[0.98] text-gray-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-xs"
                   >
                     {payingAction === "listing" ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1164,14 +1164,14 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
           </div>
 
           {/* 2. Spotlight & Boost Section */}
-          <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-3xl border border-amber-200/80 p-6 sm:p-8 space-y-5">
+          <div className="bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-white rounded-2xl sm:rounded-3xl border border-amber-200/80 p-4 sm:p-8 space-y-4 sm:space-y-5 shadow-xs">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-                  <Star className="w-6 h-6 fill-white" />
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                  <Star className="w-5 h-5 sm:w-6 sm:h-6 fill-white" />
                 </div>
                 <div>
-                  <h3 className="font-black text-gray-900 text-lg">Spotlight & Boost Your Listing</h3>
+                  <h3 className="font-black text-gray-900 text-base sm:text-lg">Spotlight & Boost Your Listing</h3>
                   <p className="text-xs text-gray-600">
                     Appear in the top "Featured Services" carousel on the Services page for maximum visibility.
                   </p>
@@ -1179,23 +1179,23 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
               </div>
 
               {isBoostActive && (
-                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-sm">
+                <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] sm:text-xs font-black px-3 py-1 rounded-full shadow-xs">
                   <Zap className="w-3.5 h-3.5 fill-white" />
                   Boosted ({boostDaysLeft}d left)
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <div className="p-5 rounded-2xl bg-white border border-amber-200/60 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-1">
+              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white border border-amber-200/60 shadow-xs flex flex-col justify-between space-y-3.5 sm:space-y-4">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-700">7-Day Boost</span>
-                    <span className="text-lg font-black text-gray-900">
+                    <span className="text-base sm:text-lg font-black text-gray-900">
                       ₦{boostPrices.featured_7.toLocaleString("en-NG")}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Featured placement at the very top of the Campus Services marketplace for one full week.
                   </p>
                 </div>
@@ -1203,7 +1203,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                   type="button"
                   onClick={() => handleBoostService("featured_7")}
                   disabled={payingAction === "featured_7"}
-                  className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:bg-[#143728] transition-all disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white text-xs font-bold py-3 sm:py-2.5 px-4 rounded-xl hover:bg-[#143728] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   {payingAction === "featured_7" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1214,15 +1214,15 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 </button>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white border border-amber-200/60 shadow-sm flex flex-col justify-between space-y-4">
+              <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-white border border-amber-200/60 shadow-xs flex flex-col justify-between space-y-3.5 sm:space-y-4">
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-orange-700">30-Day Boost</span>
-                    <span className="text-lg font-black text-gray-900">
+                    <span className="text-base sm:text-lg font-black text-gray-900">
                       ₦{boostPrices.featured_30.toLocaleString("en-NG")}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Full month priority spotlight + featured badge on your card. Best value for ongoing bookings.
                   </p>
                 </div>
@@ -1230,7 +1230,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                   type="button"
                   onClick={() => handleBoostService("featured_30")}
                   disabled={payingAction === "featured_30"}
-                  className="w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold py-2.5 px-4 rounded-xl hover:brightness-105 transition-all disabled:opacity-50 shadow-sm"
+                  className="w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold py-3 sm:py-2.5 px-4 rounded-xl hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50 shadow-xs"
                 >
                   {payingAction === "featured_30" ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1244,52 +1244,54 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
           </div>
 
           {/* 3. Service Card Preview & Details */}
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-gray-100 gap-4">
-              <div className="flex items-center gap-3.5">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-xs p-4 sm:p-8 space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 sm:pb-5 border-b border-gray-100 gap-3 sm:gap-4">
+              <div className="flex items-start gap-3 sm:gap-3.5 min-w-0 flex-1">
                 {service.image_url ? (
                   <img
                     src={service.image_url}
                     alt={service.business_name}
-                    className="w-16 h-16 rounded-2xl object-cover border border-gray-200 shrink-0"
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover border border-gray-200 shrink-0"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-2xl bg-[#1B4332] text-white font-extrabold text-2xl flex items-center justify-center shrink-0">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-[#1B4332] text-white font-extrabold text-xl sm:text-2xl flex items-center justify-center shrink-0">
                     {service.business_name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-black text-gray-900 text-lg">{service.business_name}</h3>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h3 className="font-black text-gray-900 text-base sm:text-lg truncate max-w-full">
+                      {service.business_name}
+                    </h3>
                     {isBoostActive && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                         <Star className="w-3 h-3 fill-amber-500 text-amber-500" /> Featured
                       </span>
                     )}
                     {service.is_verified && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <ShieldCheck className="w-3 h-3" /> Verified
                       </span>
                     )}
                     {service.is_student_owned && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200">
+                      <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200">
                         🎓 Student-Owned
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
                     {getCategoryLabel(service.category, service.custom_category_name)} • {service.university}
                   </p>
-                  <p className="text-sm font-black text-[#1B4332] mt-1">
+                  <p className="text-sm sm:text-base font-black text-[#1B4332] mt-0.5">
                     {formatServicePrice(service.pricing_type, service.price_amount, service.price_unit)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="w-full sm:w-auto">
                 <Link
                   href={`/services/${service.id}`}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-[#1B4332] bg-[#1B4332]/5 hover:bg-[#1B4332]/10 px-3.5 py-2 rounded-xl transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[#1B4332] bg-[#1B4332]/5 hover:bg-[#1B4332]/10 px-3.5 py-2.5 sm:py-2 rounded-xl transition-colors active:scale-95"
                 >
                   View Public Page <ExternalLink className="w-3.5 h-3.5" />
                 </Link>
@@ -1298,43 +1300,43 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
 
             {/* Description */}
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+              <label className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
                 About Your Service
               </label>
-              <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-line leading-relaxed">
                 {service.description}
               </p>
             </div>
 
             {/* Live Analytics Dashboard */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                  <MessageCircle className="w-6 h-6" />
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+              <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-2.5 sm:gap-3.5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-2xl font-black text-gray-900">{service.whatsapp_clicks || 0}</p>
-                  <p className="text-xs font-semibold text-gray-500">WhatsApp Bookings</p>
+                <div className="min-w-0">
+                  <p className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">{service.whatsapp_clicks || 0}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-gray-500 truncate">WhatsApp Bookings</p>
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-[#F59E0B] flex items-center justify-center shrink-0">
-                  <ThumbsUp className="w-6 h-6" />
+              <div className="p-3 sm:p-5 rounded-xl sm:rounded-2xl bg-amber-50/70 border border-amber-100 flex items-center gap-2.5 sm:gap-3.5">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-100 text-[#F59E0B] flex items-center justify-center shrink-0">
+                  <ThumbsUp className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-2xl font-black text-gray-900">{service.vouch_count || 0}</p>
-                  <p className="text-xs font-semibold text-gray-500">Student Vouches</p>
+                <div className="min-w-0">
+                  <p className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">{service.vouch_count || 0}</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-gray-500 truncate">Student Vouches</p>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons: Edit, Pause/Activate, Share My Service Card */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-1 sm:pt-2">
               <button
                 type="button"
                 onClick={startEdit}
-                className="flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-300 py-3 px-4 rounded-xl text-sm font-bold text-gray-700 transition-colors bg-white hover:bg-gray-50"
+                className="flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-300 py-3.5 sm:py-3 px-4 rounded-xl text-sm font-bold text-gray-700 transition-colors bg-white hover:bg-gray-50 active:scale-[0.98]"
               >
                 <Pencil className="w-4 h-4 text-gray-500" />
                 Edit Details
@@ -1344,7 +1346,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
                 type="button"
                 onClick={handleToggleStatus}
                 disabled={togglingStatus}
-                className={`flex items-center justify-center gap-2 border py-3 px-4 rounded-xl text-sm font-bold transition-colors ${
+                className={`flex items-center justify-center gap-2 border py-3.5 sm:py-3 px-4 rounded-xl text-sm font-bold transition-colors active:scale-[0.98] ${
                   service.status === "active"
                     ? "border-amber-200 text-amber-700 bg-amber-50/50 hover:bg-amber-50"
                     : "border-emerald-200 text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50"
@@ -1364,7 +1366,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3 px-4 rounded-xl text-sm font-bold hover:bg-[#143728] transition-colors shadow-sm shadow-[#1B4332]/20"
+                className="flex items-center justify-center gap-2 bg-[#1B4332] text-white py-3.5 sm:py-3 px-4 rounded-xl text-sm font-bold hover:bg-[#143728] transition-colors shadow-xs shadow-[#1B4332]/20 active:scale-[0.98]"
               >
                 <Share2 className="w-4 h-4" />
                 Share Service
