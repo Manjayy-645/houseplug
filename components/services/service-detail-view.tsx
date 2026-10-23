@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import {
   ChevronLeft,
   Share2,
@@ -10,6 +11,8 @@ import {
   GraduationCap,
   MapPin,
   Check,
+  CheckCircle2,
+  Copy,
   MessageCircle,
   Truck,
   Sparkles,
@@ -68,15 +71,33 @@ interface ServiceDetailViewProps {
 }
 
 export function ServiceDetailView({ service }: ServiceDetailViewProps) {
+  const searchParams = useSearchParams()
   const [vouchCount, setVouchCount] = useState<number>(service.vouch_count || 0)
   const [hasVouched, setHasVouched] = useState<boolean>(false)
   const [vouching, setVouching] = useState<boolean>(false)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [isOwner, setIsOwner] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3000)
   }
+
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      setPaymentSuccess(true)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user && user.id === service.user_id) {
+        setIsOwner(true)
+      }
+    })
+  }, [service.user_id])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -193,14 +214,54 @@ export function ServiceDetailView({ service }: ServiceDetailViewProps) {
             <ChevronLeft className="w-4 h-4" /> Back to Campus Services
           </Link>
 
-          <button
-            type="button"
-            onClick={handleShare}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl transition-colors shadow-xs active:scale-95"
-          >
-            <Share2 className="w-4 h-4" /> Share Service
-          </button>
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <Link
+                href="/services/manage"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1B4332] bg-[#1B4332]/10 hover:bg-[#1B4332]/15 px-3 py-1.5 sm:py-2 rounded-xl transition-colors"
+              >
+                <Wrench className="w-3.5 h-3.5" /> Manage Service
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 bg-white border border-gray-200 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl transition-colors shadow-xs active:scale-95"
+            >
+              <Share2 className="w-4 h-4" /> Share Service
+            </button>
+          </div>
         </div>
+
+        {/* PAYMENT SUCCESS & NEXT ACTIONS BANNER */}
+        {paymentSuccess && (
+          <div className="bg-gradient-to-r from-emerald-500/15 via-emerald-50 to-white border-2 border-emerald-500/30 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md shadow-emerald-900/5 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-600/30">
+                <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+              </div>
+              <div>
+                <h3 className="font-black text-gray-900 text-sm sm:text-base">🎉 Payment Verified — Your Service is Live!</h3>
+                <p className="text-xs text-gray-600">Students across UniPort and RSU can now discover this service and book directly on WhatsApp.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all shadow-xs active:scale-95"
+              >
+                <Share2 className="w-3.5 h-3.5" /> Share on WhatsApp
+              </button>
+              <Link
+                href="/services/manage"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-[#1B4332] text-white text-xs font-bold py-2.5 px-3.5 rounded-xl transition-all active:scale-95"
+              >
+                Manage Hub
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Hero Card */}
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-xs overflow-hidden">

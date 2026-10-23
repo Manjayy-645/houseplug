@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyPaystackTransaction } from '@/lib/paystack'
 import { processSuccessfulPayment } from '@/lib/billing'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -35,7 +36,21 @@ export async function GET(request: Request) {
         return NextResponse.redirect(`${base}/landlord/dashboard?success_fee=paid`)
       }
       if (type === 'service_listing' || type === 'service_boost') {
-        return NextResponse.redirect(`${base}/services/manage?payment=success`)
+        const rawReturn = transaction.metadata?.return_url as string | undefined
+        // Ensure returnUrl is a valid relative path on our domain
+        const returnUrl = rawReturn && rawReturn.startsWith('/') ? rawReturn : '/services/manage'
+        const boostType = transaction.metadata?.boost_type || ''
+        const serviceId = transaction.metadata?.service_id || ''
+        const action = type === 'service_listing' ? 'listing_active' : 'boost_active'
+        const params = new URLSearchParams({
+          payment: 'success',
+          type,
+          action,
+          ...(boostType ? { boost_type: boostType } : {}),
+          ...(serviceId ? { service_id: serviceId } : {}),
+          ref: reference,
+        })
+        return NextResponse.redirect(`${base}${returnUrl}?${params.toString()}`)
       }
       return NextResponse.redirect(`${base}/landlord/subscription?payment=success`)
     }
@@ -49,13 +64,39 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${base}/landlord/dashboard?error=payment_failed`)
     }
     if (failType === 'service_listing' || failType === 'service_boost') {
-      return NextResponse.redirect(`${base}/services/manage?error=payment_failed`)
+      const rawReturn = transaction.metadata?.return_url as string | undefined
+      const returnUrl = rawReturn && rawReturn.startsWith('/') ? rawReturn : '/services/manage'
+      const serviceId = transaction.metadata?.service_id || ''
+      const params = new URLSearchParams({
+        error: 'payment_failed',
+        type: failType,
+        ...(serviceId ? { service_id: serviceId } : {}),
+      })
+      return NextResponse.redirect(`${base}${returnUrl}?${params.toString()}`)
     }
     return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {
     console.error('[CALLBACK] Error:', error)
     // The payment itself may have succeeded (the webhook is the backup that
     // applies it). Never show a scary server error for a real payment.
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+      if (supabaseUrl && serviceKey && reference) {
+        const supabase = createSupabaseClient(supabaseUrl, serviceKey)
+        const { data: payRecord } = await supabase
+          .from('payments')
+          .select('type, service_id')
+          .eq('paystack_reference', reference)
+          .maybeSingle()
+        if (payRecord && (payRecord.type === 'service_listing' || payRecord.type === 'service_boost')) {
+          return NextResponse.redirect(`${base}/services/manage?status=processing&type=${payRecord.type}`)
+        }
+      }
+    } catch (e) {
+      console.error('[CALLBACK] Secondary lookup failed:', e)
+    }
+
     return NextResponse.redirect(`${base}/landlord/subscription?status=processing`)
   }
 }

@@ -12,6 +12,8 @@ import {
   Play,
   Share2,
   Check,
+  CheckCircle2,
+  Copy,
   AlertCircle,
   ExternalLink,
   MessageCircle,
@@ -171,6 +173,13 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
   const [isStudentOwned, setIsStudentOwned] = useState<boolean>(true)
   const [description, setDescription] = useState<string>("")
   const [imageUrl, setImageUrl] = useState<string>("")
+  const [copiedLink, setCopiedLink] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState<{
+    type: string
+    action: string
+    boostType?: string | null
+    ref?: string | null
+  } | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -183,13 +192,59 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
   useEffect(() => {
     const payment = searchParams.get("payment")
     const error = searchParams.get("error")
+    const status = searchParams.get("status")
 
     if (payment === "success") {
-      showToast("Payment received successfully! Your service listing is updated.")
+      setPaymentSuccess({
+        type: searchParams.get("type") || "service_listing",
+        action: searchParams.get("action") || "listing_active",
+        boostType: searchParams.get("boost_type"),
+        ref: searchParams.get("ref"),
+      })
+      showToast("Payment received successfully! Your service is active.")
     } else if (error === "payment_failed") {
       showToast("Payment was not completed. Please try again.")
+    } else if (status === "processing") {
+      showToast("Payment is processing. Your service will activate in a moment.")
     }
   }, [searchParams])
+
+  const handleDismissSuccess = () => {
+    setPaymentSuccess(null)
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      url.searchParams.delete("payment")
+      url.searchParams.delete("type")
+      url.searchParams.delete("action")
+      url.searchParams.delete("boost_type")
+      url.searchParams.delete("service_id")
+      url.searchParams.delete("ref")
+      url.searchParams.delete("error")
+      url.searchParams.delete("status")
+      window.history.replaceState({}, "", url.pathname)
+    }
+  }
+
+  const handleCopyServiceLink = async () => {
+    if (!service) return
+    const publicUrl = `https://www.houseplug.ng/services/${service.id}`
+    try {
+      await navigator.clipboard.writeText(publicUrl)
+      setCopiedLink(true)
+      showToast("Service link copied to clipboard!")
+      setTimeout(() => setCopiedLink(false), 2500)
+    } catch {
+      showToast("Failed to copy link")
+    }
+  }
+
+  const handleShareToWhatsApp = () => {
+    if (!service) return
+    const publicUrl = `https://www.houseplug.ng/services/${service.id}`
+    const text = `Hello! Check out our campus service *${service.business_name}* on HousePlug!\nBook directly with us here: ${publicUrl}`
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(waUrl, "_blank", "noopener,noreferrer")
+  }
 
   // Fetch user's service and platform pricing
   useEffect(() => {
@@ -362,12 +417,14 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     if (!service) return
     setPayingAction("listing")
     try {
+      const returnUrl = typeof window !== "undefined" ? window.location.pathname : "/services/manage"
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "service_listing",
           service_id: service.id,
+          return_url: returnUrl,
         }),
       })
 
@@ -386,6 +443,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
     if (!service) return
     setPayingAction(boostType)
     try {
+      const returnUrl = typeof window !== "undefined" ? window.location.pathname : "/services/manage"
       const res = await fetch("/api/payments/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -393,6 +451,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
           type: "service_boost",
           boost_type: boostType,
           service_id: service.id,
+          return_url: returnUrl,
         }),
       })
 
@@ -546,6 +605,7 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
             body: JSON.stringify({
               type: "service_listing",
               service_id: createdService.id,
+              return_url: "/services/manage",
             }),
           })
           const payData = await res.json()
@@ -613,6 +673,139 @@ export function MyCampusService({ userId, defaultPhone = "" }: MyCampusServicePr
         <div className="fixed bottom-6 right-6 z-50 bg-[#1B4332] text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <Check className="w-4 h-4 text-emerald-400 shrink-0" />
           {toastMessage}
+        </div>
+      )}
+
+      {/* PAYMENT SUCCESS & NEXT ACTIONS BANNER */}
+      {paymentSuccess && service && (
+        <div className="bg-gradient-to-br from-emerald-500/15 via-emerald-50/80 to-white border-2 border-emerald-500/30 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-lg shadow-emerald-900/5 space-y-4 sm:space-y-5 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 sm:gap-3.5">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-[#1B4332] to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-[#1B4332]/20">
+                <CheckCircle2 className="w-6 h-6 text-emerald-300" />
+              </div>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider mb-1">
+                  <Sparkles className="w-3 h-3 text-[#F59E0B]" /> Payment Verified
+                </div>
+                <h2 className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-snug">
+                  {paymentSuccess.type === "service_boost"
+                    ? "🚀 Spotlight Boost Activated!"
+                    : "🎉 Your Campus Service is Now Live!"}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed max-w-2xl">
+                  {paymentSuccess.type === "service_boost"
+                    ? "Your boost payment was confirmed. Your service is now prominently featured in the top Featured Spotlight for students across UniPort and RSU!"
+                    : "Your ₦3,000 monthly listing payment was verified via Paystack. Your business profile is active, indexed in campus search, and students can now contact you directly on WhatsApp."}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleDismissSuccess}
+              className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+              title="Dismiss notification"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Quick Summary Pill Bar */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-emerald-100/80">
+            <div className="flex items-center gap-1 text-xs text-emerald-900 bg-white/80 border border-emerald-200 px-3 py-1.5 rounded-xl font-semibold shadow-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Status: <strong className="text-emerald-800">Active Listing</strong></span>
+            </div>
+            {paymentSuccess.ref && (
+              <div className="flex items-center gap-1 text-xs text-gray-600 bg-white/80 border border-gray-200 px-3 py-1.5 rounded-xl font-medium shadow-xs">
+                <span>Ref: <code className="text-gray-800 font-mono text-[11px]">{paymentSuccess.ref}</code></span>
+              </div>
+            )}
+            <div className="flex items-center gap-1 text-xs text-gray-600 bg-white/80 border border-gray-200 px-3 py-1.5 rounded-xl font-medium shadow-xs">
+              <Calendar className="w-3.5 h-3.5 text-blue-500" />
+              <span>Duration: <strong>{paymentSuccess.type === "service_boost" ? (paymentSuccess.boostType === "featured_30" ? "30 Days Boost" : "7 Days Boost") : "30 Days Listing"}</strong></span>
+            </div>
+          </div>
+
+          {/* NEXT ACTIONS BLOCK */}
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-200/80 space-y-3.5 shadow-xs">
+            <div>
+              <span className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider block">
+                Recommended Next Actions
+              </span>
+              <p className="text-sm font-black text-gray-900">
+                Start getting bookings from students today
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+              {/* Action 1: View Live Listing */}
+              <Link
+                href={`/services/${service.id}`}
+                className="flex items-center justify-center gap-2 bg-[#1B4332] hover:bg-[#143728] text-white py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm shadow-[#1B4332]/20 active:scale-[0.98]"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Live Service
+              </Link>
+
+              {/* Action 2: Share on WhatsApp */}
+              <button
+                type="button"
+                onClick={handleShareToWhatsApp}
+                className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20ba59] text-white py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm shadow-[#25D366]/20 active:scale-[0.98]"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-4 h-4 fill-white shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.532 5.857L.054 23.338a.75.75 0 0 0 .916.916l5.481-1.478A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.694 9.694 0 0 1-4.95-1.357l-.355-.212-3.683.993.992-3.617-.232-.373A9.694 9.694 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z" />
+                </svg>
+                Share on WhatsApp
+              </button>
+
+              {/* Action 3: Copy Link */}
+              <button
+                type="button"
+                onClick={handleCopyServiceLink}
+                className="flex items-center justify-center gap-2 border border-gray-200 hover:border-gray-300 bg-white text-gray-700 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-[0.98]"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span className="text-emerald-700">Link Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-gray-500" />
+                    Copy Service Link
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Optional Promotion / Boost tip if listing payment */}
+            {paymentSuccess.type === "service_listing" && !service.is_boosted && (
+              <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-amber-600 shrink-0" />
+                  <p className="text-xs text-amber-900 leading-snug">
+                    <strong>Want 5x more student inquiries?</strong> Boost your listing for 7 days (₦{boostPrices.featured_7.toLocaleString("en-NG")}) to feature in the top carousel.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleBoostService("featured_7")}
+                  disabled={payingAction === "featured_7"}
+                  className="shrink-0 text-xs font-bold text-amber-900 bg-white border border-amber-300 hover:bg-amber-100/50 py-1.5 px-3 rounded-lg transition-colors active:scale-95"
+                >
+                  Boost Now (₦{boostPrices.featured_7.toLocaleString("en-NG")})
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

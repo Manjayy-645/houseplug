@@ -50,6 +50,7 @@ export async function processSuccessfulPayment(transaction: any) {
       billing_cycle: billing_cycle ?? null,
       listing_id: listing_id ?? null,
       boost_type: boost_type ?? null,
+      service_id: metadata?.service_id ?? null,
       amount,
       paystack_reference: reference,
       status: 'success',
@@ -235,6 +236,9 @@ export async function processSuccessfulPayment(transaction: any) {
 
     if (serviceError) {
       console.error('[BILLING] Service listing update error:', serviceError)
+      if (serviceError.message?.includes('listing_paid') || serviceError.message?.includes('schema cache')) {
+        await supabase.from('service_providers').update({ status: 'active' }).eq('id', serviceId)
+      }
     } else {
       console.log('[BILLING] Service listing activated successfully:', serviceId)
     }

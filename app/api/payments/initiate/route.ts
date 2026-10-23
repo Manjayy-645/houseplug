@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { type, plan, billing_cycle, listing_id, boost_type, verification, service_id } = await request.json()
+  const { type, plan, billing_cycle, listing_id, boost_type, verification, service_id, return_url } = await request.json()
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -62,7 +62,8 @@ export async function POST(request: Request) {
     billing_cycle,
     listing_id,
     boost_type,
-    service_id
+    service_id,
+    return_url: return_url || (isServicePayment ? "/services/manage" : null)
   }
 
   // Carry the (already-uploaded) document URLs through Paystack so the payment
