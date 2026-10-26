@@ -355,7 +355,7 @@ export default async function LandingPage() {
               <h4 className="font-bold text-primary mb-4 sm:mb-6 text-sm uppercase tracking-wider">Legal</h4>
               <ul className="space-y-3 sm:space-y-4">
                 <li><Link href="/safety" className="text-sm text-gray-500 hover:text-primary transition-all">Safety Guide</Link></li>
-                <li><Link href="/terms" className="text-sm text-gray-500 hover:text-primary transition-all">Terms of Service</Link></li>
+                <li><Link href="/terms" className="text-sm text-gray-500 hover:text-primary transition-all">Terms &amp; Refund Policy</Link></li>
                 <li><Link href="/privacy" className="text-sm text-gray-500 hover:text-primary transition-all">Privacy Policy</Link></li>
               </ul>
             </div>
