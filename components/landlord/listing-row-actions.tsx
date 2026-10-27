@@ -17,39 +17,10 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
-  const [showSuccessFeeModal, setShowSuccessFeeModal] = useState(false)
-
-  const handlePaySuccessFee = async () => {
-    if (isToggling) return
-    setIsToggling(true)
-    try {
-      const res = await fetch("/api/payments/initiate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "success_fee",
-          listing_id: listingId,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to initiate payment")
-
-      if (data.authorization_url) {
-        window.location.href = data.authorization_url
-      }
-    } catch (error: any) {
-      console.error("Error initiating payment:", error)
-      alert(error.message || "Failed to initiate payment. Please try again.")
-      setIsToggling(false)
-    }
-  }
 
   const toggleAvailability = async () => {
-    // This is only called when making a listing AVAILABLE from UNAVAILABLE.
-    // Marking it unavailable is handled via the success fee payment now.
     if (isToggling) return
-    const newStatus = "active"
+    const newStatus = status === "active" ? "unavailable" : "active"
     setIsToggling(true)
     try {
       const supabase = createClient()
@@ -90,48 +61,17 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
 
   return (
     <div className="flex items-center justify-end gap-2">
-      {/* Availability toggle — only meaningful for live/hidden listings */}
+      {/* Availability toggle — freely switch between active and unavailable */}
       {status === "active" && (
-        <>
-          <button
-            type="button"
-            onClick={() => setShowSuccessFeeModal(true)}
-            disabled={isToggling}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
-          >
-            {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
-            Mark Unavailable
-          </button>
-
-          {showSuccessFeeModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-              <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl relative">
-                <h3 className="mb-2 text-lg font-bold text-gray-900">Property Rented?</h3>
-                <p className="mb-6 text-sm text-gray-600">
-                  Please pay ₦1000 to mark this listing as rented. Your contribution helps keep HousePlug running!
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowSuccessFeeModal(false)}
-                    disabled={isToggling}
-                    className="flex-1 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-200 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handlePaySuccessFee}
-                    disabled={isToggling}
-                    className="flex-1 rounded-xl bg-[#1B4332] px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110 transition flex items-center justify-center"
-                  >
-                    {isToggling ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pay with Paystack"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
+        <button
+          type="button"
+          onClick={toggleAvailability}
+          disabled={isToggling}
+          className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
+        >
+          {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
+          Mark Unavailable
+        </button>
       )}
       {status === "unavailable" && (
         <button

@@ -195,25 +195,6 @@ export async function processSuccessfulPayment(transaction: any) {
     )
   }
 
-  if (type === 'success_fee') {
-    if (!listing_id) {
-      console.error('[BILLING] Success fee missing listing_id:', metadata)
-      return
-    }
-
-    const { error: updateError } = await supabase
-      .from('listings')
-      .update({ status: 'unavailable' })
-      .eq('id', listing_id)
-      .eq('landlord_id', landlord_id)
-
-    if (updateError) {
-      console.error('[BILLING] Failed to apply success fee (mark unavailable):', updateError)
-    } else {
-      console.log('[BILLING] Success fee applied successfully, listing marked unavailable:', listing_id)
-    }
-  }
-
   if (type === 'service_listing') {
     const serviceId = metadata.service_id
     if (!serviceId) {

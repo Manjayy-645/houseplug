@@ -32,9 +32,6 @@ export async function GET(request: Request) {
       if (type === 'boost') {
         return NextResponse.redirect(`${base}/landlord/subscription?boost=success`)
       }
-      if (type === 'success_fee') {
-        return NextResponse.redirect(`${base}/landlord/dashboard?success_fee=paid`)
-      }
       if (type === 'service_listing' || type === 'service_boost') {
         const rawReturn = transaction.metadata?.return_url as string | undefined
         // Ensure returnUrl is a valid relative path on our domain
@@ -59,9 +56,6 @@ export async function GET(request: Request) {
     const failType = transaction.metadata?.type
     if (failType === 'verification') {
       return NextResponse.redirect(`${base}/landlord/verification?error=payment_failed`)
-    }
-    if (failType === 'success_fee') {
-      return NextResponse.redirect(`${base}/landlord/dashboard?error=payment_failed`)
     }
     if (failType === 'service_listing' || failType === 'service_boost') {
       const rawReturn = transaction.metadata?.return_url as string | undefined
