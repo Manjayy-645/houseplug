@@ -1,12 +1,37 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!
 const PAYSTACK_BASE = 'https://api.paystack.co'
 
+function getPaystackSecret(): string {
+  const secret = process.env.PAYSTACK_SECRET_KEY
+  if (!secret) {
+    throw new Error('PAYSTACK_SECRET_KEY is not configured in environment variables')
+  }
+  return secret
+}
+
 export async function getPlanPrices() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceKey) {
+    return {
+      pro_monthly: 500000,
+      pro_annual: 4500000,
+      business_monthly: 1500000,
+      business_annual: 13500000,
+      verification: 200000,
+      featured_7: 150000,
+      featured_30: 400000,
+      urgent: 50000,
+      refresh: 30000,
+      service_listing: 300000,
+    }
+  }
+
   const supabase = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    supabaseUrl,
+    serviceKey,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
@@ -53,24 +78,33 @@ export async function initializePaystackTransaction({
   metadata: Record<string, any>
   callback_url: string
 }) {
+  const secret = getPaystackSecret()
   const res = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${PAYSTACK_SECRET}`,
+      Authorization: `Bearer ${secret}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email, amount, metadata, callback_url }),
   })
   const data = await res.json()
-  if (!data.status) throw new Error(data.message)
+  if (!res.ok || !data.status) {
+    throw new Error(data.message || `Paystack initialize failed (status: ${res.status})`)
+  }
   return data.data as { authorization_url: string; reference: string; access_code: string }
 }
 
 export async function verifyPaystackTransaction(reference: string) {
-  const res = await fetch(`${PAYSTACK_BASE}/transaction/verify/${reference}`, {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+  const secret = getPaystackSecret()
+  const cleanRef = encodeURIComponent(reference.trim())
+  const res = await fetch(`${PAYSTACK_BASE}/transaction/verify/${cleanRef}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${secret}` },
+    cache: 'no-store',
   })
   const data = await res.json()
-  if (!data.status) throw new Error(data.message)
+  if (!res.ok || !data.status) {
+    throw new Error(data.message || `Paystack verification failed (status: ${res.status})`)
+  }
   return data.data
 }

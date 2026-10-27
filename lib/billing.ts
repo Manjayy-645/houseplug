@@ -4,26 +4,31 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { sendAdminNotification } from './email'
 
 export async function processSuccessfulPayment(transaction: any) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  const supabase = createSupabaseClient(supabaseUrl, serviceKey)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  const { metadata, reference, amount } = transaction
-  console.log('[BILLING] Processing payment:', { reference, amount, metadata })
-
-  if (!metadata || !metadata.landlord_id) {
-    throw new Error(`Missing metadata in transaction: ${reference}`)
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error('Supabase configuration missing (NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY)')
   }
 
-  const { landlord_id, type, plan, billing_cycle, listing_id, boost_type } = metadata
+  const supabase = createSupabaseClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  const { metadata, reference, amount, currency } = transaction
+  console.log('[BILLING] Processing payment:', { reference, amount, currency, metadata })
+
+  if (!reference) {
+    throw new Error('Missing transaction reference in processSuccessfulPayment')
+  }
 
   // Idempotency: the initiate route inserts a pending payment row, and BOTH the
   // callback and the webhook call this function for the same reference. If we've
   // already marked this reference successful, the side effects ran — bail out so
-  // we don't double-apply boosts or duplicate listing_boosts rows.
+  // we don't double-apply boosts or duplicate records.
   const { data: existingPayment } = await supabase
     .from('payments')
-    .select('id, status')
+    .select('*')
     .eq('paystack_reference', reference)
     .maybeSingle()
 
@@ -32,32 +37,37 @@ export async function processSuccessfulPayment(transaction: any) {
     return
   }
 
-  if (existingPayment) {
-    // Flip the pending row created at initiate time to success.
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .update({ status: 'success' })
-      .eq('paystack_reference', reference)
-    if (paymentError) {
-      console.error('[BILLING] Failed to update payment record:', paymentError)
-    }
-  } else {
-    // No pending row (e.g. webhook arrived first) — record it now.
-    const { error: insertError } = await supabase.from('payments').insert({
+  // Resolve metadata: use Paystack metadata if present, fallback to existing DB payment row
+  const landlord_id = metadata?.landlord_id || existingPayment?.landlord_id
+  const type = metadata?.type || existingPayment?.type
+  const plan = metadata?.plan || existingPayment?.plan
+  const billing_cycle = metadata?.billing_cycle || existingPayment?.billing_cycle
+  const listing_id = metadata?.listing_id || existingPayment?.listing_id
+  const boost_type = metadata?.boost_type || existingPayment?.boost_type
+  const service_id = metadata?.service_id || existingPayment?.service_id
+
+  if (!landlord_id || !type) {
+    throw new Error(`Missing landlord_id or type in transaction (${reference}) and DB record`)
+  }
+
+  // Upsert payment row to 'success' using the unique paystack_reference
+  const { error: paymentError } = await supabase
+    .from('payments')
+    .upsert({
       landlord_id,
       type,
       plan: plan ?? null,
       billing_cycle: billing_cycle ?? null,
       listing_id: listing_id ?? null,
       boost_type: boost_type ?? null,
-      service_id: metadata?.service_id ?? null,
-      amount,
+      service_id: service_id ?? null,
+      amount: amount ?? existingPayment?.amount ?? 0,
       paystack_reference: reference,
       status: 'success',
-    })
-    if (insertError) {
-      console.error('[BILLING] Failed to insert payment record:', insertError)
-    }
+    }, { onConflict: 'paystack_reference' })
+
+  if (paymentError) {
+    console.error('[BILLING] Failed to upsert payment record:', paymentError)
   }
 
   if (type === 'subscription') {
@@ -172,13 +182,13 @@ export async function processSuccessfulPayment(transaction: any) {
         verification_paid: true,
         verification_payment_ref: reference,
         verification_status: 'pending',
-        id_document_url: metadata.id_document_url ?? null,
-        id_document_back_url: metadata.id_document_back_url ?? null,
-        selfie_url: metadata.selfie_url ?? null,
-        property_document_url: metadata.property_document_url ?? null,
-        id_document_type: metadata.id_document_type ?? null,
-        nin_number: metadata.nin_number ?? null,
-        verification_type: metadata.verification_type ?? 'identity',
+        id_document_url: metadata?.id_document_url ?? null,
+        id_document_back_url: metadata?.id_document_back_url ?? null,
+        selfie_url: metadata?.selfie_url ?? null,
+        property_document_url: metadata?.property_document_url ?? null,
+        id_document_type: metadata?.id_document_type ?? null,
+        nin_number: metadata?.nin_number ?? null,
+        verification_type: metadata?.verification_type ?? 'identity',
         verification_note: null,
       })
       .eq('id', landlord_id)
@@ -196,7 +206,7 @@ export async function processSuccessfulPayment(transaction: any) {
   }
 
   if (type === 'service_listing') {
-    const serviceId = metadata.service_id
+    const serviceId = service_id || metadata?.service_id
     if (!serviceId) {
       console.error('[BILLING] Service listing payment missing service_id:', metadata)
       return
@@ -226,7 +236,7 @@ export async function processSuccessfulPayment(transaction: any) {
   }
 
   if (type === 'service_boost') {
-    const serviceId = metadata.service_id
+    const serviceId = service_id || metadata?.service_id
     if (!serviceId || !boost_type) {
       console.error('[BILLING] Service boost missing service_id or boost_type:', metadata)
       return

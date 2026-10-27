@@ -5,11 +5,13 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const reference = searchParams.get('reference') || searchParams.get('trxref')
+  const rawReference = searchParams.get('reference') || searchParams.get('trxref')
+  const reference = rawReference ? rawReference.trim() : null
 
   console.log('[CALLBACK] Reference received:', reference)
 
-  const base = process.env.NEXT_PUBLIC_APP_URL || origin
+  const rawBase = process.env.NEXT_PUBLIC_APP_URL || origin
+  const base = rawBase.replace(/\/+$/, "")
 
   if (!reference) {
     console.error('[CALLBACK] No reference in URL')
@@ -70,9 +72,9 @@ export async function GET(request: Request) {
     }
     return NextResponse.redirect(`${base}/landlord/subscription?error=payment_failed`)
   } catch (error) {
-    console.error('[CALLBACK] Error:', error)
+    console.error('[CALLBACK] Error verifying or processing payment:', error)
     // The payment itself may have succeeded (the webhook is the backup that
-    // applies it). Never show a scary server error for a real payment.
+    // applies it). Fall back to looking up the initiated payment type in the database.
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -83,8 +85,17 @@ export async function GET(request: Request) {
           .select('type, service_id')
           .eq('paystack_reference', reference)
           .maybeSingle()
-        if (payRecord && (payRecord.type === 'service_listing' || payRecord.type === 'service_boost')) {
-          return NextResponse.redirect(`${base}/services/manage?status=processing&type=${payRecord.type}`)
+
+        if (payRecord) {
+          if (payRecord.type === 'verification') {
+            return NextResponse.redirect(`${base}/landlord/verification?status=processing`)
+          }
+          if (payRecord.type === 'boost') {
+            return NextResponse.redirect(`${base}/landlord/subscription?status=processing&boost=true`)
+          }
+          if (payRecord.type === 'service_listing' || payRecord.type === 'service_boost') {
+            return NextResponse.redirect(`${base}/services/manage?status=processing&type=${payRecord.type}`)
+          }
         }
       }
     } catch (e) {

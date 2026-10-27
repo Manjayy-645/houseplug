@@ -78,10 +78,11 @@ export async function POST(request: Request) {
     })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (!appUrl) {
+  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!rawAppUrl) {
     return NextResponse.json({ error: "NEXT_PUBLIC_APP_URL is not set" }, { status: 500 })
   }
+  const appUrl = rawAppUrl.replace(/\/+$/, "")
   const callback_url = `${appUrl}/api/payments/callback`
 
   try {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { verifyPaystackTransaction } from "@/lib/paystack"
+import { processSuccessfulPayment } from "@/lib/billing"
 
 export async function POST(request: Request) {
   const supabase = createClient()
@@ -17,57 +18,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Payment reference is required" }, { status: 400 })
   }
 
-  const secret = process.env.PAYSTACK_SECRET_KEY
-  if (!secret) {
-    return NextResponse.json({ error: "Paystack key missing" }, { status: 500 })
+  try {
+    const transaction = await verifyPaystackTransaction(reference)
+
+    if (transaction.status !== "success") {
+      return NextResponse.json({ 
+        error: transaction.gateway_response || "Payment verification failed" 
+      }, { status: 400 })
+    }
+
+    // Process payment through the centralized, idempotent billing engine
+    await processSuccessfulPayment(transaction)
+
+    return NextResponse.json({ 
+      success: true, 
+      status: transaction.status,
+      type: transaction.metadata?.type || "unknown" 
+    })
+  } catch (error: any) {
+    console.error("[API_PAYMENTS_VERIFY] Error:", error)
+    return NextResponse.json({ 
+      error: error.message || "Failed to verify transaction" 
+    }, { status: 500 })
   }
-
-  const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-    headers: { Authorization: `Bearer ${secret}` }
-  })
-
-  const verifyData = await verifyResponse.json()
-  if (!verifyResponse.ok || !verifyData.status || verifyData.data.status !== "success") {
-    return NextResponse.json({ error: verifyData.message ?? "Verification failed" }, { status: 400 })
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!supabaseUrl || !serviceKey) {
-    return NextResponse.json({ error: "Supabase service key missing" }, { status: 500 })
-  }
-  const service = createServiceClient(supabaseUrl, serviceKey)
-
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 30)
-
-  await service.from("subscriptions").update({ active: false }).eq("landlord_id", user.id)
-
-  const { error: subError } = await service.from("subscriptions").insert({
-    landlord_id: user.id,
-    plan: "pro",
-    active: true,
-    expires_at: expiresAt.toISOString()
-  })
-
-  if (subError) {
-    return NextResponse.json({ error: subError.message }, { status: 500 })
-  }
-
-  // Restore featured on all active listings (not rejected ones)
-  const { error: featuredError } = await service
-    .from("listings")
-    .update({ is_featured: true })
-    .eq("landlord_id", user.id)
-    .eq("status", "active")
-    .is("rejection_reason", null)
-
-  if (featuredError) {
-    console.error('[VERIFY] Failed to restore featured:', featuredError)
-  }
-
-  console.log('[VERIFY] Featured restored for landlord:', user.id)
-
-  return NextResponse.json({ success: true })
 }
-
