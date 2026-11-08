@@ -48,7 +48,7 @@ const listingSchema = z.object({
   occupancy: z.number().min(1).max(4),
   furnishing: z.enum(["furnished", "semi_furnished", "unfurnished"]),
   floor: z.enum(["ground", "upper"]),
-  description: z.string().min(20, "Description must be at least 20 characters").max(600)
+  description: z.string().min(10, "Description must be at least 10 characters").max(600)
 })
 
 type ListingFormValues = z.infer<typeof listingSchema>
@@ -648,7 +648,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
               placeholder="Describe the room, compound, security, and proximity to campus..."
             />
             <div className="mt-1 flex justify-between">
-              <p className="text-xs text-gray-500">{descriptionLength}/600 (min 20)</p>
+              <p className="text-xs text-gray-500">{descriptionLength}/600 (min 10)</p>
               {errors.description ? <p className="text-xs text-red-600">{errors.description.message}</p> : null}
             </div>
           </div>

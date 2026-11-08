@@ -49,7 +49,7 @@ const listingSchema = z.object({
   floor: z.enum(["ground", "upper"]),
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters")
+    .min(10, "Description must be at least 10 characters")
     .max(600),
 })
 
@@ -722,7 +722,7 @@ export function AdminListingForm({
               placeholder="Describe the room, compound, security, and proximity to campus..."
             />
             <div className="mt-1 flex justify-between">
-              <p className="text-xs text-gray-400">{descriptionLength}/600 (min 20)</p>
+              <p className="text-xs text-gray-400">{descriptionLength}/600 (min 10)</p>
               {errors.description && (
                 <p className="text-xs text-red-600">{errors.description.message}</p>
               )}
