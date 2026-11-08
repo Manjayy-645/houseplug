@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ShieldCheck, Phone, ShieldAlert } from "lucide-react"
+import { ShieldCheck, Phone, ShieldAlert, Users } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick, recordPhoneReveal } from "@/app/actions"
@@ -80,6 +80,28 @@ export default function ContactCard({ listing }: ContactCardProps) {
             )}
           </div>
 
+          {/* Roommate Split Callout */}
+          <a
+            href="#split-rent-section"
+            className="group block rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 p-3 hover:border-emerald-300 transition-all text-left"
+          >
+            <div className="flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#1B4332]">
+                <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
+                Rent too high? Split it!
+              </span>
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
+                Save 50%
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-600 mt-1">
+              Pay just <strong className="text-emerald-800 font-bold">{formatNaira(Math.round(listing.price_yearly / 2))}</strong>/yr with a roommate.
+              <span className="text-emerald-700 font-bold ml-1 group-hover:underline inline-flex items-center">
+                Calculate split &rarr;
+              </span>
+            </p>
+          </a>
+
           <div className="space-y-2.5 pt-2">
             <a
               href={whatsappUrl}
@@ -149,6 +171,28 @@ export default function ContactCard({ listing }: ContactCardProps) {
           )}
         </div>
 
+        {/* Roommate Split Callout */}
+        <a
+          href="#split-rent-section"
+          className="group block rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 p-3 hover:border-emerald-300 transition-all text-left"
+        >
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#1B4332]">
+              <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
+              Rent too high? Split it!
+            </span>
+            <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
+              Save 50%
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-600 mt-1">
+            Pay just <strong className="text-emerald-800 font-bold">{formatNaira(Math.round(listing.price_yearly / 2))}</strong>/yr with a roommate.
+            <span className="text-emerald-700 font-bold ml-1 group-hover:underline inline-flex items-center">
+              Calculate split &rarr;
+            </span>
+          </p>
+        </a>
+
         <div className="space-y-2.5">
           <a
             href={whatsappUrl}
@@ -215,7 +259,15 @@ export default function ContactCard({ listing }: ContactCardProps) {
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-lg flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Price</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Price</p>
+                <a
+                  href="#split-rent-section"
+                  className="text-[9px] font-black text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded hover:bg-amber-100 transition-colors"
+                >
+                  Split: {formatNaira(Math.round(listing.price_yearly / 2))}
+                </a>
+              </div>
               <p className="text-lg font-black text-[#1B4332] truncate">
                 {formatNaira(listing.price_yearly)}
                 <span className="text-xs font-normal text-gray-500 ml-1">/yr</span>

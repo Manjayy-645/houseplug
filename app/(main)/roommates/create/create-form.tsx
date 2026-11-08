@@ -7,8 +7,9 @@ import { z } from "zod"
 import { useRouter } from "next/navigation"
 import { createRoommateProfile } from "@/app/roommate-actions"
 import { UNIVERSITIES } from "@/lib/constants"
-import { Check, Loader2, Home, User, ChevronRight, ChevronLeft, Info } from "lucide-react"
+import { Check, Loader2, Home, User, ChevronRight, ChevronLeft, Info, Building, Sparkles } from "lucide-react"
 import { fireCelebrationConfetti } from "@/lib/confetti"
+import { formatNaira } from "@/lib/utils"
 import { SuggestUniversityModal } from "@/components/university/SuggestUniversityModal"
 
 const LIFESTYLE_TAGS = [
@@ -33,12 +34,43 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>
 
-export default function CreateRoommateForm() {
+export interface InitialRoommateParams {
+  intent?: string
+  university?: string
+  budget?: string
+  address?: string
+  listing_id?: string
+  listing_title?: string
+}
+
+interface CreateRoommateFormProps {
+  initialParams?: InitialRoommateParams
+}
+
+export default function CreateRoommateForm({ initialParams }: CreateRoommateFormProps = {}) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1)
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false)
+
+  const budgetNum = initialParams?.budget ? parseInt(initialParams.budget, 10) : undefined
+  const defaultBudgetMax = budgetNum && !isNaN(budgetNum) ? budgetNum : undefined
+  const defaultBudgetMin = budgetNum && !isNaN(budgetNum) ? Math.max(10000, Math.round(budgetNum * 0.8)) : undefined
+
+  // Find matching university in UNIVERSITIES
+  const matchedUni = initialParams?.university
+    ? UNIVERSITIES.find(
+        (u) =>
+          u.name.toLowerCase() === initialParams.university!.toLowerCase() ||
+          u.shortName.toLowerCase() === initialParams.university!.toLowerCase() ||
+          u.id.toLowerCase() === initialParams.university!.toLowerCase()
+      )?.name || initialParams.university
+    : ""
+
+  const defaultBio = initialParams?.listing_title
+    ? `Looking for a student roommate to split rent at ${initialParams.listing_title}. Reach out so we can inspect and apply together!`
+    : ""
 
   const {
     register,
@@ -50,7 +82,12 @@ export default function CreateRoommateForm() {
   } = useForm<z.input<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      intent: "teaming_up",
+      intent: (initialParams?.intent === "have_room" ? "have_room" : "teaming_up") as "have_room" | "teaming_up",
+      university: matchedUni,
+      budget_min: defaultBudgetMin,
+      budget_max: defaultBudgetMax,
+      room_address: initialParams?.address || "",
+      bio: defaultBio,
       lifestyle_tags: [],
     }
   })
@@ -148,6 +185,27 @@ export default function CreateRoommateForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 relative">
           
+          {initialParams?.listing_title && (
+            <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#1B4332] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                <Building className="w-4 h-4 text-[#F59E0B]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-200/60 px-2 py-0.5 rounded">
+                    Lodge Attached
+                  </span>
+                </div>
+                <h3 className="text-sm font-extrabold text-[#1B4332] truncate mt-1">
+                  Splitting Rent For: {initialParams.listing_title}
+                </h3>
+                <p className="text-xs text-gray-600 mt-1">
+                  We&apos;ve pre-filled your university, lodge details, and split target (approx {budgetNum ? formatNaira(budgetNum) : "₦0"}/yr). Complete your profile below to find a co-renter!
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <div className="p-4 bg-red-50 text-red-600 rounded-xl font-medium border border-red-100 text-sm text-center mb-6">
               {error}

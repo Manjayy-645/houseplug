@@ -113,7 +113,7 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
       
       <div className="p-5">
         <Link href={`/listing/${listing.id}`} className="block">
-          <div className="flex justify-between items-start mb-2 gap-2">
+          <div className="flex justify-between items-start mb-1 gap-2">
             <h3 className="font-title-md text-primary flex-1">
               {formatNaira(listing.price_yearly)} <span className="text-gray-400 text-xs font-normal">/yr</span>
             </h3>
@@ -124,6 +124,10 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
               </span>
             )}
           </div>
+          <p className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1 mb-2">
+            <Users className="w-3 h-3 text-[#F59E0B] shrink-0" />
+            <span>Split: ~{formatNaira(Math.round(listing.price_yearly / 2))}/yr each</span>
+          </p>
         </Link>
         
         <div className="flex flex-col gap-1 mb-4">

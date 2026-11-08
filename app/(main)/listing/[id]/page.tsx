@@ -17,6 +17,7 @@ import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
 import SaveButton from "@/components/listing/save-button"
 import ShareButton from "@/components/listing/share-button"
+import { RoommateSplitSection, type CampusRoommate } from "@/components/listing/roommate-split-section"
 import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld"
 import type { Metadata } from "next"
 
@@ -262,6 +263,44 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     }
   }
 
+  // Fetch active roommate profiles near this listing's university campus
+  let campusRoommates: CampusRoommate[] = []
+  if (listingRowData?.university) {
+    try {
+      const campusObj = UNIVERSITIES.find(
+        (u) =>
+          u.id.toLowerCase() === listingRowData.university.toLowerCase() ||
+          u.shortName.toLowerCase() === listingRowData.university.toLowerCase() ||
+          u.name.toLowerCase() === listingRowData.university.toLowerCase()
+      )
+      const campusFilter = campusObj?.shortName || listingRowData.university
+      const dataClient = !user ? createServiceClient() : supabase
+
+      const { data: roommateRows } = await dataClient
+        .from("roommate_profiles")
+        .select("id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, user_id")
+        .eq("status", "active")
+        .or(`university.ilike.%${campusFilter}%,university.ilike.%${campusObj?.id || campusFilter}%`)
+        .order("created_at", { ascending: false })
+        .limit(3)
+
+      if (roommateRows && roommateRows.length > 0) {
+        const userIds = roommateRows.map((r: any) => r.user_id)
+        const { data: usersProfiles } = await dataClient
+          .from("profiles")
+          .select("id, full_name, avatar_url, verification_status")
+          .in("id", userIds)
+
+        campusRoommates = roommateRows.map((r: any) => ({
+          ...r,
+          profile: usersProfiles?.find((up: any) => up.id === r.user_id) || null,
+        }))
+      }
+    } catch (err) {
+      console.error("Error fetching campus roommates for listing:", err)
+    }
+  }
+
   const listing: Listing = {
     ...(listingRowData as Listing),
     landlord: landlordRowData as unknown as any,
@@ -372,6 +411,13 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 sm:text-xs">
                   Per Academic Year
                 </p>
+                <a
+                  href="#split-rent-section"
+                  className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  <span>Split: ~{formatNaira(Math.round(listing.price_yearly / 2))}/yr</span>
+                </a>
               </div>
               <div className="sm:mt-2">
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
@@ -430,6 +476,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 </p>
               </div>
             )}
+
+            {/* Roommate Rent-Split Section */}
+            <RoommateSplitSection listing={listing} campusRoommates={campusRoommates} />
 
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />
