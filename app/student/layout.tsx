@@ -1,7 +1,16 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { StudentNav } from "@/components/student/student-nav"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Student Dashboard | HousePlug",
+}
 
 export default async function StudentLayout({ children }: { children: ReactNode }) {
   const supabase = createClient()

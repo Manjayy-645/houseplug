@@ -4,6 +4,7 @@ import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft } from
 import Link from "next/link"
 import { RoommateContactButton } from "./contact-button"
 import { ShareButton } from "./share-button"
+import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld"
 
 import { Metadata } from "next"
 
@@ -141,6 +142,20 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Roommates", url: "/roommates" },
+          { name: `${data.profile.full_name}`, url: `/roommates/${params.id}` },
+        ]}
+      />
+      <ProfileJsonLd
+        name={data.profile.full_name}
+        username={data.profile.full_name}
+        role="student"
+        image={data.profile.avatar_url}
+        description={`Student near ${data.university} seeking a roommate. Budget: ₦${data.budget_min.toLocaleString('en-NG')} – ₦${data.budget_max.toLocaleString('en-NG')}/year.`}
+      />
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <Link href="/roommates" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-semibold transition-colors">

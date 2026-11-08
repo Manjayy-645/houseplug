@@ -1,25 +1,23 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import type { Metadata } from "next"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminSidebar } from "@/components/admin/admin-sidebar"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Admin Portal | HousePlug",
+}
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-      },
-    }
-  )
+  const supabase = createClient()
+  const db = getAdminClient()
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -27,22 +25,26 @@ export default async function AdminLayout({
     redirect("/login")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
+  // Fetch admin profile and pending verification count in parallel
+  const [profileRes, pendingRes] = await Promise.all([
+    db
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single(),
+    db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .in("role", ["landlord", "agent"])
+      .eq("verification_status", "pending"),
+  ])
+
+  const profile = profileRes.data
+  const pendingVerifications = pendingRes.count
 
   if (!["admin", "super_admin"].includes(profile?.role || "")) {
     redirect("/")
   }
-
-  // Fetch pending count for sidebar
-  const { count: pendingVerifications } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "landlord")
-    .eq("verification_status", "pending")
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">

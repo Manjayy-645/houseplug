@@ -1,8 +1,17 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { LandlordSidebar } from "@/components/landlord/sidebar"
 import { createClient } from "@/lib/supabase/server"
 import type { Plan } from "@/types"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Landlord Dashboard | HousePlug",
+}
 
 type LandlordLayoutProps = {
   children: ReactNode

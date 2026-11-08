@@ -5,6 +5,10 @@ import CreateRoommateForm from "./create-form"
 
 export const metadata = {
   title: "Create Roommate Profile | HousePlug",
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function CreateRoommatePage() {

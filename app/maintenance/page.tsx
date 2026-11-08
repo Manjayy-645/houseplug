@@ -1,6 +1,15 @@
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { Wrench, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Under Maintenance | HousePlug",
+}
 
 export default function MaintenancePage() {
   return (

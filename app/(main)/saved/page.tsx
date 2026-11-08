@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import { ListingCard } from "@/components/listing-card"
 import { redirect } from "next/navigation"
@@ -6,6 +7,14 @@ import Link from "next/link"
 import type { Listing } from "@/types"
 
 export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Saved Listings | HousePlug",
+}
 
 export default async function SavedListingsPage() {
   const supabase = createClient()

@@ -1,8 +1,39 @@
+import type { Metadata } from "next"
 import { Mail, Phone, MapPin } from "lucide-react"
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
+
+export const metadata: Metadata = {
+  title: "Contact Support | HousePlug",
+  description:
+    "Get in touch with the HousePlug support team. Inquire about student listings, verification, landlord partnerships, or report a safety issue.",
+  alternates: {
+    canonical: "https://houseplug.ng/contact",
+  },
+  openGraph: {
+    title: "Contact Support | HousePlug",
+    description:
+      "Need help with student housing or landlord verification? Reach out to the HousePlug support team.",
+    url: "https://houseplug.ng/contact",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact Support | HousePlug",
+    description: "Get in touch with HousePlug support in Port Harcourt, Nigeria.",
+  },
+}
 
 export default function ContactPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-20 lg:px-8">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Contact", url: "/contact" },
+        ]}
+      />
       <div className="text-center">
         <h1 className="text-4xl font-extrabold text-[#1B4332]">Contact Us</h1>
         <p className="mt-4 text-lg text-gray-600">Have questions or need help? We're here for you.</p>

@@ -1,12 +1,33 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { RoommateCard } from "@/components/roommate-card"
 import { Users, ArrowRight, Sparkles } from "lucide-react"
 import { RoommateFilters } from "@/components/roommate-filters"
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
 
-export const metadata = {
-  title: "Find a Roommate | HousePlug",
-  description: "Connect with verified students across Nigerian universities to find your perfect roommate.",
+export const metadata: Metadata = {
+  title: "Find a Student Roommate in Nigeria",
+  description:
+    "Connect with verified students across UniPort, RSU, IAUE, and KenPoly. Team up to split lodge rent and find your ideal roommate safely.",
+  alternates: {
+    canonical: "https://houseplug.ng/roommates",
+  },
+  openGraph: {
+    title: "Find a Student Roommate in Nigeria | HousePlug",
+    description:
+      "Connect with verified university students near UniPort, RSU, IAUE, and KenPoly. Split rent and save on off-campus accommodation.",
+    url: "https://houseplug.ng/roommates",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Find a Student Roommate | HousePlug",
+    description:
+      "Find verified student roommates near your campus. Connect safely and split lodge rent.",
+  },
 }
 
 
@@ -80,6 +101,12 @@ export default async function RoommatesPage({
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Find a Roommate", url: "/roommates" },
+        ]}
+      />
       {/* Hero Section */}
       <section className="bg-[#1B4332] py-16 px-5 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">

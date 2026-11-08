@@ -1,8 +1,17 @@
+import type { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AlertCircle, Clock, Send, ShieldAlert, ArrowLeft } from "lucide-react"
 import { submitAppeal } from "./actions"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Submit an Appeal | HousePlug",
+}
 
 export default async function AppealPage() {
   const supabase = createClient()

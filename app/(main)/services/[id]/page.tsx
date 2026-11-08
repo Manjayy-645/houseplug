@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ServiceDetailView } from "@/components/services/service-detail-view"
 import { formatServicePrice, getCategoryLabel } from "@/lib/service-utils"
+import { BreadcrumbJsonLd, ServiceJsonLd } from "@/components/seo/json-ld"
 import type { ServiceProvider } from "@/types"
 
 interface ServicePageProps {
@@ -36,15 +37,19 @@ export async function generateMetadata({
   )
   const title = `${service.business_name} (${categoryLabel}) | HousePlug Services`
   const description = `${priceLabel} • ${service.university}. ${service.description || ""}`.slice(0, 160)
-  const ogImageUrl = `https://www.houseplug.ng/api/og/service?id=${params.id}`
+  const ogImageUrl = `https://houseplug.ng/api/og/service?id=${params.id}`
+  const canonicalUrl = `https://houseplug.ng/services/${params.id}`
 
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title,
       description,
-      url: `https://www.houseplug.ng/services/${params.id}`,
+      url: canonicalUrl,
       siteName: "HousePlug",
       images: [
         {
@@ -77,5 +82,31 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     notFound()
   }
 
-  return <ServiceDetailView service={service as ServiceProvider} />
+  const categoryLabel = getCategoryLabel(service.category)
+  const priceLabel = formatServicePrice(
+    service.pricing_type,
+    service.price_amount,
+    service.price_unit
+  )
+
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Campus Services", url: "/services" },
+          { name: service.business_name, url: `/services/${service.id}` },
+        ]}
+      />
+      <ServiceJsonLd
+        id={service.id}
+        name={service.business_name}
+        category={categoryLabel}
+        university={service.university}
+        description={service.description}
+        priceLabel={priceLabel}
+      />
+      <ServiceDetailView service={service as ServiceProvider} />
+    </>
+  )
 }

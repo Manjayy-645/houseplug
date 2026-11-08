@@ -38,3 +38,15 @@ export function createServiceClient() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 }
+
+/**
+ * Returns service client if SUPABASE_SERVICE_ROLE_KEY is set,
+ * otherwise falls back to standard cookie-based client.
+ * Safe and fast for protected admin server routes.
+ */
+export function getAdminClient() {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return createServiceClient()
+  }
+  return createClient()
+}

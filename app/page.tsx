@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Suspense } from "react"
+import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { HeroSearch } from "@/components/hero-search"
 import { ListingCard } from "@/components/listing-card"
@@ -11,8 +12,50 @@ import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university-logo"
 import { createClient } from "@/lib/supabase/server"
 import type { Listing } from "@/types"
+import { FaqJsonLd } from "@/components/seo/json-ld"
 
 export const revalidate = 3600 // revalidate once per hour
+
+export const metadata: Metadata = {
+  title: "HousePlug | Verified Student Housing Near Nigerian Campuses",
+  description:
+    "Find verified student lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Zero agent stress, direct WhatsApp contact with verified landlords.",
+  alternates: {
+    canonical: "https://houseplug.ng",
+  },
+  openGraph: {
+    title: "HousePlug | Verified Student Housing & Lodges Near Campus",
+    description:
+      "Find verified off-campus student accommodation near UniPort, RSU, IAUE, and KenPoly. Connect directly with landlords on WhatsApp.",
+    url: "https://houseplug.ng",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+  },
+}
+
+const HOME_FAQS = [
+  {
+    question: "What is HousePlug?",
+    answer:
+      "HousePlug is a verified student housing platform connecting Nigerian university students to off-campus lodges, apartments, roommates, and campus services with direct WhatsApp landlord contact.",
+  },
+  {
+    question: "Which universities are currently supported on HousePlug?",
+    answer:
+      "HousePlug currently serves students around Port Harcourt universities including University of Port Harcourt (UniPort Choba), Rivers State University (RSU Nkpolu), Ignatius Ajuru University of Education (IAUE Rumuola), and Ken Saro-Wiwa Polytechnic (KenPoly Bori).",
+  },
+  {
+    question: "How does HousePlug verify lodges and landlords?",
+    answer:
+      "Our team verifies properties and landlords through physical location checks, valid identity verification, and property ownership documentation to protect students from accommodation scams.",
+  },
+  {
+    question: "Are there agent fees on HousePlug?",
+    answer:
+      "HousePlug offers transparent listings. Many properties are listed directly by landlords with zero agent fees. For agent-listed properties, fee terms are explicitly stated upfront.",
+  },
+]
 
 export default async function LandingPage() {
   const supabase = createClient()
@@ -58,6 +101,7 @@ export default async function LandingPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <FaqJsonLd faqs={HOME_FAQS} />
       <Header />
       
       <main className="flex-1 pt-16">

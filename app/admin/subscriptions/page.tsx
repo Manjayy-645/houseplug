@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { formatDate } from "@/lib/utils"
 import { CreditCard, CheckCircle2, XCircle, User } from "lucide-react"
 import Link from "next/link"
@@ -8,12 +8,12 @@ export default async function AdminSubscriptionsPage({
 }: {
   searchParams: { page?: string }
 }) {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  const { data: subscriptions, count, error } = await supabase
+  const { data: subscriptions, count, error } = await db
     .from("subscriptions")
     .select(`
       *,

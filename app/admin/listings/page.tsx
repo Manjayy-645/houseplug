@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { Listing, ListingStatus } from "@/types"
 import ListingTable from "@/components/admin/listing-table"
 import ListingAppealsTable from "@/components/admin/listing-appeals-table"
@@ -9,7 +9,7 @@ export default async function AdminListingsPage({
 }: {
   searchParams: { status?: ListingStatus | "appeals"; page?: string }
 }) {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   const currentStatus = searchParams.status || "all"
   const currentPage = parseInt(searchParams.page || "1")
@@ -29,7 +29,7 @@ export default async function AdminListingsPage({
   let count = 0
 
   if (currentStatus === "appeals") {
-    const { data: appealsData, count: appealsCount } = await supabase
+    const { data: appealsData, count: appealsCount } = await db
       .from("listing_appeals")
       .select(`
         *,
@@ -43,7 +43,7 @@ export default async function AdminListingsPage({
     appeals = appealsData || []
     count = appealsCount || 0
   } else {
-    let query = supabase
+    let query = db
       .from("listings")
       .select(`
         *,

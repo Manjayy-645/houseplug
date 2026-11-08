@@ -17,6 +17,7 @@ import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
 import SaveButton from "@/components/listing/save-button"
 import ShareButton from "@/components/listing/share-button"
+import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld"
 import type { Metadata } from "next"
 
 type ListingDetailPageProps = {
@@ -68,6 +69,9 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
   const metadata: Metadata = {
     title,
     description,
+    alternates: {
+      canonical: listingUrl,
+    },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
@@ -266,8 +270,30 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     amenities: (listingRowData as any).amenities ?? []
   }
 
+  const campusName = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
+  const breadcrumbItems = [
+    { name: "Home", url: "/" },
+    { name: "Browse", url: "/browse" },
+    { name: campusName, url: `/browse?university=${listing.university}` },
+    { name: listing.title, url: `/listing/${listing.id}` },
+  ]
+
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-20 pb-24 lg:pt-24 lg:pb-12">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+      <ListingJsonLd
+        id={listing.id}
+        title={listing.title}
+        description={listing.description}
+        priceYearly={listing.price_yearly}
+        roomType={formatRoomType(listing.room_type)}
+        address={listing.address}
+        area={listing.area}
+        university={campusName}
+        photos={listing.photos}
+        amenities={listing.amenities}
+        createdAt={listing.created_at}
+      />
       <ViewTracker listingId={listing.id} />
       {listing.status === "unavailable" && (isOwner || isAdmin) && (
         <div className="bg-gray-800 text-white px-4 py-3 text-center text-sm font-medium flex items-center justify-center gap-2">

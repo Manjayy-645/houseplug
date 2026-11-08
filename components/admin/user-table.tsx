@@ -479,6 +479,7 @@ function RoleBadge({ role }: { role: string }) {
     landlord: "bg-blue-100 text-blue-800",
     agent: "bg-cyan-100 text-cyan-800",
     student: "bg-gray-100 text-gray-700",
+    service_provider: "bg-emerald-100 text-emerald-800",
   }
   return (
     <span
@@ -619,14 +620,14 @@ export default function UserTable({
                               <Crown className="w-3.5 h-3.5 text-amber-500" />
                             </span>
                           )}
-                          {user.role === "landlord" &&
+                          {(user.role === "landlord" || user.role === "agent") &&
                             user.verification_status === "verified" && (
                               <ShieldCheck
                                 className="w-3.5 h-3.5 text-emerald-500"
                                 aria-hidden="true"
                               />
                             )}
-                          {user.role === "landlord" &&
+                          {(user.role === "landlord" || user.role === "agent") &&
                             user.verification_status === "pending" && (
                               <div
                                 className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"

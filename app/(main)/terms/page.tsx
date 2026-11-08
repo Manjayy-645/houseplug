@@ -1,15 +1,33 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import { ShieldCheck, AlertTriangle, CreditCard, RefreshCw, FileText, Mail, MapPin } from "lucide-react"
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
 
 export const metadata: Metadata = {
   title: "Terms of Service & Refund Policy | HousePlug",
   description: "Terms of Service, payment terms, and refund policy for HousePlug Nigeria (houseplug.ng).",
+  alternates: {
+    canonical: "https://houseplug.ng/terms",
+  },
+  openGraph: {
+    title: "Terms of Service & Refund Policy | HousePlug",
+    description: "Terms of Service and payment terms for HousePlug Nigeria.",
+    url: "https://houseplug.ng/terms",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+  },
 }
 
 export default function TermsOfServicePage() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-12 md:py-20 min-h-screen">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Terms of Service", url: "/terms" },
+        ]}
+      />
       {/* Header */}
       <div className="border-b border-gray-100 pb-8 mb-10">
         <div className="inline-flex items-center gap-2 bg-[#1B4332]/10 text-[#1B4332] text-xs font-bold px-3 py-1 rounded-full mb-4">

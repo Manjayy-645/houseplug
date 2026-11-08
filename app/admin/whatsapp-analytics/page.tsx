@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { MessageCircle, Eye, TrendingUp, ArrowUpRight, Search, ArrowLeft, Phone } from "lucide-react"
@@ -15,11 +15,13 @@ export default async function WhatsAppAnalyticsPage({
   searchParams: { sort?: string; order?: string; search?: string }
 }) {
   const supabase = createClient()
+  const db = getAdminClient()
+
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from("profiles")
     .select("role")
     .eq("id", user.id)
@@ -30,7 +32,7 @@ export default async function WhatsAppAnalyticsPage({
   }
 
   // Fetch all listings with their whatsapp_clicks, views, and landlord info
-  const { data: listings } = await supabase
+  const { data: listings } = await db
     .from("listings")
     .select(`
       id,

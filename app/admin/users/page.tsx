@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import UserTable from "@/components/admin/user-table"
 import Link from "next/link"
 
@@ -8,13 +8,14 @@ export default async function AdminUsersPage({
   searchParams: { role?: string; search?: string; page?: string }
 }) {
   const supabase = createClient()
+  const db = getAdminClient()
 
   const currentRole = searchParams.role || "all"
   const search = searchParams.search || ""
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  let query = supabase
+  let query = db
     .from("profiles")
     .select(`
       *,
@@ -32,17 +33,21 @@ export default async function AdminUsersPage({
     terms.forEach(term => {
       const safeTerm = term.replace(/[,'\"()\\\\]/g, '')
       if (safeTerm) {
-        query = query.or(`full_name.ilike.%${safeTerm}%,email.ilike.%${safeTerm}%`)
+        query = query.or(`full_name.ilike.%${safeTerm}%,email.ilike.%${safeTerm}%,phone.ilike.%${safeTerm}%`)
       }
     })
   }
 
-  const { data: users, count, error } = await query
+  // Parallel fetch: data query and caller authentication
+  const [{ data: users, count, error }, authRes] = await Promise.all([
+    query,
+    supabase.auth.getUser()
+  ])
 
   // Caller identity — gates the super-admin-only delete action in the table.
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  const currentUser = authRes.data?.user
   const { data: currentProfile } = currentUser
-    ? await supabase.from("profiles").select("role").eq("id", currentUser.id).single()
+    ? await db.from("profiles").select("role").eq("id", currentUser.id).single()
     : { data: null }
   const isSuperAdmin = currentProfile?.role === "super_admin"
 
@@ -57,21 +62,15 @@ export default async function AdminUsersPage({
     )
   }
 
-  if (!users || users.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#1B4332]">User Management</h1>
-        </div>
-        <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-gray-500">No users found matching your criteria.</p>
-          <Link href="/admin/users" className="mt-4 inline-block text-primary font-semibold hover:underline">
-            Clear all filters
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  const roleTabs = [
+    { value: "all", label: "All" },
+    { value: "student", label: "Students" },
+    { value: "landlord", label: "Landlords" },
+    { value: "agent", label: "Agents" },
+    { value: "service_provider", label: "Service Providers" },
+    { value: "admin", label: "Admins" },
+    { value: "super_admin", label: "Super Admins" },
+  ]
 
   const totalPages = Math.ceil((count || 0) / pageSize)
 
@@ -83,11 +82,14 @@ export default async function AdminUsersPage({
 
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <form className="flex gap-2 w-full md:w-auto">
+          {currentRole !== "all" && (
+            <input type="hidden" name="role" value={currentRole} />
+          )}
           <input
             type="text"
             name="search"
             defaultValue={search}
-            placeholder="Search name or email..."
+            placeholder="Search name, email, or phone..."
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1B4332] outline-none w-full md:w-64"
           />
           <button
@@ -99,40 +101,51 @@ export default async function AdminUsersPage({
         </form>
 
         <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-          {["all", "student", "landlord", "admin", "super_admin"].map((role) => (
+          {roleTabs.map((tab) => (
             <Link
-              key={role}
-              href={`/admin/users?role=${role}&search=${search}`}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize whitespace-nowrap ${
-                currentRole === role
-                  ? "bg-[#1B4332] text-white"
+              key={tab.value}
+              href={`/admin/users?role=${tab.value}${search ? `&search=${encodeURIComponent(search)}` : ""}`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                currentRole === tab.value
+                  ? "bg-[#1B4332] text-white shadow-sm"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {role}
+              {tab.label}
             </Link>
           ))}
         </div>
       </div>
 
-      <UserTable users={users as any[]} isSuperAdmin={isSuperAdmin} currentUserId={currentUser?.id ?? null} />
-
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-8">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <Link
-              key={i}
-              href={`/admin/users?role=${currentRole}&search=${search}&page=${i + 1}`}
-              className={`px-4 py-2 rounded ${
-                currentPage === i + 1
-                  ? "bg-[#1B4332] text-white"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {i + 1}
-            </Link>
-          ))}
+      {!users || users.length === 0 ? (
+        <div className="p-12 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-gray-500">No users found matching your criteria.</p>
+          <Link href="/admin/users" className="mt-4 inline-block text-primary font-semibold hover:underline">
+            Clear all filters
+          </Link>
         </div>
+      ) : (
+        <>
+          <UserTable users={users as any[]} isSuperAdmin={isSuperAdmin} currentUserId={currentUser?.id ?? null} />
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <Link
+                  key={i}
+                  href={`/admin/users?role=${currentRole}${search ? `&search=${encodeURIComponent(search)}` : ""}&page=${i + 1}`}
+                  className={`px-4 py-2 rounded ${
+                    currentPage === i + 1
+                      ? "bg-[#1B4332] text-white"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  {i + 1}
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

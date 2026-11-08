@@ -23,6 +23,9 @@ export async function generateMetadata({ params }: { params: { username: string 
   return {
     title: `${profile.full_name} — Student Rooms on HousePlug`,
     description: `${activeCount || 0} verified student rooms available in Port Harcourt. View listings on HousePlug.`,
+    alternates: {
+      canonical: `https://houseplug.ng/card/${params.username}`,
+    },
     openGraph: {
       title: `${profile.full_name} has rooms on HousePlug`,
       description: `${activeCount || 0} listings available · ${profile.verification_status === 'verified' ? 'Verified landlord' : 'Landlord'} · houseplug.ng`,

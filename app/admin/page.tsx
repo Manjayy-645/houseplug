@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { 
   ShieldCheck, 
@@ -17,20 +17,11 @@ import AppealsList from "@/components/admin/appeals-list"
 
 export default async function AdminDashboardPage() {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const db = getAdminClient()
 
-  if (!user) {
-    redirect("/login")
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-
-  // Parallel fetch for overview stats
+  // Parallel fetch auth + all overview stats simultaneously
   const [
+    authRes,
     { count: pendingListings },
     { count: pendingVerifications },
     { count: totalActiveListings },
@@ -39,14 +30,26 @@ export default async function AdminDashboardPage() {
     { count: activeRoommates },
     { count: totalRoommates }
   ] = await Promise.all([
-    supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'landlord').eq('verification_status', 'pending'),
-    supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10),
-    supabase.from('roommate_profiles').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('roommate_profiles').select('*', { count: 'exact', head: true })
+    supabase.auth.getUser(),
+    db.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    db.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['landlord', 'agent']).eq('verification_status', 'pending'),
+    db.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    db.from('profiles').select('*', { count: 'exact', head: true }),
+    db.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10),
+    db.from('roommate_profiles').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    db.from('roommate_profiles').select('*', { count: 'exact', head: true })
   ])
+
+  const user = authRes.data?.user
+  if (!user) {
+    redirect("/login")
+  }
+
+  const { data: profile } = await db
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
 
   return (
     <div className="space-y-10">
@@ -130,7 +133,7 @@ export default async function AdminDashboardPage() {
                         <ShieldCheck className="h-5 w-5" />
                      </div>
                      <div>
-                        <p className="text-sm font-bold text-gray-900">Verify Landlords</p>
+                        <p className="text-sm font-bold text-gray-900">Verify Landlords & Agents</p>
                         <p className="text-xs text-gray-400 font-medium">{pendingVerifications} identity documents to check</p>
                      </div>
                   </div>
@@ -139,7 +142,7 @@ export default async function AdminDashboardPage() {
              ) : (
                 <div className="p-6 flex items-center gap-4 text-emerald-600 opacity-60">
                    <CheckCircle2 className="h-5 w-5" />
-                   <p className="text-sm font-bold">All landlord verifications are up to date</p>
+                   <p className="text-sm font-bold">All landlord & agent verifications are up to date</p>
                 </div>
              )}
           </div>

@@ -1,17 +1,53 @@
+import type { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import { ProfileClient } from "./profile-client"
+import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld"
 
-export async function generateMetadata({ params }: { params: { username: string } }) {
+export async function generateMetadata({ params }: { params: { username: string } }): Promise<Metadata> {
   const supabase = createClient()
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, username')
-    .eq('username', params.username)
+    .from("profiles")
+    .select("full_name, username, role, avatar_url")
+    .eq("username", params.username)
     .single()
 
-  if (!profile) return { title: 'Profile Not Found' }
-  return { title: `${profile.full_name} | HousePlug` }
+  if (!profile) return { title: "Profile Not Found | HousePlug" }
+
+  const roleLabel = profile.role === "agent" ? "Agent" : "Landlord"
+  const title = `${profile.full_name} — Verified ${roleLabel} on HousePlug`
+  const description = `View verified student accommodation and lodges managed by ${profile.full_name} on HousePlug. Contact directly via WhatsApp.`
+  const canonicalUrl = `https://houseplug.ng/landlord/${params.username}`
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "HousePlug",
+      locale: "en_NG",
+      type: "profile",
+      images: [
+        {
+          url: profile.avatar_url || "https://houseplug.ng/icons/og-default.jpg",
+          width: 1200,
+          height: 630,
+          alt: `${profile.full_name} HousePlug Profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [profile.avatar_url || "https://houseplug.ng/icons/og-default.jpg"],
+    },
+  }
 }
 
 export default async function LandlordProfilePage({ params }: { params: { username: string } }) {
@@ -38,8 +74,6 @@ export default async function LandlordProfilePage({ params }: { params: { userna
     .eq('status', 'active')
     .order('created_at', { ascending: false })
 
-  // Note: in a real application, you would also fetch reviews.
-  // For now, we mock review counts and average rating since it requires a join with reviews table.
   const reviewsCount = 0
   const averageRating = 5.0
   
@@ -47,15 +81,31 @@ export default async function LandlordProfilePage({ params }: { params: { userna
   const createdDate = new Date(profile.created_at)
   const currentDate = new Date()
   let yearsOnPlatform = currentDate.getFullYear() - createdDate.getFullYear()
-  if (yearsOnPlatform === 0) yearsOnPlatform = 1 // default to 1yr for new agents
+  if (yearsOnPlatform === 0) yearsOnPlatform = 1
 
   return (
-    <ProfileClient 
-      profile={profile} 
-      listings={listings || []} 
-      reviewsCount={reviewsCount}
-      averageRating={averageRating}
-      yearsOnPlatform={yearsOnPlatform}
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Browse Housing", url: "/browse" },
+          { name: profile.full_name, url: `/landlord/${profile.username}` },
+        ]}
+      />
+      <ProfileJsonLd
+        name={profile.full_name}
+        username={profile.username}
+        role={profile.role}
+        image={profile.avatar_url}
+        description={`Verified ${profile.role} on HousePlug with ${listings?.length || 0} active student housing listings.`}
+      />
+      <ProfileClient 
+        profile={profile} 
+        listings={listings || []} 
+        reviewsCount={reviewsCount}
+        averageRating={averageRating}
+        yearsOnPlatform={yearsOnPlatform}
+      />
+    </>
   )
 }

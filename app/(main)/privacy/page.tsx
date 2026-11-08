@@ -1,15 +1,33 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import { ShieldCheck, Lock, UserCheck, CreditCard, Mail, MapPin, Eye } from "lucide-react"
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
 
 export const metadata: Metadata = {
   title: "Privacy Policy | HousePlug",
   description: "Privacy policy, data collection, and payment security standards for HousePlug Nigeria (houseplug.ng).",
+  alternates: {
+    canonical: "https://houseplug.ng/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy | HousePlug",
+    description: "Data protection and privacy guidelines for HousePlug Nigeria.",
+    url: "https://houseplug.ng/privacy",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+  },
 }
 
 export default function PrivacyPolicyPage() {
   return (
     <div className="max-w-4xl mx-auto px-5 py-12 md:py-20 min-h-screen">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: "/" },
+          { name: "Privacy Policy", url: "/privacy" },
+        ]}
+      />
       {/* Header */}
       <div className="border-b border-gray-100 pb-8 mb-10">
         <div className="inline-flex items-center gap-2 bg-[#1B4332]/10 text-[#1B4332] text-xs font-bold px-3 py-1 rounded-full mb-4">

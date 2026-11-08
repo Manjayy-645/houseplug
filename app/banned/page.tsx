@@ -1,7 +1,16 @@
+import type { Metadata } from "next"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { AlertOctagon, ShieldAlert } from "lucide-react"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+  title: "Account Suspended | HousePlug",
+}
 
 export default async function BannedPage() {
   const supabase = createClient()

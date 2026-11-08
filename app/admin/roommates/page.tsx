@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { Users, Search, ArrowLeft } from "lucide-react"
 import { AdminRoommateTable } from "@/components/admin/admin-roommate-table"
@@ -8,7 +8,7 @@ export default async function AdminRoommatesPage({
 }: {
   searchParams: { status?: string; search?: string; page?: string }
 }) {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   const currentStatus = searchParams.status || "all"
   const search = searchParams.search || ""
@@ -17,7 +17,7 @@ export default async function AdminRoommatesPage({
 
   // Build query — fetch roommate_profiles without FK join
   // (user_id references auth.users, not profiles, so PostgREST can't auto-join)
-  let query = supabase
+  let query = db
     .from("roommate_profiles")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
@@ -45,7 +45,7 @@ export default async function AdminRoommatesPage({
 
   if (roommates && roommates.length > 0) {
     const userIds = roommates.map((r: any) => r.user_id)
-    const { data: profilesData } = await supabase
+    const { data: profilesData } = await db
       .from("profiles")
       .select("id, full_name, email, avatar_url, verification_status")
       .in("id", userIds)

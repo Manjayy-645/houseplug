@@ -1,10 +1,13 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { ChevronLeft, ChevronRight, Users } from "lucide-react"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { ListingCard } from "@/components/listing-card"
 import { SearchBar } from "@/components/search-bar"
 import { createClient } from "@/lib/supabase/server"
 import { UNIVERSITIES } from "@/lib/constants"
+import { formatRoomType } from "@/lib/utils"
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
 import type { Listing } from "@/types"
 
 type BrowsePageProps = {
@@ -24,6 +27,67 @@ type BrowsePageProps = {
 const PER_PAGE = 12
 
 export const revalidate = 60 // revalidate every 60 seconds
+
+export async function generateMetadata({ searchParams }: BrowsePageProps): Promise<Metadata> {
+  const university = searchParams.university?.trim()
+  const q = searchParams.q?.trim()
+  const roomType = searchParams.room_type?.trim()
+
+  const matchedUni = UNIVERSITIES.find(
+    (u) =>
+      u.id.toLowerCase() === university?.toLowerCase() ||
+      u.shortName.toLowerCase() === university?.toLowerCase()
+  )
+
+  let title = "Browse Student Housing & Lodges in Nigeria"
+  let description =
+    "Search verified student lodges, self-cons, and apartments near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with verified landlords & agents."
+
+  if (matchedUni && roomType) {
+    const formattedType = formatRoomType(roomType as any)
+    title = `${formattedType} near ${matchedUni.shortName} (${matchedUni.area})`
+    description = `Find verified ${formattedType.toLowerCase()} accommodation near ${matchedUni.name} in ${matchedUni.area}. Connect directly with verified landlords on WhatsApp.`
+  } else if (matchedUni) {
+    title = `Student Housing near ${matchedUni.shortName} (${matchedUni.area})`
+    description = `Browse verified off-campus student accommodation, self-cons, and lodges near ${matchedUni.name} in ${matchedUni.area}. Direct WhatsApp contact with landlords.`
+  } else if (q) {
+    title = `"${q}" — Student Lodges & Accommodation`
+    description = `Search results for "${q}" on HousePlug. Verified student accommodation across Nigerian universities.`
+  } else if (roomType) {
+    const formattedType = formatRoomType(roomType as any)
+    title = `${formattedType} Student Housing in Port Harcourt`
+    description = `Browse verified ${formattedType.toLowerCase()} student accommodations across universities in Port Harcourt on HousePlug.`
+  }
+
+  const queryParams = new URLSearchParams()
+  if (university) queryParams.set("university", university)
+  if (roomType) queryParams.set("room_type", roomType)
+  const queryString = queryParams.toString()
+  const canonicalUrl = queryString
+    ? `https://houseplug.ng/browse?${queryString}`
+    : "https://houseplug.ng/browse"
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${title} | HousePlug`,
+      description,
+      url: canonicalUrl,
+      siteName: "HousePlug",
+      locale: "en_NG",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | HousePlug`,
+      description,
+    },
+  }
+}
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const supabase = createClient()
@@ -118,8 +182,20 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     return `/browse?${params.toString()}`
   }
 
+  const breadcrumbItems = [
+    { name: "Home", url: "/" },
+    { name: "Browse Housing", url: "/browse" },
+  ]
+  if (university) {
+    const uniObj = UNIVERSITIES.find(u => u.id === university)
+    if (uniObj) {
+      breadcrumbItems.push({ name: uniObj.shortName, url: `/browse?university=${uniObj.id}` })
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#F9FAFB] px-4 py-8 pt-24 lg:px-6 lg:pt-28">
+      <BreadcrumbJsonLd items={breadcrumbItems} />
       <div className="mx-auto max-w-7xl space-y-4">
         <div className="flex flex-col gap-3 lg:block rounded-2xl border border-gray-200 bg-white p-3 lg:p-4 shadow-sm">
           <div className="flex items-center gap-2">

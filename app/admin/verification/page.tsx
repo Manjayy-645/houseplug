@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { Profile } from "@/types"
 import Link from "next/link"
 import { ShieldCheck, Clock, CheckCircle2, XCircle, Users } from "lucide-react"
@@ -9,16 +9,16 @@ export default async function AdminVerificationPage({
 }: {
   searchParams: { status?: Profile["verification_status"] | "all"; page?: string }
 }) {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   const currentStatus = searchParams.status || "pending"
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  let query = supabase
+  let query = db
     .from("profiles")
     .select("*", { count: "exact" })
-    .eq("role", "landlord")
+    .in("role", ["landlord", "agent"])
     .order("created_at", { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
@@ -26,18 +26,19 @@ export default async function AdminVerificationPage({
     query = query.eq("verification_status", currentStatus)
   }
 
-  const { data: landlords, count, error } = await query
+  // Parallel fetch: filtered landlords/agents and pending count for badge
+  const [{ data: landlords, count, error }, { count: pendingCount }] = await Promise.all([
+    query,
+    db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .in("role", ["landlord", "agent"])
+      .eq("verification_status", "pending")
+  ])
   
   if (error) {
-    console.error("[ADMIN_VERIFY] Error fetching landlords:", error)
+    console.error("[ADMIN_VERIFY] Error fetching landlords/agents:", error)
   }
-
-  // Fetch pending count for badge
-  const { count: pendingCount } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "landlord")
-    .eq("verification_status", "pending")
 
   const tabs = [
     { label: "Pending", value: "pending", icon: Clock, badge: pendingCount },
@@ -54,8 +55,8 @@ export default async function AdminVerificationPage({
             <ShieldCheck className="h-8 w-8" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Landlord Verification</h1>
-            <p className="text-gray-500 font-medium">Review and approve landlord identities</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Landlord & Agent Verification</h1>
+            <p className="text-gray-500 font-medium">Review and approve landlord and agent identities</p>
           </div>
         </div>
         {pendingCount ? (

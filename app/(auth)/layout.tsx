@@ -1,7 +1,15 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { Plug } from "lucide-react"
 import type { ReactNode } from "react"
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: true,
+  },
+}
 
 type AuthLayoutProps = {
   children: ReactNode

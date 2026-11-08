@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import { formatDate } from "@/lib/utils"
 import { Users, Landmark, Home, Globe } from "lucide-react"
 
@@ -6,7 +6,7 @@ import { GrowthChart } from "@/components/admin/growth-chart"
 import { UniversityPieChart } from "@/components/admin/university-pie-chart"
 
 export default async function AnalyticsPage() {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   // Parallel fetch for stats and raw data for aggregation
   const [
@@ -18,13 +18,13 @@ export default async function AnalyticsPage() {
     { data: allListings },
     { data: allRoomTypeListings }
   ] = await Promise.all([
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'landlord'),
-    supabase.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('listings').select('title, university, views_count, landlord:profiles(full_name)').order('views_count', { ascending: false }).limit(5),
-    supabase.from('profiles').select('created_at, role'),
-    supabase.from('listings').select('university, room_type').eq('status', 'active'),
-    supabase.from('listings').select('room_type')
+    db.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
+    db.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['landlord', 'agent']),
+    db.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    db.from('listings').select('title, university, views_count, landlord:profiles(full_name)').order('views_count', { ascending: false }).limit(5),
+    db.from('profiles').select('created_at, role'),
+    db.from('listings').select('university, room_type').eq('status', 'active'),
+    db.from('listings').select('room_type')
   ])
 
   // Real data aggregation for Weekly Growth (Last 8 weeks)
@@ -52,7 +52,7 @@ export default async function AnalyticsPage() {
     })
     if (weekIndex !== -1) {
       if (p.role === 'student') last8Weeks[weekIndex].students++
-      if (p.role === 'landlord') last8Weeks[weekIndex].landlords++
+      if (p.role === 'landlord' || p.role === 'agent') last8Weeks[weekIndex].landlords++
     }
   })
 
@@ -89,7 +89,7 @@ export default async function AnalyticsPage() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard title="Total Students" value={String(studentCount || 0)} icon={Users} color="bg-blue-500" />
-        <StatsCard title="Total Landlords" value={String(landlordCount || 0)} icon={Landmark} color="bg-amber-500" />
+        <StatsCard title="Landlords & Agents" value={String(landlordCount || 0)} icon={Landmark} color="bg-amber-500" />
         <StatsCard title="Active Listings" value={String(activeListingsCount || 0)} icon={Home} color="bg-emerald-500" />
         <StatsCard title="Universities" value={String(uniData.length)} icon={Globe} color="bg-purple-500" />
       </div>

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, getAdminClient } from "@/lib/supabase/server"
 import ReviewTable from "@/components/admin/review-table"
 import Link from "next/link"
 
@@ -7,12 +7,12 @@ export default async function AdminReviewsPage({
 }: {
   searchParams: { page?: string }
 }) {
-  const supabase = createClient()
+  const db = getAdminClient()
 
   const currentPage = parseInt(searchParams.page || "1")
   const pageSize = 20
 
-  const { data: reviews, count, error } = await supabase
+  const { data: reviews, count, error } = await db
     .from("reviews")
     .select(`
       *,
