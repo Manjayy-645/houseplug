@@ -72,20 +72,20 @@ export default async function AdminRoommatesPage({
   }
 
   // Stats
-  const { count: activeCount } = await supabase
-    .from("roommate_profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "active")
-
-  const { count: pausedCount } = await supabase
-    .from("roommate_profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "paused")
-
-  const { count: foundCount } = await supabase
-    .from("roommate_profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "found")
+  const [{ count: activeCount }, { count: pausedCount }, { count: foundCount }] = await Promise.all([
+    db
+      .from("roommate_profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active"),
+    db
+      .from("roommate_profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "paused"),
+    db
+      .from("roommate_profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "found"),
+  ])
 
 
   const totalPages = Math.ceil((count || 0) / pageSize)

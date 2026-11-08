@@ -1,1 +1,3 @@
-export { default, size, contentType, runtime } from "./opengraph-image"
+export const runtime = "nodejs"
+export { default, size, contentType } from "./opengraph-image"
+
