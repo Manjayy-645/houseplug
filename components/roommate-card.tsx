@@ -99,45 +99,49 @@ export function RoommateCard({
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-full">
       {/* Top Banner indicating Intent */}
       <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {data.intent === 'have_room' ? (
-            <span className="flex items-center gap-1.5"><Home className="h-4 w-4" /> Has a Room</span>
+            <span className="flex items-center gap-1.5 shrink-0"><Home className="h-4 w-4" /> Has a Room</span>
           ) : (
-            <span className="flex items-center gap-1.5"><User className="h-4 w-4" /> Looking to Team Up</span>
+            <span className="flex items-center gap-1.5 shrink-0"><User className="h-4 w-4" /> Looking to Team Up</span>
           )}
           {matchScore !== undefined && matchScore !== null && (
-            <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+            <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
               <Zap className="w-2.5 h-2.5 text-yellow-300" /> {matchScore}% Match
             </span>
           )}
         </div>
-        <button onClick={handleShare} className="hover:opacity-80 transition-opacity p-1.5 bg-white/20 rounded-full min-h-[30px] min-w-[30px] flex items-center justify-center" aria-label="Share">
+        <button onClick={handleShare} className="hover:opacity-80 transition-opacity p-1.5 bg-white/20 rounded-full min-h-[30px] min-w-[30px] flex items-center justify-center shrink-0" aria-label="Share">
           {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
         </button>
       </div>
 
-      <div className="p-5 sm:p-6 flex-1 flex flex-col">
+      <div className="p-5 sm:p-6 flex-1 flex flex-col min-w-0">
         {/* User Info Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3.5">
-            <div className="h-13 w-13 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0">
+          <div className="flex items-center gap-3.5 min-w-0 flex-1">
+            <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0 relative">
               {data.profile?.avatar_url ? (
-                <img src={data.profile.avatar_url} alt={data.profile.full_name || "User"} className="h-full w-full object-cover" />
+                <img
+                  src={data.profile.avatar_url}
+                  alt={data.profile.full_name || "User"}
+                  className="w-full h-full object-cover rounded-full aspect-square block"
+                />
               ) : (
-                <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
+                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                   <User className="h-6 w-6" />
                 </div>
               )}
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5">
-                {data.profile?.full_name?.split(' ')[0] || "Student"}
-                {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5 truncate">
+                <span className="truncate">{data.profile?.full_name?.split(' ')[0] || "Student"}</span>
+                {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500 shrink-0" />}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-500">{data.gender} • {data.university}</p>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">{data.gender} • {data.university}</p>
             </div>
           </div>
         </div>

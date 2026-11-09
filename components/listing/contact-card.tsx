@@ -256,34 +256,35 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
       {/* ── Mobile Sticky Floating Bottom Bar ── */}
       <div className="lg:hidden">
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto max-w-lg flex items-center justify-between gap-3">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/80 bg-white/95 px-4 sm:px-6 py-3.5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto max-w-lg flex items-center justify-between gap-3.5 sm:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Total Price</p>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Price</span>
                 <a
                   href="#split-rent-section"
-                  className="text-[9px] font-black text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded hover:bg-amber-100 transition-colors"
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md hover:bg-amber-100 transition-colors"
                 >
-                  Split: {formatNaira(Math.round(listing.price_yearly / 2))}
+                  <Users className="w-3 h-3 text-[#F59E0B] shrink-0" />
+                  <span>Split: {formatNaira(Math.round(listing.price_yearly / 2))}</span>
                 </a>
               </div>
-              <p className="text-lg font-black text-[#1B4332] truncate">
+              <p className="text-xl font-black text-[#1B4332] tracking-tight truncate">
                 {formatNaira(listing.price_yearly)}
-                <span className="text-xs font-normal text-gray-500 ml-1">/yr</span>
+                <span className="text-xs font-medium text-gray-500 ml-1">/yr</span>
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               {revealedPhone && (
                 <a
                   href={`tel:${revealedPhone}`}
                   onClick={handlePhoneCall}
-                  className="h-11 w-11 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-95 flex items-center justify-center text-gray-700 shadow-sm transition-all"
+                  className="h-12 w-12 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-95 flex items-center justify-center text-gray-700 shadow-sm transition-all"
                   title="Call Landlord"
                   aria-label="Call Landlord"
                 >
-                  <Phone className="h-4 w-4 text-gray-700" />
+                  <Phone className="h-5 w-5 text-gray-700" />
                 </a>
               )}
 
@@ -292,7 +293,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleWhatsAppClick}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-95 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-[#25D366]/30 transition-all"
+                className="h-12 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] active:scale-95 px-4 sm:px-5 text-sm sm:text-base font-extrabold text-white shadow-lg shadow-[#25D366]/25 transition-all"
               >
                 <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
                 <span>Chat on WhatsApp</span>
@@ -301,7 +302,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
           </div>
         </div>
         {/* Spacer so bottom of page content isn't covered by sticky bar */}
-        <div className="h-24" />
+        <div className="h-28" />
       </div>
     </>
   )

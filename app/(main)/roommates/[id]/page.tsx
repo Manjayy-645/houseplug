@@ -179,11 +179,15 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
           <div className="p-8 space-y-8">
             {/* Profile Main Info */}
             <div className="flex items-center gap-5 border-b border-gray-100 pb-6">
-              <div className="h-20 w-20 rounded-full overflow-hidden border-2 border-[#1B4332]/10 bg-gray-50 shrink-0">
+              <div className="w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] rounded-full overflow-hidden border-2 border-[#1B4332]/10 bg-gray-50 shrink-0 relative">
                 {data.profile.avatar_url ? (
-                  <img src={data.profile.avatar_url} alt={data.profile.full_name} className="h-full w-full object-cover" />
+                  <img
+                    src={data.profile.avatar_url}
+                    alt={data.profile.full_name}
+                    className="w-full h-full object-cover rounded-full aspect-square block"
+                  />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                     <User className="h-8 w-8" />
                   </div>
                 )}

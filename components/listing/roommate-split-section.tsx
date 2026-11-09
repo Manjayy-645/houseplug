@@ -525,25 +525,27 @@ export function RoommateSplitSection({
                           href={`/roommates/${roommate.id}`}
                           className="flex items-center gap-2.5 min-w-0 flex-1 group-hover:opacity-95"
                         >
-                          {avatar ? (
-                            <img
-                              src={avatar}
-                              alt={displayName}
-                              className="w-10 h-10 rounded-full object-cover ring-1 ring-gray-200 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-[#1B4332] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                              {displayName.charAt(0)}
-                            </div>
-                          )}
+                          <div className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-full overflow-hidden ring-1 ring-gray-200 shrink-0 relative bg-gray-50">
+                            {avatar ? (
+                              <img
+                                src={avatar}
+                                alt={displayName}
+                                className="w-full h-full object-cover rounded-full aspect-square block"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-[#1B4332] text-white flex items-center justify-center font-bold text-xs">
+                                {displayName.charAt(0)}
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-gray-900 truncate flex items-center gap-1">
-                              {displayName}
+                              <span className="truncate">{displayName}</span>
                               {isVerified && (
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 fill-emerald-100 shrink-0" />
                               )}
                             </p>
-                            <p className="text-[10px] text-gray-500 font-medium capitalize">
+                            <p className="text-[10px] text-gray-500 font-medium capitalize truncate">
                               {roommate.gender || "Student"} •{" "}
                               {roommate.intent === "have_room" ? "Has Room" : "Looking to team up"}
                             </p>

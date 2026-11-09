@@ -226,9 +226,9 @@ export default async function RoommatesPage({
             </div>
 
             {/* Mobile Horizontal Snap Scroll / Desktop Grid */}
-            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible snap-x snap-mandatory">
               {topMatches.map((item: any) => (
-                <div key={`match-${item.id}`} className="min-w-[280px] sm:min-w-0 flex-1">
+                <div key={`match-${item.id}`} className="w-[285px] sm:w-auto min-w-[285px] sm:min-w-0 shrink-0 sm:shrink max-w-full snap-start flex">
                   <RoommateCard
                     data={item}
                     currentUserId={currentUserId}
