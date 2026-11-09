@@ -38,13 +38,11 @@ export default async function RoommatesPage({
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
   const supabase = createClient()
+  const serviceClient = createServiceClient()
   
   const { data: { session } } = await supabase.auth.getSession()
   const currentUserId = session?.user?.id
   const isGuest = !currentUserId
-
-  // Use service client for guests (bypasses RLS without weakening it)
-  const dataClient = isGuest ? createServiceClient() : supabase
 
   // Fetch current user's role if logged in
   let currentUserRole: string | null = null
@@ -72,10 +70,10 @@ export default async function RoommatesPage({
     }
   }
 
-  // Build query
+  // Build query — public active roommate profiles
   let query = isGuest
-    ? dataClient.from("roommate_profiles").select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at")
-    : dataClient.from("roommate_profiles").select("*")
+    ? serviceClient.from("roommate_profiles").select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at")
+    : serviceClient.from("roommate_profiles").select("*")
   
   query = query.eq("status", "active").order("created_at", { ascending: false })
 
@@ -93,11 +91,11 @@ export default async function RoommatesPage({
   const { data } = await query
   let profiles = data || []
 
-  // If we have profiles, fetch their corresponding public.profiles data 
-  // since there is no direct foreign key from roommate_profiles to public.profiles
+  // If we have profiles, fetch their corresponding public.profiles data via serviceClient
+  // to guarantee public full_name, avatar_url, and verification status are never blocked by RLS
   if (profiles.length > 0) {
-    const userIds = profiles.map(p => p.user_id)
-    const { data: usersProfiles } = await dataClient
+    const userIds = profiles.map(p => p.user_id).filter(Boolean)
+    const { data: usersProfiles } = await serviceClient
       .from("profiles")
       .select("id, full_name, avatar_url, verification_status")
       .in("id", userIds)

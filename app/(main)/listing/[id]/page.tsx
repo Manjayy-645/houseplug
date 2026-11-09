@@ -289,9 +289,9 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
           u.name.toLowerCase() === listingRowData.university.toLowerCase()
       )
       const campusFilter = campusObj?.shortName || listingRowData.university
-      const dataClient = !user ? createServiceClient() : supabase
+      const serviceClient = createServiceClient()
 
-      const { data: roommateRows } = await dataClient
+      const { data: roommateRows } = await serviceClient
         .from("roommate_profiles")
         .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, phone_number, room_address, target_listing_id, target_listing_title")
         .eq("status", "active")
@@ -301,7 +301,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
       if (roommateRows && roommateRows.length > 0) {
         const userIds = roommateRows.map((r: any) => r.user_id)
-        const { data: usersProfiles } = await dataClient
+        const { data: usersProfiles } = await serviceClient
           .from("profiles")
           .select("id, full_name, avatar_url, verification_status")
           .in("id", userIds)

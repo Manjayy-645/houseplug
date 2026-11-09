@@ -49,14 +49,16 @@ export function RoommateCard({
     setMounted(true)
   }, [])
 
-  const firstName = data.profile?.full_name?.split(' ')[0] || "Student"
-  const initial = (firstName[0] || "S").toUpperCase()
+  const fullName = data.profile?.full_name?.trim()
+  const firstName = fullName?.split(' ')[0]
+  const displayName = fullName || "Student"
+  const initial = ((firstName || displayName)[0] || "S").toUpperCase()
   const showAvatar = Boolean(data.profile?.avatar_url && !imageError)
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     const url = `${window.location.origin}/roommates/${data.id}`;
-    const name = firstName
+    const name = firstName || displayName
     const shareText = data.intent === "have_room"
       ? `Check out ${name}'s roommate profile on HousePlug — they have a room available! 🏠`
       : `Check out ${name}'s roommate profile on HousePlug — wanna team up? 🤝`
@@ -95,7 +97,7 @@ export function RoommateCard({
     // Case 3: verified student — open WhatsApp with smart pre-filled message
     const waUrl = buildGeneralRoommateWhatsAppLink({
       phone: data.phone_number,
-      candidateName: data.profile?.full_name || "there",
+      candidateName: firstName || displayName,
       targetLodgeTitle: data.target_listing_title,
       targetLodgeId: data.target_listing_id,
       campusName: data.university,
@@ -177,8 +179,8 @@ export function RoommateCard({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5 truncate">
-                <span className="truncate">{firstName}</span>
+              <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5 min-w-0">
+                <span className="truncate min-w-0">{displayName}</span>
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500 shrink-0" />}
               </h3>
               <p className="text-xs sm:text-sm text-gray-500 truncate">{data.gender} • {data.university}</p>

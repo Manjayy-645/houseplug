@@ -239,14 +239,29 @@ export function TopMatches({ myProfile }: { myProfile: any }) {
 
     const { data, error } = await supabase
       .from("roommate_profiles")
-      .select(`*, profile:profiles!roommate_profiles_user_id_profiles_fkey(full_name, avatar_url, verification_status)`)
+      .select("*")
       .eq("status", "active")
       .eq("university", myProfile.university)
       .neq("user_id", user.id)
 
     if (error || !data) { setLoading(false); return }
 
-    const filtered = data.filter((p: any) => {
+    let loadedMatches = data
+    if (data.length > 0) {
+      const uids = data.map((d: any) => d.user_id)
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, verification_status")
+        .in("id", uids)
+      if (profs) {
+        loadedMatches = data.map((d: any) => ({
+          ...d,
+          profile: profs.find((p: any) => p.id === d.user_id) || null
+        }))
+      }
+    }
+
+    const filtered = loadedMatches.filter((p: any) => {
       const theyWantMe =
         p.preferred_gender === "any" ||
         p.preferred_gender.toLowerCase() === myProfile.gender.toLowerCase()
