@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
-import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check } from "lucide-react"
+import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check, Building, Zap } from "lucide-react"
+import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 
 type RoommateProfile = {
   id: string
@@ -18,6 +19,8 @@ type RoommateProfile = {
   phone_number: string
   room_photos: string[]
   room_address: string
+  target_listing_id?: string | null
+  target_listing_title?: string | null
   profile: {
     full_name: string
     avatar_url: string
@@ -29,10 +32,12 @@ export function RoommateCard({
   data,
   currentUserId,
   currentUserRole,
+  matchScore,
 }: {
   data: RoommateProfile
   currentUserId?: string | null
   currentUserRole?: string | null
+  matchScore?: number | null
 }) {
   const [showGuestModal, setShowGuestModal] = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
@@ -82,38 +87,43 @@ export function RoommateCard({
       return
     }
 
-    // Case 3: verified student — open WhatsApp
-    let phone = data.phone_number
-    if (phone.startsWith("0")) {
-      phone = "234" + phone.substring(1)
-    } else if (!phone.startsWith("234")) {
-      phone = "234" + phone
-    }
-
-    const name = data.profile?.full_name?.split(" ")[0] || "there"
-    const message = encodeURIComponent(`Hi ${name}, I saw your roommate profile on HousePlug!`)
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank")
+    // Case 3: verified student — open WhatsApp with smart pre-filled message
+    const waUrl = buildGeneralRoommateWhatsAppLink({
+      phone: data.phone_number,
+      candidateName: data.profile?.full_name || "there",
+      targetLodgeTitle: data.target_listing_title,
+      targetLodgeId: data.target_listing_id,
+      campusName: data.university,
+    })
+    window.open(waUrl, "_blank")
   }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
       {/* Top Banner indicating Intent */}
-      <div className={`px-4 py-2 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
-        {data.intent === 'have_room' ? (
-          <span className="flex items-center gap-2"><Home className="h-4 w-4" /> Has a Room</span>
-        ) : (
-          <span className="flex items-center gap-2"><User className="h-4 w-4" /> Looking to Team Up</span>
-        )}
-        <button onClick={handleShare} className="hover:opacity-80 transition-opacity p-1 bg-white/20 rounded-full" aria-label="Share">
+      <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
+        <div className="flex items-center gap-2">
+          {data.intent === 'have_room' ? (
+            <span className="flex items-center gap-1.5"><Home className="h-4 w-4" /> Has a Room</span>
+          ) : (
+            <span className="flex items-center gap-1.5"><User className="h-4 w-4" /> Looking to Team Up</span>
+          )}
+          {matchScore !== undefined && matchScore !== null && (
+            <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Zap className="w-2.5 h-2.5 text-yellow-300" /> {matchScore}% Match
+            </span>
+          )}
+        </div>
+        <button onClick={handleShare} className="hover:opacity-80 transition-opacity p-1.5 bg-white/20 rounded-full min-h-[30px] min-w-[30px] flex items-center justify-center" aria-label="Share">
           {copied ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
         </button>
       </div>
 
-      <div className="p-6 flex-1 flex flex-col">
+      <div className="p-5 sm:p-6 flex-1 flex flex-col">
         {/* User Info Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0">
+          <div className="flex items-center gap-3.5">
+            <div className="h-13 w-13 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0">
               {data.profile?.avatar_url ? (
                 <img src={data.profile.avatar_url} alt={data.profile.full_name || "User"} className="h-full w-full object-cover" />
               ) : (
@@ -127,10 +137,38 @@ export function RoommateCard({
                 {data.profile?.full_name?.split(' ')[0] || "Student"}
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500" />}
               </h3>
-              <p className="text-sm text-gray-500">{data.gender} • {data.university}</p>
+              <p className="text-xs sm:text-sm text-gray-500">{data.gender} • {data.university}</p>
             </div>
           </div>
         </div>
+
+        {/* Target Lodge Attachment Pill if present */}
+        {data.target_listing_title && (
+          <div className="mb-4 rounded-xl border border-amber-200/90 bg-amber-50/70 p-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-7 h-7 rounded-lg bg-amber-200 text-amber-900 flex items-center justify-center shrink-0">
+                <Building className="w-3.5 h-3.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                  Splitting Lodge
+                </p>
+                <p className="text-xs font-black text-amber-950 truncate">
+                  {data.target_listing_title}
+                </p>
+              </div>
+            </div>
+            {data.target_listing_id && (
+              <Link
+                href={`/listing/${data.target_listing_id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-[10px] font-bold text-[#1B4332] bg-white border border-amber-200 px-2 py-1 rounded-md hover:bg-gray-50 shrink-0"
+              >
+                View
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Budget */}
         <div className="mb-4">
@@ -165,14 +203,14 @@ export function RoommateCard({
         <div className="flex gap-2">
           <Link
             href={`/roommates/${data.id}`}
-            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-1.5"
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 active:scale-95 flex items-center justify-center gap-1.5 min-h-[44px]"
           >
             <Eye className="h-4 w-4 text-gray-500" />
             View Details
           </Link>
           <button
             onClick={handleConnect}
-            className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
+            className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm min-h-[44px]"
           >
             <MessageCircle className="h-4 w-4 text-[#F59E0B]" />
             WhatsApp

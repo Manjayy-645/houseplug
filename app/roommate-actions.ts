@@ -23,6 +23,8 @@ const createRoommateSchema = z
       .regex(NIGERIAN_PHONE_RE, "Enter a valid Nigerian number (e.g. 08012345678)"),
     room_photos: z.array(z.string().url()).max(5).optional(),
     room_address: z.string().max(200).optional(),
+    target_listing_id: z.string().uuid().optional().nullable(),
+    target_listing_title: z.string().max(200).optional().nullable(),
   })
   .refine((d) => d.budget_max >= d.budget_min, {
     message: "Maximum budget must be ≥ minimum budget",
@@ -80,6 +82,8 @@ export async function createRoommateProfile(raw: unknown) {
       phone_number: data.phone_number,
       room_photos: data.room_photos ?? [],
       room_address: data.room_address ?? null,
+      target_listing_id: data.target_listing_id ?? null,
+      target_listing_title: data.target_listing_title ?? null,
       status: "active",
     },
     { onConflict: "user_id" }
@@ -164,4 +168,87 @@ export async function updateRoommateStatus(status: "active" | "paused" | "found"
   revalidatePath("/student/dashboard")
   return { success: true, data }
 }
+
+export async function attachListingToRoommateProfile(params: {
+  listingId: string
+  listingTitle: string
+  university?: string
+  area?: string
+  priceYearly?: number
+}) {
+  const supabase = createClient()
+  const { user, error: authError } = await requireStudent(supabase)
+  if (authError || !user) return { error: authError }
+
+  const { data: existingProfile } = await supabase
+    .from("roommate_profiles")
+    .select("id, university, budget_min, budget_max")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (!existingProfile) {
+    return {
+      error: "no_profile",
+      message: "Please create your roommate profile first to attach this lodge.",
+    }
+  }
+
+  const splitHalf = params.priceYearly ? Math.round(params.priceYearly / 2) : null
+  const updateData: Record<string, any> = {
+    target_listing_id: params.listingId,
+    target_listing_title: params.listingTitle,
+    status: "active",
+    updated_at: new Date().toISOString(),
+  }
+
+  if (params.university && !existingProfile.university) {
+    updateData.university = params.university
+  }
+  if (params.area) {
+    updateData.room_address = params.area
+  }
+  if (splitHalf && existingProfile.budget_max < splitHalf) {
+    updateData.budget_max = splitHalf
+  }
+
+  const { error } = await supabase
+    .from("roommate_profiles")
+    .update(updateData)
+    .eq("user_id", user.id)
+
+  if (error) {
+    console.error("Failed to attach listing to roommate profile:", error)
+    return { error: "Failed to update profile. Please try again." }
+  }
+
+  revalidatePath("/roommates")
+  revalidatePath(`/listing/${params.listingId}`)
+  revalidatePath("/student/roommate")
+  return { success: true }
+}
+
+export async function removeListingFromRoommateProfile(listingId?: string) {
+  const supabase = createClient()
+  const { user, error: authError } = await requireStudent(supabase)
+  if (authError || !user) return { error: authError }
+
+  const { error } = await supabase
+    .from("roommate_profiles")
+    .update({
+      target_listing_id: null,
+      target_listing_title: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id)
+
+  if (error) {
+    return { error: "Failed to detach lodge." }
+  }
+
+  revalidatePath("/roommates")
+  if (listingId) revalidatePath(`/listing/${listingId}`)
+  revalidatePath("/student/roommate")
+  return { success: true }
+}
+
 

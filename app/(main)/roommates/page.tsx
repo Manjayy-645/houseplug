@@ -5,6 +5,7 @@ import { RoommateCard } from "@/components/roommate-card"
 import { Users, ArrowRight, Sparkles } from "lucide-react"
 import { RoommateFilters } from "@/components/roommate-filters"
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
+import { computeComprehensiveMatchScore } from "@/lib/roommate-matching"
 
 export const metadata: Metadata = {
   title: "Find a Student Roommate in Nigeria",
@@ -56,9 +57,24 @@ export default async function RoommatesPage({
     currentUserRole = userProfile?.role ?? null
   }
   
+  // Fetch current user's roommate profile for match scoring
+  let currentUserRoommateProfile = null
+  if (currentUserId) {
+    try {
+      const { data: myProfile } = await supabase
+        .from("roommate_profiles")
+        .select("id, user_id, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, target_listing_id, target_listing_title, room_address")
+        .eq("user_id", currentUserId)
+        .maybeSingle()
+      currentUserRoommateProfile = myProfile
+    } catch {
+      // Best effort
+    }
+  }
+
   // Build query
   let query = isGuest
-    ? dataClient.from("roommate_profiles").select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
+    ? dataClient.from("roommate_profiles").select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at")
     : dataClient.from("roommate_profiles").select("*")
   
   query = query.eq("status", "active").order("created_at", { ascending: false })
@@ -98,6 +114,22 @@ export default async function RoommatesPage({
       profiles = profiles.filter(p => p.profile?.verification_status === "verified")
     }
   }
+
+  // Calculate top compatible matches for logged in student
+  const topMatches = currentUserRoommateProfile
+    ? profiles
+        .filter((p: any) => p.user_id !== currentUserId)
+        .map((p: any) => {
+          const matchResult = computeComprehensiveMatchScore(currentUserRoommateProfile, p)
+          return {
+            ...p,
+            matchResult,
+          }
+        })
+        .filter((p: any) => p.matchResult.isEligible && p.matchResult.score >= 50)
+        .sort((a: any, b: any) => b.matchResult.score - a.matchResult.score)
+        .slice(0, 3)
+    : []
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
@@ -171,14 +203,64 @@ export default async function RoommatesPage({
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-5 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 py-8 sm:py-12">
+        {/* Top Compatible Matches Strip for logged-in students */}
+        {topMatches.length > 0 && (
+          <div className="mb-10 rounded-3xl border-2 border-emerald-500/25 bg-gradient-to-br from-emerald-50/70 via-white to-amber-50/50 p-4 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1B4332] text-white text-[10px] font-black uppercase tracking-wider mb-1.5 shadow-xs">
+                  <Sparkles className="w-3 h-3 text-[#F59E0B]" />
+                  <span>Smart Match Engine</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                  Top Roommate Matches For You
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                  Ranked by mutual campus, overlapping budget, and compatible lifestyle preferences.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-100/80 px-3 py-1 rounded-full self-start sm:self-auto">
+                {topMatches.length} high-match {topMatches.length === 1 ? "roommate" : "roommates"}
+              </span>
+            </div>
+
+            {/* Mobile Horizontal Snap Scroll / Desktop Grid */}
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:overflow-visible">
+              {topMatches.map((item: any) => (
+                <div key={`match-${item.id}`} className="min-w-[280px] sm:min-w-0 flex-1">
+                  <RoommateCard
+                    data={item}
+                    currentUserId={currentUserId}
+                    currentUserRole={currentUserRole}
+                    matchScore={item.matchResult.score}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Filters Bar */}
         <RoommateFilters />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {profiles.map((profile: any) => (
-            <RoommateCard key={profile.id} data={profile} currentUserId={currentUserId} currentUserRole={currentUserRole} />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {profiles.map((profile: any) => {
+            const score =
+              currentUserRoommateProfile && profile.user_id !== currentUserId
+                ? computeComprehensiveMatchScore(currentUserRoommateProfile, profile).score
+                : null
+
+            return (
+              <RoommateCard
+                key={profile.id}
+                data={profile}
+                currentUserId={currentUserId}
+                currentUserRole={currentUserRole}
+                matchScore={score && score >= 50 ? score : null}
+              />
+            )
+          })}
         </div>
       </div>
     </main>

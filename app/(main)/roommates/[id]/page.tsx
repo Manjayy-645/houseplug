@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
-import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft } from "lucide-react"
+import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft, Building, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { RoommateContactButton } from "./contact-button"
 import { ShareButton } from "./share-button"
@@ -107,7 +107,7 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
   if (isGuest) {
     const { data } = await dataClient
       .from("roommate_profiles")
-      .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, status, created_at, updated_at")
+      .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at")
       .eq("id", params.id)
       .eq("status", "active")
       .single()
@@ -221,6 +221,34 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
               </div>
             </div>
 
+            {/* Target Lodge for Splitting (If attached) */}
+            {data.target_listing_title && (
+              <div className="bg-gradient-to-r from-emerald-50 to-amber-50/70 p-5 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shrink-0">
+                    <Building className="w-5 h-5 text-[#F59E0B]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded">
+                      Target Lodge For Splitting
+                    </span>
+                    <h3 className="text-base font-extrabold text-gray-900 mt-1">
+                      {data.target_listing_title}
+                    </h3>
+                  </div>
+                </div>
+                {data.target_listing_id && (
+                  <Link
+                    href={`/listing/${data.target_listing_id}`}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-xs font-extrabold text-[#1B4332] hover:bg-gray-50 shadow-xs min-h-[42px]"
+                  >
+                    <span>View Lodge Details</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+              </div>
+            )}
+
             {/* Room Location (If Has Room) */}
             {data.intent === "have_room" && data.room_address && (
               <div className="bg-amber-50/60 p-5 rounded-2xl border border-amber-100">
@@ -285,6 +313,9 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
                 phoneNumber={data.phone_number} 
                 firstName={data.profile.full_name?.split(" ")[0] || "there"} 
                 currentUserRole={currentUserRole}
+                targetLodgeTitle={data.target_listing_title}
+                targetLodgeId={data.target_listing_id}
+                campusName={data.university}
               />
             )}
           </div>

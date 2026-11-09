@@ -30,6 +30,8 @@ const formSchema = z.object({
   bio: z.string().min(20, "Bio must be at least 20 characters").max(300, "Bio is too long"),
   phone_number: z.string().min(11, "Enter a valid phone number (e.g., 08012345678)"),
   room_address: z.string().optional(),
+  target_listing_id: z.string().optional().nullable(),
+  target_listing_title: z.string().optional().nullable(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -132,6 +134,8 @@ export default function CreateRoommateForm({ initialParams }: CreateRoommateForm
     try {
       const result = await createRoommateProfile({
         ...data,
+        target_listing_id: initialParams?.listing_id || null,
+        target_listing_title: initialParams?.listing_title || null,
         room_photos: [] // Would handle photo uploads here later
       })
 

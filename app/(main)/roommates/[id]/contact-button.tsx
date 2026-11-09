@@ -4,15 +4,22 @@ import { Phone, AlertCircle } from "lucide-react"
 import { useState } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
+import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 
 export function RoommateContactButton({
   phoneNumber,
   firstName,
-  currentUserRole
+  currentUserRole,
+  targetLodgeTitle,
+  targetLodgeId,
+  campusName,
 }: {
   phoneNumber: string
   firstName: string
   currentUserRole: string | null
+  targetLodgeTitle?: string | null
+  targetLodgeId?: string | null
+  campusName?: string
 }) {
   const [showRoleModal, setShowRoleModal] = useState(false)
 
@@ -22,15 +29,14 @@ export function RoommateContactButton({
       return
     }
 
-    let phone = phoneNumber
-    if (phone.startsWith("0")) {
-      phone = "234" + phone.substring(1)
-    } else if (!phone.startsWith("234")) {
-      phone = "234" + phone
-    }
-
-    const message = encodeURIComponent(`Hi ${firstName}, I saw your roommate profile on HousePlug!`)
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank")
+    const waUrl = buildGeneralRoommateWhatsAppLink({
+      phone: phoneNumber,
+      candidateName: firstName,
+      targetLodgeTitle,
+      targetLodgeId,
+      campusName,
+    })
+    window.open(waUrl, "_blank")
   }
 
   return (

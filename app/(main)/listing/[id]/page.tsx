@@ -263,6 +263,21 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     }
   }
 
+  // Fetch current user's roommate profile if logged in
+  let currentUserRoommateProfile = null
+  if (user) {
+    try {
+      const { data: myProfile } = await supabase
+        .from("roommate_profiles")
+        .select("id, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, target_listing_id, target_listing_title, room_address")
+        .eq("user_id", user.id)
+        .maybeSingle()
+      currentUserRoommateProfile = myProfile
+    } catch {
+      // Best effort
+    }
+  }
+
   // Fetch active roommate profiles near this listing's university campus
   let campusRoommates: CampusRoommate[] = []
   if (listingRowData?.university) {
@@ -278,11 +293,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
 
       const { data: roommateRows } = await dataClient
         .from("roommate_profiles")
-        .select("id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, user_id")
+        .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, phone_number, room_address, target_listing_id, target_listing_title")
         .eq("status", "active")
         .or(`university.ilike.%${campusFilter}%,university.ilike.%${campusObj?.id || campusFilter}%`)
         .order("created_at", { ascending: false })
-        .limit(3)
+        .limit(6)
 
       if (roommateRows && roommateRows.length > 0) {
         const userIds = roommateRows.map((r: any) => r.user_id)
@@ -478,7 +493,13 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
             )}
 
             {/* Roommate Rent-Split Section */}
-            <RoommateSplitSection listing={listing} campusRoommates={campusRoommates} />
+            <RoommateSplitSection
+              listing={listing}
+              campusRoommates={campusRoommates}
+              currentUserId={user?.id}
+              currentUserRole={userProfile?.role}
+              currentUserRoommateProfile={currentUserRoommateProfile}
+            />
 
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />

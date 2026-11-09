@@ -170,3 +170,30 @@ export type ServiceProvider = {
   updated_at?: string
 }
 
+export type RoommateProfile = {
+  id: string
+  user_id: string
+  intent: "have_room" | "teaming_up"
+  university: string
+  budget_min: number
+  budget_max: number
+  gender: string
+  preferred_gender: string
+  lifestyle_tags: string[]
+  bio: string
+  phone_number?: string
+  room_photos?: string[]
+  room_address?: string
+  target_listing_id?: string | null
+  target_listing_title?: string | null
+  status: "active" | "paused" | "found"
+  created_at: string
+  updated_at?: string
+  profile?: {
+    id?: string
+    full_name: string
+    avatar_url: string | null
+    verification_status: string
+  } | null
+}
+
