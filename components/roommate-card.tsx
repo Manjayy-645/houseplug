@@ -43,15 +43,20 @@ export function RoommateCard({
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  const firstName = data.profile?.full_name?.split(' ')[0] || "Student"
+  const initial = (firstName[0] || "S").toUpperCase()
+  const showAvatar = Boolean(data.profile?.avatar_url && !imageError)
+
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     const url = `${window.location.origin}/roommates/${data.id}`;
-    const name = data.profile?.full_name?.split(' ')[0] || "this student"
+    const name = firstName
     const shareText = data.intent === "have_room"
       ? `Check out ${name}'s roommate profile on HousePlug — they have a room available! 🏠`
       : `Check out ${name}'s roommate profile on HousePlug — wanna team up? 🤝`
@@ -99,18 +104,18 @@ export function RoommateCard({
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-full">
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 w-full max-w-full box-border">
       {/* Top Banner indicating Intent */}
-      <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
+      <div className={`px-4 py-2.5 text-xs font-black uppercase tracking-widest text-white flex justify-between items-center shrink-0 ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {data.intent === 'have_room' ? (
-            <span className="flex items-center gap-1.5 shrink-0"><Home className="h-4 w-4" /> Has a Room</span>
+            <span className="flex items-center gap-1.5 shrink-0"><Home className="h-4 w-4 shrink-0" /> Has a Room</span>
           ) : (
-            <span className="flex items-center gap-1.5 shrink-0"><User className="h-4 w-4" /> Looking to Team Up</span>
+            <span className="flex items-center gap-1.5 shrink-0"><User className="h-4 w-4 shrink-0" /> Looking to Team Up</span>
           )}
           {matchScore !== undefined && matchScore !== null && (
             <span className="bg-white/20 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-              <Zap className="w-2.5 h-2.5 text-yellow-300" /> {matchScore}% Match
+              <Zap className="w-2.5 h-2.5 text-yellow-300 shrink-0" /> {matchScore}% Match
             </span>
           )}
         </div>
@@ -123,22 +128,57 @@ export function RoommateCard({
         {/* User Info Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
-            <div className="w-14 h-14 min-w-[56px] min-h-[56px] max-w-[56px] max-h-[56px] rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 shrink-0 relative">
-              {data.profile?.avatar_url ? (
+            <div
+              style={{
+                width: "52px",
+                height: "52px",
+                minWidth: "52px",
+                minHeight: "52px",
+                maxWidth: "52px",
+                maxHeight: "52px",
+                borderRadius: "9999px",
+              }}
+              className="relative shrink-0 overflow-hidden rounded-full border-2 border-gray-100 bg-[#1B4332] shadow-xs select-none"
+            >
+              {showAvatar ? (
                 <img
                   src={data.profile.avatar_url}
-                  alt={data.profile.full_name || "User"}
-                  className="w-full h-full object-cover rounded-full aspect-square block"
+                  alt={data.profile.full_name || "Student"}
+                  width={52}
+                  height={52}
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    width: "52px",
+                    height: "52px",
+                    minWidth: "52px",
+                    minHeight: "52px",
+                    maxWidth: "52px",
+                    maxHeight: "52px",
+                    borderRadius: "9999px",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                  onError={() => setImageError(true)}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                  <User className="h-6 w-6" />
+                <div
+                  style={{
+                    width: "52px",
+                    height: "52px",
+                    minWidth: "52px",
+                    minHeight: "52px",
+                    borderRadius: "9999px",
+                  }}
+                  className="flex items-center justify-center bg-[#1B4332] text-white font-black text-lg select-none"
+                >
+                  {initial}
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-lg text-gray-900 flex items-center gap-1.5 truncate">
-                <span className="truncate">{data.profile?.full_name?.split(' ')[0] || "Student"}</span>
+                <span className="truncate">{firstName}</span>
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500 shrink-0" />}
               </h3>
               <p className="text-xs sm:text-sm text-gray-500 truncate">{data.gender} • {data.university}</p>

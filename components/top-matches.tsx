@@ -99,12 +99,48 @@ function MatchModal({
 
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           <div className="flex items-center gap-4 border-b border-gray-100 pb-5">
-            <div className="h-16 w-16 rounded-full overflow-hidden border-2 border-[#1B4332]/10 bg-gray-50 shrink-0">
+            <div
+              style={{
+                width: "60px",
+                height: "60px",
+                minWidth: "60px",
+                minHeight: "60px",
+                maxWidth: "60px",
+                maxHeight: "60px",
+                borderRadius: "9999px",
+              }}
+              className="relative shrink-0 overflow-hidden rounded-full border-2 border-[#1B4332]/10 bg-[#1B4332] shadow-xs select-none"
+            >
               {match.profile?.avatar_url ? (
-                <img src={match.profile.avatar_url} alt={match.profile.full_name} className="h-full w-full object-cover" />
+                <img
+                  src={match.profile.avatar_url}
+                  alt={match.profile.full_name || "Student"}
+                  width={60}
+                  height={60}
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    minWidth: "60px",
+                    minHeight: "60px",
+                    maxWidth: "60px",
+                    maxHeight: "60px",
+                    borderRadius: "9999px",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
               ) : (
-                <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-400">
-                  <User className="h-7 w-7" />
+                <div
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    minWidth: "60px",
+                    minHeight: "60px",
+                    borderRadius: "9999px",
+                  }}
+                  className="flex items-center justify-center bg-[#1B4332] text-white font-black text-xl uppercase"
+                >
+                  {(match.profile?.full_name?.split(" ")[0]?.[0] || "S").toUpperCase()}
                 </div>
               )}
             </div>
@@ -311,12 +347,48 @@ export function TopMatches({ myProfile }: { myProfile: any }) {
                 </div>
 
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      minWidth: "40px",
+                      minHeight: "40px",
+                      maxWidth: "40px",
+                      maxHeight: "40px",
+                      borderRadius: "9999px",
+                    }}
+                    className="relative shrink-0 overflow-hidden rounded-full border-2 border-white shadow-xs bg-[#1B4332] select-none"
+                  >
                     {match.profile?.avatar_url ? (
-                      <img src={match.profile.avatar_url} alt={match.profile.full_name} className="h-full w-full object-cover" />
+                      <img
+                        src={match.profile.avatar_url}
+                        alt={match.profile.full_name || "Student"}
+                        width={40}
+                        height={40}
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          minWidth: "40px",
+                          minHeight: "40px",
+                          maxWidth: "40px",
+                          maxHeight: "40px",
+                          borderRadius: "9999px",
+                          objectFit: "cover",
+                          display: "block",
+                        }}
+                      />
                     ) : (
-                      <div className="h-full w-full bg-gray-200 flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-400" />
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          minWidth: "40px",
+                          minHeight: "40px",
+                          borderRadius: "9999px",
+                        }}
+                        className="flex items-center justify-center bg-[#1B4332] text-white font-black text-sm uppercase"
+                      >
+                        {(match.profile?.full_name?.split(" ")[0]?.[0] || "S").toUpperCase()}
                       </div>
                     )}
                   </div>

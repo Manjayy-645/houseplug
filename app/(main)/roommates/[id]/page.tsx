@@ -179,16 +179,48 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
           <div className="p-8 space-y-8">
             {/* Profile Main Info */}
             <div className="flex items-center gap-5 border-b border-gray-100 pb-6">
-              <div className="w-20 h-20 min-w-[80px] min-h-[80px] max-w-[80px] max-h-[80px] rounded-full overflow-hidden border-2 border-[#1B4332]/10 bg-gray-50 shrink-0 relative">
+              <div
+                style={{
+                  width: "72px",
+                  height: "72px",
+                  minWidth: "72px",
+                  minHeight: "72px",
+                  maxWidth: "72px",
+                  maxHeight: "72px",
+                  borderRadius: "9999px",
+                }}
+                className="relative shrink-0 overflow-hidden rounded-full border-2 border-[#1B4332]/10 bg-[#1B4332] shadow-xs select-none"
+              >
                 {data.profile.avatar_url ? (
                   <img
                     src={data.profile.avatar_url}
-                    alt={data.profile.full_name}
-                    className="w-full h-full object-cover rounded-full aspect-square block"
+                    alt={data.profile.full_name || "Student"}
+                    width={72}
+                    height={72}
+                    style={{
+                      width: "72px",
+                      height: "72px",
+                      minWidth: "72px",
+                      minHeight: "72px",
+                      maxWidth: "72px",
+                      maxHeight: "72px",
+                      borderRadius: "9999px",
+                      objectFit: "cover",
+                      display: "block",
+                    }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                    <User className="h-8 w-8" />
+                  <div
+                    style={{
+                      width: "72px",
+                      height: "72px",
+                      minWidth: "72px",
+                      minHeight: "72px",
+                      borderRadius: "9999px",
+                    }}
+                    className="flex items-center justify-center bg-[#1B4332] text-white font-black text-2xl uppercase"
+                  >
+                    {(data.profile.full_name?.split(" ")[0]?.[0] || "S").toUpperCase()}
                   </div>
                 )}
               </div>

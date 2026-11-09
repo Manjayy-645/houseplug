@@ -244,7 +244,7 @@ export default async function RoommatesPage({
         {/* Filters Bar */}
         <RoommateFilters />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
           {profiles.map((profile: any) => {
             const score =
               currentUserRoommateProfile && profile.user_id !== currentUserId
@@ -252,13 +252,14 @@ export default async function RoommatesPage({
                 : null
 
             return (
-              <RoommateCard
-                key={profile.id}
-                data={profile}
-                currentUserId={currentUserId}
-                currentUserRole={currentUserRole}
-                matchScore={score && score >= 50 ? score : null}
-              />
+              <div key={profile.id} className="w-full min-w-0 max-w-full flex">
+                <RoommateCard
+                  data={profile}
+                  currentUserId={currentUserId}
+                  currentUserRole={currentUserRole}
+                  matchScore={score && score >= 50 ? score : null}
+                />
+              </div>
             )
           })}
         </div>

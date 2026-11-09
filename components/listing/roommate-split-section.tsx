@@ -525,16 +525,49 @@ export function RoommateSplitSection({
                           href={`/roommates/${roommate.id}`}
                           className="flex items-center gap-2.5 min-w-0 flex-1 group-hover:opacity-95"
                         >
-                          <div className="w-10 h-10 min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-full overflow-hidden ring-1 ring-gray-200 shrink-0 relative bg-gray-50">
+                          <div
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              minWidth: "40px",
+                              minHeight: "40px",
+                              maxWidth: "40px",
+                              maxHeight: "40px",
+                              borderRadius: "9999px",
+                            }}
+                            className="relative shrink-0 overflow-hidden rounded-full ring-1 ring-gray-200 bg-[#1B4332] shadow-2xs select-none"
+                          >
                             {avatar ? (
                               <img
                                 src={avatar}
                                 alt={displayName}
-                                className="w-full h-full object-cover rounded-full aspect-square block"
+                                width={40}
+                                height={40}
+                                loading="lazy"
+                                style={{
+                                  width: "40px",
+                                  height: "40px",
+                                  minWidth: "40px",
+                                  minHeight: "40px",
+                                  maxWidth: "40px",
+                                  maxHeight: "40px",
+                                  borderRadius: "9999px",
+                                  objectFit: "cover",
+                                  display: "block",
+                                }}
                               />
                             ) : (
-                              <div className="w-full h-full bg-[#1B4332] text-white flex items-center justify-center font-bold text-xs">
-                                {displayName.charAt(0)}
+                              <div
+                                style={{
+                                  width: "40px",
+                                  height: "40px",
+                                  minWidth: "40px",
+                                  minHeight: "40px",
+                                  borderRadius: "9999px",
+                                }}
+                                className="flex items-center justify-center bg-[#1B4332] text-white font-bold text-xs"
+                              >
+                                {displayName.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
