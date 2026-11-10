@@ -23,7 +23,7 @@ async function verifyAdmin() {
     .eq("id", user.id)
     .single()
 
-  return profile?.role === "admin"
+  return ["admin", "super_admin"].includes(profile?.role || "")
 }
 
 export async function fetchUniversityRequestsSummary(search?: string): Promise<{ data?: UniversityRequestSummary[], error?: string }> {

@@ -1,15 +1,26 @@
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { sendNewReviewEmail } from "@/lib/email"
+
+const reviewSchema = z.object({
+  listingId: z.string().uuid("Invalid listing ID"),
+  rating: z.coerce.number().int().min(1, "Rating must be at least 1").max(5, "Rating cannot exceed 5"),
+  reviewText: z.string().max(1000, "Review is too long").optional().nullable(),
+  reviewerName: z.string().max(80, "Name is too long").optional().nullable(),
+})
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { listingId, rating, reviewText, reviewerName } = body
+    const parsed = reviewSchema.safeParse(body)
 
-    if (!listingId || !rating) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message || "Invalid review data"
+      return NextResponse.json({ error: firstError }, { status: 400 })
     }
+
+    const { listingId, rating, reviewText, reviewerName } = parsed.data
 
     const supabase = createClient()
 
@@ -19,8 +30,8 @@ export async function POST(req: Request) {
       .insert({
         listing_id: listingId,
         rating,
-        review_text: reviewText || null,
-        reviewer_name: reviewerName || "UniPort Student",
+        review_text: reviewText?.trim() || null,
+        reviewer_name: reviewerName?.trim() || "UniPort Student",
       })
       .select()
       .single()
@@ -50,8 +61,8 @@ export async function POST(req: Request) {
           await sendNewReviewEmail({
             landlordEmail: landlord.email,
             rating,
-            reviewerName: reviewerName || "UniPort Student",
-            reviewText,
+            reviewerName: reviewerName?.trim() || "UniPort Student",
+            reviewText: reviewText?.trim() || undefined,
             listingId,
           })
         }

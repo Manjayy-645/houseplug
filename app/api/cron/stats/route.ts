@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { sendLandlordAnalyticsEmail } from '@/lib/email'
 
 export async function GET(request: Request) {
-  // Verify Cron Secret if set (Vercel standard)
+  // Verify Cron Secret (fail-closed: reject if secret is missing or header doesn't match)
   const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 })
   }
 

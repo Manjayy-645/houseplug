@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 
   const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
   
-  const baseUrl = "https://www.houseplug.ng"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
   // Dynamic OG image endpoint — renders a branded PNG card on the fly,
   // converting .webp avatars server-side so WhatsApp always gets a valid preview.
   const ogImageUrl = `${baseUrl}/api/og/roommate?id=${params.id}`

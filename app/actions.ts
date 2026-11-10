@@ -10,16 +10,32 @@ import { logAdminAction } from "@/lib/audit"
 /**
  * Server action wrapper around logAdminAction so client components can call it
  * without needing direct access to the service role key.
+ * Requires caller to be an authenticated admin or super_admin.
  */
 export async function logAdminActionClient(params: {
-  admin_id: string
+  admin_id?: string
   action: string
   target_type?: string
   target_id?: string
   details?: Record<string, any>
 }) {
   try {
-    await logAdminAction(params)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    if (!["admin", "super_admin"].includes(profile?.role || "")) return
+
+    await logAdminAction({
+      ...params,
+      admin_id: user.id,
+    })
   } catch (err) {
     console.error("[actions] logAdminActionClient failed:", err)
   }
