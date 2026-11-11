@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { GoogleIcon } from "@/components/auth/google-icon"
+import { safeReturnPath } from "@/lib/safe-return"
 
 type LoginStep = "email" | "password"
 
@@ -21,14 +22,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    setRedirect(params.get("redirect"))
+    const requested = params.get("redirect") || params.get("redirectTo")
+    setRedirect(requested ? safeReturnPath(requested, "/student/dashboard") : null)
   }, [])
 
   async function handleGoogleLogin() {
     setError("")
     // Persist the destination so the callback (server-side) can honour it for
     // students after OAuth.
-    if (redirect) document.cookie = `signup_redirect=${redirect}; path=/; max-age=3600`
+    if (redirect) document.cookie = `signup_redirect=${encodeURIComponent(redirect)}; path=/; max-age=3600; SameSite=Lax`
     // New Google users are created directly via the signup flow; existing users
     // simply log in and redirect by role.
     const { error } = await supabase.auth.signInWithOAuth({
@@ -44,35 +46,8 @@ export default function LoginPage() {
       return
     }
     setError("")
-    setLoading(true)
-
-    try {
-      const res = await fetch("/api/auth/check-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      })
-      const { exists } = await res.json()
-
-      if (!exists) {
-        setError("No account found with this email. Redirecting you to sign up...")
-        setLoading(false)
-        setTimeout(() => {
-          const signupUrl = redirect
-            ? `/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirect)}`
-            : `/signup?email=${encodeURIComponent(email)}`
-          window.location.href = signupUrl
-        }, 2000)
-        return
-      }
-
-      setLoading(false)
-      setStep("password")
-    } catch {
-      // If the check fails for any reason, just proceed to password step
-      setLoading(false)
-      setStep("password")
-    }
+    setEmail(email.trim().toLowerCase())
+    setStep("password")
   }
 
 
@@ -86,7 +61,7 @@ export default function LoginPage() {
       if (error.message.includes("Email not confirmed")) {
         setError("Please verify your email first. Check your inbox.")
       } else if (error.message.includes("Invalid login")) {
-        setError("Wrong password. Try again or reset it.")
+        setError("Email or password is incorrect. Try again or reset your password.")
       } else {
         setError(error.message)
       }
@@ -104,7 +79,7 @@ export default function LoginPage() {
 
     // Students may have come from a listing's "Sign Up to Contact" button.
     const storedRedirect = typeof window !== "undefined" ? window.localStorage.getItem("signup_redirect") : null
-    const destination = redirect || storedRedirect
+    const destination = safeReturnPath(redirect || storedRedirect, "/student/dashboard")
     if (typeof window !== "undefined") window.localStorage.removeItem("signup_redirect")
 
     if (role === "landlord" || role === "agent") {
@@ -112,7 +87,7 @@ export default function LoginPage() {
     } else if (role === "admin" || role === "super_admin") {
       window.location.href = "/admin/listings"
     } else {
-      window.location.href = destination || "/student/dashboard"
+      window.location.href = destination
     }
   }
 
@@ -156,7 +131,7 @@ export default function LoginPage() {
           {loading ? (
             <span className="flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
-              Checking...
+              Continue...
             </span>
           ) : (
             "Continue"

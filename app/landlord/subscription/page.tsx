@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { getLandlordSubscription } from "@/lib/billing"
 import { isSubscriptionExpiringSoon, formatExpiryDate, daysUntilExpiry } from "@/lib/billing-utils"
 import { BoostListingSelect } from "@/components/landlord/boost-listing-select"
+import { NEW_PAYMENTS_AVAILABLE } from "@/lib/payment-availability"
 
 export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly")
@@ -99,6 +100,10 @@ export default function SubscriptionPage() {
   }, [supabase])
 
   const handleInitiatePayment = async (payload: any) => {
+    if (!NEW_PAYMENTS_AVAILABLE) {
+      setToast({ msg: "New payments are temporarily unavailable.", tone: "info" })
+      return
+    }
     setActionLoading(payload.plan || payload.boost_type || 'verification')
     try {
       const res = await fetch("/api/payments/initiate", {
@@ -212,6 +217,11 @@ export default function SubscriptionPage() {
 
   return (
     <div className="space-y-10 p-4 lg:p-8 pb-24">
+      {!NEW_PAYMENTS_AVAILABLE && (
+        <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          New paid subscriptions, boosts and verification are temporarily unavailable. You can still manage existing listings and review your payment history.
+        </div>
+      )}
       {/* Payment outcome banner */}
       {toast && (
         <div

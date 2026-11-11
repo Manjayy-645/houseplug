@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { MyCampusService } from "@/components/services/my-campus-service"
 import type { Profile } from "@/types"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { NEW_PAYMENTS_AVAILABLE } from "@/lib/payment-availability"
 
 export default function ManageServicesPage() {
   const router = useRouter()
@@ -19,7 +20,7 @@ export default function ManageServicesPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
-        router.push("/login?redirectTo=/services/manage")
+        router.push("/login?redirect=/services/manage")
         return
       }
       setUser(user)
@@ -76,6 +77,11 @@ export default function ManageServicesPage() {
         </div>
 
         {/* Service Manager Component */}
+        {!NEW_PAYMENTS_AVAILABLE && (
+          <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            New paid service listings and boosts are temporarily unavailable. You can still manage an existing service profile.
+          </div>
+        )}
         <MyCampusService userId={user.id} defaultPhone={profile?.phone || ""} />
       </div>
     </div>
