@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
   const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(listing.price_yearly)
   const campus = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
 
-  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw} | HousePlug`
+  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw}`
   const description = `Student housing near ${campus}. Confirm rent terms and availability with the listing agent on WhatsApp.`
 
   const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary")
@@ -401,11 +401,15 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 </div>
                 {listing.agent_fee_type === "fixed" ? (
                   <p className="text-sm text-amber-700">
-                    This listing has an agent fee of {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                    {listing.agent_fee_amount && listing.agent_fee_amount > 0
+                      ? `This listing has an agent fee of ${formatNaira(listing.agent_fee_amount)}.`
+                      : "The agent fee amount has not been confirmed."} Discuss directly with the agent.
                   </p>
                 ) : (
                   <p className="text-sm text-amber-700">
-                    Agent fee is negotiable from {formatNaira(listing.agent_fee_amount ?? 0)}. Discuss directly with the agent.
+                    {listing.agent_fee_amount && listing.agent_fee_amount > 0
+                      ? `Agent fee may be negotiated from ${formatNaira(listing.agent_fee_amount)}.`
+                      : "The negotiable agent fee amount has not been confirmed."} Discuss directly with the agent.
                   </p>
                 )}
               </div>

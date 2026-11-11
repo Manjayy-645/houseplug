@@ -10,22 +10,24 @@ export function ListingDetailsGrid({ listing }: ListingDetailsGridProps) {
   const details = [
     {
       label: "Occupancy",
-      value: `${listing.occupancy || 1} student(s)`,
+      value: listing.occupancy ? `${listing.occupancy} student(s)` : "Not confirmed",
       icon: Users
     },
     {
       label: "Furnishing",
-      value: (listing.furnishing || "unfurnished").replace("_", " "),
+      value: listing.furnishing ? listing.furnishing.replace("_", " ") : "Not confirmed",
       icon: Home
     },
     {
       label: "Floor",
-      value: (listing.floor || "ground") + " floor",
+      value: listing.floor ? listing.floor + " floor" : "Not confirmed",
       icon: ArrowUpCircle
     },
     {
       label: "Available From",
-      value: listing.available_from ? formatDate(listing.available_from) : "Immediate",
+      value: listing.available_from && Date.parse(listing.available_from) > Date.now()
+        ? `${formatDate(listing.available_from)} · confirm`
+        : "Confirm with agent",
       icon: Calendar
     }
   ]
