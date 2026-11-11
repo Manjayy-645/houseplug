@@ -18,7 +18,17 @@ async function login(context: any, role: string) {
 test("mobile homepage has exact positioning, honest totals, accessible search and no overflow", async ({
   page,
 }) => {
-  for (const width of [320, 360, 375, 768, 1280]) {
+  const stylesheetFailures: string[] = [];
+  const renderingErrors: string[] = [];
+  page.on("response", (r) => {
+    if (r.request().resourceType() === "stylesheet" && r.status() >= 400)
+      stylesheetFailures.push(`${r.status()} ${r.url()}`);
+  });
+  page.on("requestfailed", (r) => {
+    if (r.resourceType() === "stylesheet") stylesheetFailures.push(r.url());
+  });
+  page.on("pageerror", (e) => renderingErrors.push(e.message));
+  for (const width of [320, 360, 375, 768, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(
@@ -35,6 +45,59 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
       await expect(
         page.getByRole("navigation", { name: "Mobile navigation" }),
       ).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: "Campus surroundings", exact: true }),
+    ).toBeVisible();
+    const menu = page.getByRole("button", { name: "Open navigation menu" });
+    if (width < 1280) await expect(menu).toBeVisible();
+    else await expect(menu).toBeHidden();
+    await expect(
+      page.locator("header").getByRole("link", { name: "Sign Up", exact: true }),
+    ).toBeVisible();
+    const headerLinks = await page
+      .locator("header a:visible")
+      .evaluateAll((links) =>
+        links.map((link) => {
+          const rect = link.getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        }),
+      );
+    for (const link of headerLinks) {
+      expect(link.left).toBeGreaterThanOrEqual(0);
+      expect(link.right).toBeLessThanOrEqual(width);
+    }
+    if (width === 768) {
+      await menu.click();
+      await expect(
+        page.locator("header nav").getByRole("link", { name: "Browse Listings" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Close navigation menu" }).click();
+    }
+    expect(
+      await page
+        .getByRole("img", { name: "Campus surroundings", exact: true })
+        .evaluate((i: HTMLImageElement) => i.naturalWidth),
+    ).toBeGreaterThan(0);
+    const brand = await page.evaluate(() => ({
+      font: getComputedStyle(document.body).fontFamily,
+      weight: getComputedStyle(document.querySelector("h1")!).fontWeight,
+      hero: getComputedStyle(
+        document.querySelector('[aria-label="Find student housing"]')!,
+      ).backgroundColor,
+      radius: parseFloat(
+        getComputedStyle(
+          document.querySelector(
+            'form[aria-label="Find student accommodation"]',
+          )!,
+        ).borderRadius,
+      ),
+      sheets: document.styleSheets.length,
+    }));
+    expect(brand.font).toContain("Inter");
+    expect(Number(brand.weight)).toBeGreaterThanOrEqual(800);
+    expect(brand.hero).toBe("rgb(27, 67, 50)");
+    expect(brand.radius).toBeGreaterThanOrEqual(24);
+    expect(brand.sheets).toBeGreaterThan(0);
     const accessibility = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();
@@ -44,6 +107,28 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
       fullPage: true,
     });
   }
+  expect(stylesheetFailures).toEqual([]);
+  expect(renderingErrors).toEqual([]);
+});
+test("restored hero search preserves campus, area, room type and total-budget filters", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const form = page.getByRole("form", { name: "Find student accommodation" });
+  await form.locator('[name="university"]').selectOption("uniport");
+  await form.locator('[name="q"]').fill("Aluu");
+  await form.locator('[name="room_type"]').selectOption("self_con");
+  await form.locator('[name="max_total"]').fill("450000");
+  await form.getByRole("button", { name: "Find Available Rooms" }).click();
+  await expect(page).toHaveURL(/\/browse\?/);
+  const url = new URL(page.url());
+  expect(Object.fromEntries(url.searchParams)).toMatchObject({
+    university: "uniport",
+    q: "Aluu",
+    room_type: "self_con",
+    max_total: "450000",
+  });
+  await expect(page.getByText("Move-in total: ₦400,000")).toBeVisible();
 });
 test("total budget filtering, single occupancy and no synthetic inventory", async ({
   page,

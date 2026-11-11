@@ -182,12 +182,12 @@ export function Header() {
 
   return (
     <header className="fixed top-0 w-full z-50 bg-white border-b border-gray-100 shadow-sm transition-all duration-200">
-      <div className="flex justify-between items-center h-16 px-5 md:px-20 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center h-16 px-5 sm:px-6 xl:px-20 max-w-7xl mx-auto">
         {/* Logo + desktop nav links */}
         <div className="flex items-center gap-8">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary"
+            className="flex shrink-0 items-center gap-2 whitespace-nowrap text-xl font-bold tracking-tight text-primary"
           >
             <Image
               src="/logo.png"
@@ -198,7 +198,7 @@ export function Header() {
             />
             HousePlug
           </Link>
-          <div className="hidden md:flex gap-6 items-center">
+          <div className="hidden xl:flex gap-6 items-center whitespace-nowrap">
             <Link
               href="/browse"
               className={`text-sm font-semibold py-1 transition-colors ${
@@ -265,7 +265,7 @@ export function Header() {
         </div>
 
         {/* Right: auth button + mobile hamburger */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
           {/* Auth control (always visible) */}
           <div className="flex items-center">
             {loading ? (
@@ -390,7 +390,7 @@ export function Header() {
             }
             aria-expanded={isOpen}
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden min-h-11 min-w-11 p-2"
+            className="xl:hidden min-h-11 min-w-11 p-2"
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -399,7 +399,7 @@ export function Header() {
 
       {/* Mobile Nav */}
       {isOpen && (
-        <div className="fixed inset-0 top-[65px] z-40 bg-white md:hidden animate-in slide-in-from-top duration-300 overflow-y-auto">
+        <div className="fixed inset-0 top-[65px] z-40 bg-white xl:hidden animate-in slide-in-from-top duration-300 overflow-y-auto">
           <nav className="flex flex-col p-6 pb-20 text-base font-semibold text-on-background">
             {/* Logged-in user info */}
             {!loading && user && (

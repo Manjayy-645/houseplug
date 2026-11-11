@@ -6,11 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint --config .eslintrc.visual.json app/page.tsx components/header.tsx components/hero-search.tsx components/home/site-footer.tsx",
     "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "test:db": "bash scripts/test-database.sh",
-    "test:e2e": "node scripts/qa-local.mjs"
+    "test:e2e": "node scripts/qa-local.mjs",
+    "lint:all": "eslint --config .eslintrc.visual.json app components lib --ext .ts,.tsx"
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
@@ -53,6 +54,8 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.21",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.35",
     "postcss": "^8.5.6",
     "tsx": "4.23.15",
     "typescript": "^5.4.5"

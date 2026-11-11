@@ -1,0 +1,306 @@
+[
+  {
+    "label": "regressed",
+    "width": 375,
+    "httpStatus": 200,
+    "css": [
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/da6e9b4a73108890.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/05f44d6c73df0d76.css",
+        "status": 200
+      }
+    ],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/browse?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/roommates?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/_vercel/insights/script.js",
+        "type": "script",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/listing/20000000-0000-4000-8000-000000000001?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/profile?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=rsu&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/safety?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/student-housing/uniport?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=kenpoly&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/guides/student-rental-fees-nigeria?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/guides/uniport-accommodation?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/about?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/privacy?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/terms?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/contact?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "errors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Refused to execute script from 'http://127.0.0.1:3101/_vercel/insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+    ],
+    "viewport": 375,
+    "bodyFont": "__Inter_d8ebd1, __Inter_Fallback_d8ebd1",
+    "h1FontSize": "30px",
+    "h1Weight": "900",
+    "stylesheets": 2,
+    "heroImage": [
+      {
+        "width": 187,
+        "height": 104
+      },
+      {
+        "width": 1376,
+        "height": 768
+      }
+    ],
+    "heading": "Find a Room Near Campus Without the Stress."
+  },
+  {
+    "label": "regressed",
+    "width": 768,
+    "httpStatus": 200,
+    "css": [
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/da6e9b4a73108890.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/05f44d6c73df0d76.css",
+        "status": 200
+      }
+    ],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:3101/browse?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/services?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/_vercel/insights/script.js",
+        "type": "script",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/listing/20000000-0000-4000-8000-000000000001?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/student-housing/uniport?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=iaue&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "errors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Refused to execute script from 'http://127.0.0.1:3101/_vercel/insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+    ],
+    "viewport": 768,
+    "bodyFont": "__Inter_d8ebd1, __Inter_Fallback_d8ebd1",
+    "h1FontSize": "48px",
+    "h1Weight": "900",
+    "stylesheets": 2,
+    "heroImage": [
+      {
+        "width": 384,
+        "height": 214
+      },
+      {
+        "width": 1376,
+        "height": 768
+      }
+    ],
+    "heading": "Find a Room Near Campus Without the Stress."
+  },
+  {
+    "label": "regressed",
+    "width": 1440,
+    "httpStatus": 200,
+    "css": [
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/da6e9b4a73108890.css",
+        "status": 200
+      },
+      {
+        "url": "http://127.0.0.1:3101/_next/static/css/05f44d6c73df0d76.css",
+        "status": 200
+      }
+    ],
+    "failed": [
+      {
+        "url": "http://127.0.0.1:3101/services?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/roommates?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/browse?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/_vercel/insights/script.js",
+        "type": "script",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/listing/20000000-0000-4000-8000-000000000001?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/student-housing/uniport?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=rsu&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=iaue&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/housing-assistance?university=kenpoly&_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/guides/student-rental-fees-nigeria?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/guides/uniport-accommodation?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/about?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/privacy?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/contact?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      },
+      {
+        "url": "http://127.0.0.1:3101/terms?_rsc=19zvn",
+        "type": "fetch",
+        "error": "net::ERR_ABORTED"
+      }
+    ],
+    "errors": [],
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "Refused to execute script from 'http://127.0.0.1:3101/_vercel/insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled."
+    ],
+    "viewport": 1440,
+    "bodyFont": "__Inter_d8ebd1, __Inter_Fallback_d8ebd1",
+    "h1FontSize": "48px",
+    "h1Weight": "900",
+    "stylesheets": 2,
+    "heroImage": [
+      {
+        "width": 720,
+        "height": 402
+      },
+      {
+        "width": 1376,
+        "height": 768
+      }
+    ],
+    "heading": "Find a Room Near Campus Without the Stress."
+  }
+]
