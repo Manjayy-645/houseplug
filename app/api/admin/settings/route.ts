@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { logAdminAction } from "@/lib/audit";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -17,8 +20,13 @@ export async function POST(request: Request) {
     .select("role,banned,is_banned")
     .eq("id", user.id)
     .single();
-  if (profile?.banned || profile?.is_banned || profile?.role !== "super_admin")
+  if (
+    profile?.banned ||
+    profile?.is_banned ||
+    !["admin", "super_admin"].includes(profile?.role || "")
+  ) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { section, settings } = await request.json();
   if (!section || !settings)
@@ -48,6 +56,10 @@ export async function POST(request: Request) {
       target_type: "platform",
       details: { section, ...settings },
     });
+
+    // Revalidate paths so cached middleware and pages update immediately
+    revalidatePath("/admin/settings");
+    revalidatePath("/", "layout");
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

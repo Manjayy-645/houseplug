@@ -23,14 +23,20 @@ export function SettingsForm({ settings: initialSettings }: { settings: Record<s
     }))
   }
 
-  const handleSave = async (section: string, keys: string[]) => {
+  const handleSave = async (
+    section: string,
+    keys: string[],
+    explicitData?: Record<string, any>
+  ) => {
     setLoading(section)
     setSuccess(null)
 
-    const data: Record<string, any> = {}
-    keys.forEach(key => {
-      data[key] = settings[key]
-    })
+    const data: Record<string, any> = explicitData ? { ...explicitData } : {}
+    if (!explicitData) {
+      keys.forEach(key => {
+        data[key] = settings[key]
+      })
+    }
 
     try {
       const res = await fetch('/api/admin/settings', {
@@ -40,6 +46,10 @@ export function SettingsForm({ settings: initialSettings }: { settings: Record<s
       })
       const result = await res.json()
       if (!res.ok) throw new Error(result.error)
+
+      if (explicitData) {
+        setSettings(prev => ({ ...prev, ...explicitData }))
+      }
       
       setSuccess(section)
       setTimeout(() => setSuccess(null), 3000)
@@ -199,36 +209,47 @@ export function SettingsForm({ settings: initialSettings }: { settings: Record<s
            <p className="text-sm text-gray-500 mt-1 font-medium">Emergency system status control</p>
         </div>
         <div className="p-8 space-y-6">
-           <div className="flex items-center justify-between p-6 rounded-3xl bg-red-50 border border-red-100">
-              <div className="flex items-center gap-4">
-                 <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${settings.maintenance_mode === 'true' ? 'bg-red-500 text-white' : 'bg-white text-red-500 border border-red-100'}`}>
-                    <AlertTriangle className="h-6 w-6" />
+           {(() => {
+              const isMaintenance = Boolean(
+                settings.maintenance_mode === true ||
+                settings.maintenance_mode === 'true' ||
+                settings.maintenance_mode === '"true"'
+              )
+
+              return (
+                 <div className="flex items-center justify-between p-6 rounded-3xl bg-red-50 border border-red-100">
+                    <div className="flex items-center gap-4">
+                       <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-colors ${isMaintenance ? 'bg-red-500 text-white' : 'bg-white text-red-500 border border-red-100'}`}>
+                          <AlertTriangle className="h-6 w-6" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-bold text-red-900">System Visibility</p>
+                          <p className="text-xs font-medium text-red-700/70 mt-0.5">
+                             {isMaintenance ? 'Site is currently locked for maintenance (Admins & Devs can still browse).' : 'Site is live and accessible to all users.'}
+                          </p>
+                       </div>
+                    </div>
+                    <button 
+                       type="button"
+                       disabled={loading === 'maintenance'}
+                       onClick={async () => {
+                          const nextVal = isMaintenance ? 'false' : 'true'
+                          const actionText = nextVal === 'true' ? 'ENABLE' : 'DISABLE'
+                          if (confirm(`Are you sure you want to ${actionText} maintenance mode?`)) {
+                             await handleSave('maintenance', ['maintenance_mode'], { maintenance_mode: nextVal })
+                          }
+                       }}
+                       className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
+                         isMaintenance 
+                           ? 'bg-red-500 text-white hover:brightness-110 shadow-lg shadow-red-500/20' 
+                           : 'border border-red-200 text-red-500 hover:bg-red-100'
+                       } disabled:opacity-50`}
+                    >
+                       {loading === 'maintenance' ? 'Updating...' : isMaintenance ? 'Disable Maintenance' : 'Enable Maintenance'}
+                    </button>
                  </div>
-                 <div>
-                    <p className="text-sm font-bold text-red-900">System Visibility</p>
-                    <p className="text-xs font-medium text-red-700/70 mt-0.5">
-                       {(settings.maintenance_mode === 'true' || settings.maintenance_mode === true) ? 'Site is currently locked for maintenance.' : 'Site is live and accessible to all users.'}
-                    </p>
-                 </div>
-              </div>
-              <button 
-                 onClick={() => {
-                    const newValue = settings.maintenance_mode === 'true' ? 'false' : 'true'
-                    if (confirm(`Are you sure you want to ${newValue === 'true' ? 'ENABLE' : 'DISABLE'} maintenance mode?`)) {
-                       // Update local state then save
-                       setSettings(prev => ({ ...prev, maintenance_mode: newValue }))
-                       setTimeout(() => handleSave('maintenance', ['maintenance_mode']), 100)
-                    }
-                 }}
-                 className={`px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
-                   settings.maintenance_mode === 'true' 
-                     ? 'bg-red-500 text-white hover:brightness-110' 
-                     : 'border border-red-200 text-red-500 hover:bg-red-100'
-                 }`}
-              >
-                 {settings.maintenance_mode === 'true' ? 'Disable Maintenance' : 'Enable Maintenance'}
-              </button>
-           </div>
+              )
+           })()}
         </div>
       </section>
     </div>

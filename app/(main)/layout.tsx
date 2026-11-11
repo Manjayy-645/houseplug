@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { headers } from "next/headers"
 import { Header } from "@/components/header"
 
 export default async function MainLayout({
@@ -6,8 +7,20 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode
 }) {
+  const isMaintenance = headers().get("x-maintenance-mode") === "active"
+
   return (
     <div className="flex min-h-screen flex-col">
+      {isMaintenance && (
+        <aside
+          aria-label="Maintenance Mode Notice"
+          className="bg-amber-500 text-white text-xs sm:text-sm font-bold py-2 px-4 text-center sticky top-0 z-[100] flex items-center justify-center gap-2 shadow-md"
+        >
+          <span>
+            🛠️ <strong>Maintenance Mode Active:</strong> Public visitors are blocked. You are viewing the platform with Administrator / Developer bypass.
+          </span>
+        </aside>
+      )}
       <Header />
       <div className="flex-1">
         {children}
