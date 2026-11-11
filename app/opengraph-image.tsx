@@ -98,7 +98,7 @@ export default function Image() {
             border: "1px solid rgba(255,255,255,0.2)",
           }}
         >
-          <span style={{ color: "#10B981" }}>✓</span> Compare Rooms & Costs
+          Compare Rooms & Costs
         </div>
       </div>
 

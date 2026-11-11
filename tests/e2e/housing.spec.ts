@@ -31,15 +31,15 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
     ).toBeLessThanOrEqual(width);
     await expect(page.getByText("Move-in total: ₦400,000")).toBeVisible();
     await expect(page.getByText("500+ Verified Listings")).toHaveCount(0);
+    const accessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze();
+    expect(accessibility.violations).toEqual([]);
     await page.screenshot({
       path: `test-results/home-${width}.png`,
       fullPage: true,
     });
   }
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
-    .analyze();
-  expect(results.violations).toEqual([]);
 });
 test("total budget filtering, single occupancy and no synthetic inventory", async ({
   page,

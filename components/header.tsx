@@ -383,7 +383,15 @@ export function Header() {
           </div>
 
           {/* Mobile hamburger */}
-          <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2">
+          <button
+            type="button"
+            aria-label={
+              isOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden min-h-11 min-w-11 p-2"
+          >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (caller?.role !== "super_admin") {
+  if (caller?.banned || caller?.is_banned || caller?.role !== "super_admin") {
     return NextResponse.json(
       { error: "Only super admins can delete users" },
       { status: 403 },

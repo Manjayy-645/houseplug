@@ -67,3 +67,7 @@ Disable new workflow flags first; pause cron notifications. Preserve lead/audit/
 Start with accurate UNIPORT supply and timely, useful connection requests. Track qualified requests, actual connections and consented reported outcomes for two weeks. A fair first revenue experiment is an opt-in advertiser subscription for request-management tools or a clearly disclosed qualified-lead package with duplicate/refund rules. Keep students' basic requests free during validation. Agree price, allocation fairness, advertiser consent and refund/dispute terms before implementing charges. Sponsored listings must remain labelled and pass the same truth/freshness gates.
 
 Daily: review new/unassigned requests, reports and expiring availability. Weekly: sample fees and evidence, inspect duplicate candidates, review connected/request and reported-outcome counts with explicit denominators. No public response time or safety guarantee.
+
+## Main integration
+
+Integrated maintenance fixes from main commit `5fbba2e`. The developer maintenance bypass now requires a configured `DEV_BYPASS_SECRET`; there is no public fallback secret and a literal `true` cookie does not bypass maintenance. The cookie is HTTP-only and secure in production. Admin/landlord authorization remains independent of the maintenance bypass.

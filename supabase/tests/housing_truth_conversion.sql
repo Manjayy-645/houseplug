@@ -11,6 +11,8 @@ BEGIN
  payload:=jsonb_build_object('submission_key',gen_random_uuid(),'user_id',student_id,'listing_id',listing_id,'university','uniport','area','Aluu','total_budget',400000,'move_in_date','2099-01-01','contact_name','Test Student','contact_phone','08012345678','contact_consent',true);
  PERFORM set_config('role','service_role',true);
  PERFORM public.review_listing_truth(listing_id,staff_id,jsonb_build_object('fee_items','[{"type":"agency","amount":150000,"mandatory":true}]'::jsonb,'fees_complete',true,'fee_source','Advertiser signed fee schedule','evidence_pointer','private://review-fixture','renewal_amount',250000,'sharing_allowed',false,'occupancy',1,'confirm_availability',true,'confirm_media',true,'availability_days',14,'evidence_days',90,'authority_checked',true,'physically_inspected',false));
+ IF (SELECT fee_source FROM public.listings WHERE id=listing_id)='Advertiser signed fee schedule' THEN RAISE EXCEPTION 'Private fee source exposed on public row';END IF;
+ IF has_table_privilege('anon','houseplug_private.listing_fee_reviews','SELECT') THEN RAISE EXCEPTION 'Private review source readable anonymously';END IF;
  PERFORM public.confirm_listing_availability(listing_id,owner_id,true);
  SELECT * INTO h FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
  SELECT * INTO h2 FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
