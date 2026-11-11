@@ -25,6 +25,11 @@ export function InventoryReviewForm({ listing }: { listing: Listing }) {
             f.get("renewal_amount") === ""
               ? null
               : Number(f.get("renewal_amount")),
+          price_basis: f.get("price_basis"),
+          rent_term_months:
+            f.get("rent_term_months") === ""
+              ? null
+              : Number(f.get("rent_term_months")),
           sharing_allowed: f.get("sharing_allowed") === "on",
           occupancy: Number(f.get("occupancy")),
           confirm_availability: f.get("confirm_availability") === "on",
@@ -52,6 +57,21 @@ export function InventoryReviewForm({ listing }: { listing: Listing }) {
         inspection from advertiser identity.
       </p>
       <FeeEditor value={fees} onChange={setFees} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block">
+          What does the listed rent cover?
+          <select name="price_basis" defaultValue={listing.price_basis ?? "unconfirmed"} className="block border rounded p-3 w-full">
+            <option value="unconfirmed">Not confirmed</option>
+            <option value="per_bed">One bed or occupant</option>
+            <option value="per_room">One room</option>
+            <option value="per_unit">Whole property or unit</option>
+          </select>
+        </label>
+        <label className="block">
+          Rent term in months (blank if unknown)
+          <input name="rent_term_months" type="number" min={1} max={60} defaultValue={listing.rent_term_months ?? ""} className="block border rounded p-3 w-full" />
+        </label>
+      </div>
       <label className="block">
         Fee source and reconciliation notes
         <input

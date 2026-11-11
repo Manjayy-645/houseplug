@@ -35,6 +35,8 @@ const fields = [
   "fees_complete",
   "total_initial_payment",
   "renewal_amount",
+  "price_basis",
+  "rent_term_months",
   "sharing_allowed",
   "last_confirmed_at",
   "availability_state",

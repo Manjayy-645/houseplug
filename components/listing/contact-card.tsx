@@ -29,6 +29,9 @@ export default function ContactCard({ listing }: ContactCardProps) {
   const revealedPhone = listing.phone_number || listing.whatsapp_number || "";
   const total = moveInTotal(listing);
   const isVerified = listing.landlord?.verification_status === "verified";
+  const rentTerm = listing.rent_term_months
+    ? `for ${listing.rent_term_months} months`
+    : "term unconfirmed";
 
   const whatsappUrl = useMemo(
     () => buildWhatsAppLink(listing.whatsapp_number, listing.title, listing.id),
@@ -69,12 +72,12 @@ export default function ContactCard({ listing }: ContactCardProps) {
           <div className="flex items-baseline justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
-                Annual rent
+                Listed rent
               </p>
               <p className="text-3xl font-black text-[#1B4332]">
                 {formatNaira(listing.price_yearly)}
                 <span className="ml-1.5 text-sm font-semibold text-gray-500">
-                  / year
+                  {rentTerm}
                 </span>
               </p>
             </div>
@@ -189,12 +192,12 @@ export default function ContactCard({ listing }: ContactCardProps) {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-gray-600">
-              Annual rent
+              Listed rent
             </p>
             <p className="text-2xl font-black text-[#1B4332]">
               {formatNaira(listing.price_yearly)}
               <span className="text-xs font-normal text-gray-500 ml-1">
-                / year
+                {rentTerm}
               </span>
             </p>
           </div>
@@ -326,7 +329,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
             <div className="hidden sm:block min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600">
-                  Annual rent
+                  Listed rent
                 </span>
                 {sharingEligible(listing) && (
                   <a
@@ -343,7 +346,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
               <p className="text-xl font-black text-[#1B4332] tracking-tight truncate">
                 {formatNaira(listing.price_yearly)}
                 <span className="text-xs font-medium text-gray-500 ml-1">
-                  /yr
+                  {rentTerm}
                 </span>
               </p>
             </div>

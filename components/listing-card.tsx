@@ -139,7 +139,7 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
           <div className="flex justify-between items-start mb-1 gap-2">
             <h3 className="font-title-md text-primary flex-1">
               {formatNaira(listing.price_yearly)}{" "}
-              <span className="text-gray-600 text-xs font-normal">/yr</span>
+              <span className="text-gray-600 text-xs font-normal">listed rent</span>
             </h3>
             {isVerified && (
               <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1 shrink-0">
@@ -148,6 +148,11 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
               </span>
             )}
           </div>
+          <p className="text-sm font-semibold text-gray-900 line-clamp-2 mt-2">{listing.title}</p>
+          <p className="text-xs text-gray-600">
+            {listing.price_basis === "per_bed" ? "Per bed" : listing.price_basis === "per_room" ? "Per room" : listing.price_basis === "per_unit" ? "Whole unit" : "Price basis unconfirmed"}
+            {listing.rent_term_months ? ` · ${listing.rent_term_months} months` : " · term unconfirmed"}
+          </p>
           {sharingEligible(listing) && (
             <p className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1 mb-2">
               <Users className="w-3 h-3 text-[#F59E0B] shrink-0" />

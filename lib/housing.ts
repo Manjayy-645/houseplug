@@ -13,6 +13,8 @@ export type HousingTruth = {
   fee_items?: FeeItem[];
   fees_complete?: boolean;
   renewal_amount?: number | null;
+  price_basis?: "unconfirmed" | "per_bed" | "per_room" | "per_unit";
+  rent_term_months?: number | null;
   last_fee_verified_at?: string | null;
   total_initial_payment?: number | null;
   sharing_allowed?: boolean;
@@ -48,6 +50,8 @@ export function moveInTotal(listing: HousingTruth): number | null {
 export function sharingEligible(listing: HousingTruth, people = 2): boolean {
   return (
     listing.sharing_allowed === true &&
+    listing.price_basis === "per_unit" &&
+    listing.rent_term_months === 12 &&
     Number.isInteger(people) &&
     people >= 2 &&
     Number.isInteger(listing.occupancy) &&

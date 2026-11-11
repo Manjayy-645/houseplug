@@ -64,7 +64,10 @@ test("one occupant or absent owner permission can never produce a split", () => 
     sharingEligible({ occupancy: 2, sharing_allowed: true }, 3),
     false,
   );
-  assert.equal(sharingEligible({ occupancy: 2, sharing_allowed: true }), true);
+  assert.equal(sharingEligible({ occupancy: 2, sharing_allowed: true }), false);
+  assert.equal(sharingEligible({ occupancy: 2, sharing_allowed: true, price_basis: "per_bed", rent_term_months: 12 }), false);
+  assert.equal(sharingEligible({ occupancy: 2, sharing_allowed: true, price_basis: "per_unit", rent_term_months: 11 }), false);
+  assert.equal(sharingEligible({ occupancy: 2, sharing_allowed: true, price_basis: "per_unit", rent_term_months: 12 }), true);
 });
 test("freshness and scoped evidence govern promotion and badges", () => {
   const now = Date.parse("2026-11-11T12:00:00Z");

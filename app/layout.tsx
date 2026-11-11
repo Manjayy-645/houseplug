@@ -22,11 +22,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "HousePlug | Student Housing in Port Harcourt",
+    default: "Student Accommodation near UniPort & RSU | HousePlug",
     template: "%s | HousePlug",
   },
   description:
-    "Find off-campus student accommodation, self-cons, and lodges near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with landlords & agents.",
+    "Find student accommodation, self-cons and lodges near UniPort, RSU, IAUE and KenPoly. Compare details and contact listing agents directly on WhatsApp.",
   keywords: [
     "student housing Nigeria",
     "UniPort lodges",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     "Port Harcourt student lodges",
     "self con in Choba",
     "student apartments Nigeria",
-    "verified landlords Port Harcourt",
+    "student accommodation Port Harcourt",
     "student roommates UniPort",
     "HousePlug Nigeria",
   ],
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     locale: "en_NG",
     url: "https://www.houseplug.ng",
     siteName: "HousePlug",
-    title: "HousePlug | Student Housing Near Your Campus",
+    title: "Student Accommodation near UniPort & RSU | HousePlug",
     description:
       "Find off-campus lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Connect directly with landlords on WhatsApp.",
     images: [

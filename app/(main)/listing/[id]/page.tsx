@@ -64,7 +64,7 @@ export async function generateMetadata({
     UNIVERSITIES.find((u) => u.id === listing.university)?.shortName ||
     listing.university;
 
-  const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/year | HousePlug`;
+  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw} | HousePlug`;
   const description = `Student housing near ${campus}. Contact the landlord directly on WhatsApp.`;
 
   const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary");
@@ -80,7 +80,7 @@ export async function generateMetadata({
   }
 
   const ogImageUrl = getWhatsAppListingOgImage(mediaUrl, isVideo);
-  const ogTitle = `${listing.title} — ₦${formattedPriceRaw}/yr`;
+  const ogTitle = `${listing.title} — Listed ₦${formattedPriceRaw}`;
   const ogDescription = `Student accommodation in ${listing.area}, ${campus} on HousePlug.`;
   const listingUrl = `https://www.houseplug.ng/listing/${listing.id}`;
 
@@ -269,7 +269,7 @@ export default async function ListingDetailPage({
 
   // Fetch active roommate profiles near this listing's university campus
   let campusRoommates: CampusRoommate[] = [];
-  if (listingRowData?.university) {
+  if (listingRowData?.university && sharingEligible(listingRowData)) {
     try {
       const campusObj = UNIVERSITIES.find(
         (u) =>
@@ -284,7 +284,7 @@ export default async function ListingDetailPage({
       const { data: roommateRows } = await serviceClient
         .from("roommate_profiles")
         .select(
-          "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, phone_number, room_address, target_listing_id, target_listing_title",
+          "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, target_listing_id, target_listing_title",
         )
         .eq("status", "active")
         .eq("visibility_consent", true)
@@ -442,7 +442,7 @@ export default async function ListingDetailPage({
                   {formatNaira(listing.price_yearly)}
                 </p>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 sm:text-xs">
-                  Per Academic Year
+                  Listed rent · {listing.rent_term_months ? `${listing.rent_term_months} months` : "term unconfirmed"}
                 </p>
                 {sharingEligible(listing) && (
                   <a
@@ -460,7 +460,7 @@ export default async function ListingDetailPage({
               <div className="sm:mt-2">
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Available Now
+                  Availability confirmed
                 </span>
               </div>
             </div>
@@ -520,13 +520,15 @@ export default async function ListingDetailPage({
             )}
 
             {/* Roommate Rent-Split Section */}
-            <RoommateSplitSection
-              listing={listing}
-              campusRoommates={campusRoommates}
-              currentUserId={user?.id}
-              currentUserRole={userProfile?.role}
-              currentUserRoommateProfile={currentUserRoommateProfile}
-            />
+            {sharingEligible(listing) && (
+              <RoommateSplitSection
+                listing={listing}
+                campusRoommates={campusRoommates}
+                currentUserId={user?.id}
+                currentUserRole={userProfile?.role}
+                currentUserRoommateProfile={currentUserRoommateProfile}
+              />
+            )}
 
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />

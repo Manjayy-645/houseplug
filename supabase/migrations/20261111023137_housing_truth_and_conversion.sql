@@ -23,6 +23,8 @@ ALTER TABLE public.listings
  ADD COLUMN IF NOT EXISTS last_fee_verified_at timestamptz,
  ADD COLUMN IF NOT EXISTS price_verified_by uuid REFERENCES public.profiles(id),
  ADD COLUMN IF NOT EXISTS renewal_amount bigint,
+ ADD COLUMN IF NOT EXISTS price_basis text NOT NULL DEFAULT 'unconfirmed' CHECK(price_basis IN ('unconfirmed','per_bed','per_room','per_unit')),
+ ADD COLUMN IF NOT EXISTS rent_term_months integer CHECK(rent_term_months BETWEEN 1 AND 60),
  ADD COLUMN IF NOT EXISTS sharing_allowed boolean NOT NULL DEFAULT false,
  ADD COLUMN IF NOT EXISTS availability_state text NOT NULL DEFAULT 'unconfirmed' CHECK(availability_state IN ('unconfirmed','draft','pending_review','active','paused','under_offer','rented','expired','removed')),
  ADD COLUMN IF NOT EXISTS last_confirmed_at timestamptz,
@@ -179,7 +181,7 @@ BEGIN
  IF current_user IN ('anon','authenticated') THEN
   IF TG_OP='INSERT' THEN
    NEW.status:='pending';NEW.availability_state:='pending_review';NEW.is_featured:=false;NEW.show_on_home:=false;
-   NEW.fees_complete:=false;NEW.last_fee_verified_at:=NULL;NEW.price_verified_by:=NULL;
+   NEW.fees_complete:=false;NEW.price_basis:='unconfirmed';NEW.rent_term_months:=NULL;NEW.last_fee_verified_at:=NULL;NEW.price_verified_by:=NULL;
    NEW.media_confirmed_at:=NULL;NEW.authority_checked_at:=NULL;NEW.physically_inspected_at:=NULL;NEW.evidence_expires_at:=NULL;
    NEW.last_confirmed_at:=NULL;NEW.availability_expires_at:=NULL;
   ELSE
@@ -187,7 +189,7 @@ BEGIN
    IF NEW.status='active' AND OLD.status NOT IN ('active','unavailable') THEN RAISE EXCEPTION 'Cannot self-publish listing' USING ERRCODE='42501';END IF;
    NEW.is_featured:=OLD.is_featured;NEW.show_on_home:=OLD.show_on_home;NEW.fees_complete:=OLD.fees_complete;
    NEW.last_confirmed_at:=OLD.last_confirmed_at;NEW.availability_expires_at:=OLD.availability_expires_at;
-   IF ROW(NEW.price_yearly,NEW.fee_items,NEW.agent_fee_type,NEW.agent_fee_amount,NEW.description,NEW.title,NEW.address,NEW.area,NEW.university,NEW.video_url,NEW.photos,NEW.sharing_allowed,NEW.occupancy) IS DISTINCT FROM ROW(OLD.price_yearly,OLD.fee_items,OLD.agent_fee_type,OLD.agent_fee_amount,OLD.description,OLD.title,OLD.address,OLD.area,OLD.university,OLD.video_url,OLD.photos,OLD.sharing_allowed,OLD.occupancy) THEN
+   IF ROW(NEW.price_yearly,NEW.price_basis,NEW.rent_term_months,NEW.fee_items,NEW.agent_fee_type,NEW.agent_fee_amount,NEW.description,NEW.title,NEW.address,NEW.area,NEW.university,NEW.video_url,NEW.photos,NEW.sharing_allowed,NEW.occupancy) IS DISTINCT FROM ROW(OLD.price_yearly,OLD.price_basis,OLD.rent_term_months,OLD.fee_items,OLD.agent_fee_type,OLD.agent_fee_amount,OLD.description,OLD.title,OLD.address,OLD.area,OLD.university,OLD.video_url,OLD.photos,OLD.sharing_allowed,OLD.occupancy) THEN
     NEW.status:='pending';NEW.availability_state:='pending_review';NEW.fees_complete:=false;NEW.last_fee_verified_at:=NULL;
    END IF;
   END IF;
@@ -243,6 +245,7 @@ BEGIN
  END LOOP;
  INSERT INTO houseplug_private.listing_fee_reviews(listing_id,reviewer_id,source,evidence_pointer) VALUES(l.id,reviewer_id,payload->>'fee_source',payload->>'evidence_pointer');
  UPDATE public.listings SET fee_items=payload->'fee_items',fees_complete=(payload->>'fees_complete')::boolean,fee_source='Source reviewed by HousePlug',renewal_amount=(payload->>'renewal_amount')::bigint,
+ price_basis=coalesce(payload->>'price_basis','unconfirmed'),rent_term_months=(payload->>'rent_term_months')::integer,
  last_fee_verified_at=stamp,price_verified_by=reviewer_id,sharing_allowed=(payload->>'sharing_allowed')::boolean,occupancy=(payload->>'occupancy')::integer,
  status=CASE WHEN (payload->>'confirm_availability')::boolean THEN 'active' ELSE status END,
  availability_state=CASE WHEN (payload->>'confirm_availability')::boolean THEN 'active' ELSE 'unconfirmed' END,

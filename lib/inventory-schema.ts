@@ -19,6 +19,8 @@ export const inventoryReviewSchema = z.object({
   fees_complete: z.boolean(),
   fee_source: z.string().trim().min(3).max(500),
   renewal_amount: z.number().int().nonnegative().max(100000000).nullable(),
+  price_basis: z.enum(["unconfirmed", "per_bed", "per_room", "per_unit"]),
+  rent_term_months: z.number().int().min(1).max(60).nullable(),
   sharing_allowed: z.boolean(),
   occupancy: z.number().int().min(1).max(4),
   confirm_availability: z.boolean(),
