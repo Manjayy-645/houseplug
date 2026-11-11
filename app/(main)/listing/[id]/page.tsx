@@ -457,6 +457,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <div className="px-4 lg:px-8 pt-4">
           <SimilarListings currentListingId={listing.id} roomType={listing.room_type} />
         </div>
+        <div className="h-36 lg:hidden" aria-hidden="true" />
       </div>
     </main>
   )

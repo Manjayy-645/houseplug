@@ -17,16 +17,16 @@ import { FaqJsonLd } from "@/components/seo/json-ld"
 export const revalidate = 3600 // revalidate once per hour
 
 export const metadata: Metadata = {
-  title: "HousePlug | Verified Student Housing Near Nigerian Campuses",
+  title: "Student Housing near UniPort and RSU",
   description:
-    "Find verified student lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Zero agent stress, direct WhatsApp contact with verified landlords.",
+    "Find student lodges, self-cons and flatshares near UniPort, RSU, IAUE and KenPoly. Compare listings and contact agents directly on WhatsApp.",
   alternates: {
     canonical: "https://houseplug.ng",
   },
   openGraph: {
-    title: "HousePlug | Verified Student Housing & Lodges Near Campus",
+    title: "Student Housing near UniPort and RSU | HousePlug",
     description:
-      "Find verified off-campus student accommodation near UniPort, RSU, IAUE, and KenPoly. Connect directly with landlords on WhatsApp.",
+      "Find off-campus student accommodation near UniPort, RSU, IAUE and KenPoly. Connect directly with listing agents on WhatsApp.",
     url: "https://houseplug.ng",
     siteName: "HousePlug",
     locale: "en_NG",
@@ -38,22 +38,22 @@ const HOME_FAQS = [
   {
     question: "What is HousePlug?",
     answer:
-      "HousePlug is a verified student housing platform connecting Nigerian university students to off-campus lodges, apartments, roommates, and campus services with direct WhatsApp landlord contact.",
+      "HousePlug connects Nigerian university students to off-campus lodges, apartments, roommates and campus services with direct WhatsApp contact.",
   },
   {
     question: "Which universities are currently supported on HousePlug?",
     answer:
-      "HousePlug currently serves students around Port Harcourt universities including University of Port Harcourt (UniPort Choba), Rivers State University (RSU Nkpolu), Ignatius Ajuru University of Education (IAUE Rumuola), and Ken Saro-Wiwa Polytechnic (KenPoly Bori).",
+      "You can search around UniPort, RSU, IAUE and KenPoly. The number of current listings varies by campus; check the results before planning a visit.",
   },
   {
     question: "How does HousePlug verify lodges and landlords?",
     answer:
-      "Our team verifies properties and landlords through physical location checks, valid identity verification, and property ownership documentation to protect students from accommodation scams.",
+      "An advertiser ID badge indicates an identity check. It does not mean HousePlug inspected the property. Ask about availability and fees, then inspect the property yourself before paying.",
   },
   {
     question: "Are there agent fees on HousePlug?",
     answer:
-      "HousePlug offers transparent listings. Many properties are listed directly by landlords with zero agent fees. For agent-listed properties, fee terms are explicitly stated upfront.",
+      "Agent fees vary by listing. If a fee or the total move-in cost is not confirmed on the page, ask the agent for a written breakdown before paying.",
   },
 ]
 
@@ -123,7 +123,7 @@ export default async function LandingPage() {
               Find Your Perfect Student Home
             </h1>
             <p className="font-body-lg text-white/90 mb-6 sm:mb-8 md:mb-12 max-w-2xl mx-auto opacity-100 text-sm sm:text-base md:text-lg px-1">
-              Verified rooms and apartments for students across Nigerian universities. Secure your next home with confidence.
+              Explore rooms and apartments near campus. Compare details and discuss availability with the agent directly.
             </p>
             
             <HeroSearch />
@@ -170,19 +170,19 @@ export default async function LandingPage() {
                 <div className="bg-emerald-50 p-3 sm:p-3.5 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
                   <BadgeCheck className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <span className="font-bold text-gray-800 text-sm md:text-base">500+ Verified Listings</span>
+                <span className="font-bold text-gray-800 text-sm md:text-base">Compare Rooms Near Campus</span>
               </div>
               <div className="flex items-center justify-center gap-3 sm:gap-4 p-3 sm:p-4 w-full md:w-1/3 border-t md:border-t-0 border-gray-50 md:border-transparent">
                 <div className="bg-blue-50 p-3 sm:p-3.5 rounded-full flex items-center justify-center text-blue-600 shrink-0">
                   <Users className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <span className="font-bold text-gray-800 text-sm md:text-base">Trusted by Students Across PH</span>
+                <span className="font-bold text-gray-800 text-sm md:text-base">Contact Agents Directly</span>
               </div>
               <div className="flex items-center justify-center gap-3 sm:gap-4 p-3 sm:p-4 w-full md:w-1/3 border-t md:border-t-0 border-gray-50 md:border-transparent">
                 <div className="bg-amber-50 p-3 sm:p-3.5 rounded-full flex items-center justify-center text-amber-600 shrink-0">
                   <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
-                <span className="font-bold text-gray-800 text-sm md:text-base">Landlords Verified by ID</span>
+                <span className="font-bold text-gray-800 text-sm md:text-base">Inspect Before You Pay</span>
               </div>
             </div>
           </div>
@@ -239,7 +239,7 @@ export default async function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 sm:mb-10 md:mb-14 gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-2 sm:mb-3 tracking-tight">Rooms Near Campus</h2>
-              <p className="text-gray-500 font-medium text-sm sm:text-base md:text-lg">Handpicked quality accommodation across Nigerian Universities.</p>
+              <p className="text-gray-500 font-medium text-sm sm:text-base md:text-lg">Explore accommodation listings near Port Harcourt campuses.</p>
             </div>
             {featuredListings.length > 0 && (
               <Link href="/browse" className="text-primary font-bold hover:text-hp-amber transition-colors flex items-center gap-2 bg-primary/5 px-5 py-2.5 rounded-full w-full md:w-auto justify-center text-sm sm:text-base">
@@ -288,21 +288,21 @@ export default async function LandingPage() {
                   <Search className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-black text-gray-900 mb-3 sm:mb-4">1. Search</h3>
-                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Browse through hundreds of verified listings near campus with high-quality photos and clear prices.</p>
+                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Browse student housing near campus and compare the listed prices, videos and property details.</p>
               </div>
               <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] border border-gray-100 flex flex-col items-center text-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center mb-5 sm:mb-8 text-amber-600 -rotate-3 transition-transform group-hover:-rotate-6">
                   <MessageCircle className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-black text-gray-900 mb-3 sm:mb-4">2. Contact</h3>
-                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Connect directly with landlords and agents via WhatsApp or phone. No hidden platform commissions.</p>
+                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Contact the listing agent directly on WhatsApp. Confirm the rent term and all fees in your conversation.</p>
               </div>
               <div className="bg-white p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] border border-gray-100 flex flex-col items-center text-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center mb-5 sm:mb-8 text-emerald-600 rotate-3 transition-transform group-hover:rotate-6">
                   <Home className="h-8 w-8 sm:h-10 sm:w-10" />
                 </div>
                 <h3 className="text-lg sm:text-xl font-black text-gray-900 mb-3 sm:mb-4">3. Move In</h3>
-                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Schedule a physical inspection, pay securely, and settle into your perfect new student home.</p>
+                <p className="text-gray-500 font-medium leading-relaxed text-sm sm:text-base">Arrange an inspection with the agent yourself. Inspect the property and agree terms before paying.</p>
               </div>
             </div>
           </div>
@@ -322,7 +322,7 @@ export default async function LandingPage() {
                 Looking for a <span className="text-[#F59E0B]">Roommate?</span>
               </h2>
               <p className="text-emerald-50 text-base sm:text-lg mb-6 sm:mb-8 opacity-90 leading-relaxed">
-                Split the rent and make a new friend. Browse verified roommate requests from students near your campus or create your own request today.
+                Find someone to share suitable housing with. Check that the property allows sharing and agree costs before committing.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start">
                 <Link 
@@ -357,7 +357,7 @@ export default async function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-800/30 via-transparent to-transparent"></div>
           <div className="max-w-4xl mx-auto text-center px-5 sm:px-6 relative z-10">
             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-white mb-4 sm:mb-6 tracking-tight">Ready to find your next home?</h2>
-            <p className="text-base sm:text-lg md:text-xl text-emerald-100/90 mb-8 sm:mb-10 font-medium max-w-2xl mx-auto">Don&apos;t wait until the semester starts. Secure your spot today.</p>
+            <p className="text-base sm:text-lg md:text-xl text-emerald-100/90 mb-8 sm:mb-10 font-medium max-w-2xl mx-auto">Compare rooms, then contact the listing agent directly when one fits.</p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
               <Link 
                 href="/browse" 
