@@ -18,7 +18,9 @@ export default function Page({
       </h1>
       <p>
         Tell us your campus, preferred area, total move-in budget and move-in
-        date. We’ll help check suitable options.
+        date. We’ll help check suitable options. This assistance is optional:
+        you can contact a listing’s agent directly on WhatsApp without
+        submitting a request.
       </p>
       {featureFlags.housingRequests ? (
         <HousingRequestForm

@@ -85,6 +85,8 @@ try {
   }
   for (const file of [
     "tests/fixtures/base-schema.sql",
+    "supabase/migrations/020_real_time_tracking.sql",
+    "supabase/migrations/038_activity_events.sql",
     ...migrations.map((m) => "supabase/migrations/" + m),
     "tests/fixtures/e2e-seed.sql",
   ])

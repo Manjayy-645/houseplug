@@ -2,7 +2,9 @@
 
 ## Founder decisions (11 November 2026)
 
-HousePlug takes housing requests and connects students with advertisers. Students arrange inspections independently. This supersedes the brief's appointment, attendance, collision, reminder and inspection SLA engine. No appointment booking or inspection completion claim is implemented. The meaningful stages are submitted → qualified → matching → connected → reported rental / closed. A reported rental is not independent proof of a move-in.
+The governing contract is [direct student-to-agent WhatsApp contact](houseplug-direct-contact-model.md). The listing’s primary action is “Chat With Agent on WhatsApp.” Optional assistance, internal routing and reported outcomes never gate this action. HousePlug cannot monitor private conversations. Keep PR #3 draft; no merge or deployment until this correction is reviewed.
+
+HousePlug takes housing requests and connects students with advertisers. Students arrange inspections independently. This supersedes the brief's appointment, attendance, collision, reminder and inspection SLA engine. No appointment booking or inspection completion claim is implemented. Automatic Vercel deployments are disabled specifically for `feat/master-brief-implementation` in vercel.json during review; other branches retain their existing behavior. The meaningful stages are submitted → qualified → matching → connected → reported rental / closed. A reported rental is not independent proof of a move-in.
 
 Canonical origin: https://www.houseplug.ng. Retention controls remain configurable and automatic deletion is disabled by default. Housing request monetization is exploratory; intake is free and no new housing request payment product exists.
 
@@ -10,7 +12,7 @@ Canonical origin: https://www.houseplug.ng. Retention controls remain configurab
 
 - Integer-naira itemized mandatory fees, unknown totals, separate renewal/inspection disclosures, admin review evidence, scoped checks, owner-approved occupancy, freshness filters and owner reconfirmation.
 - Mobile homepage, honest eligible inventory counts and empty states, total budget browse, public listing data minimization, canonical metadata and preview indexing controls.
-- Guest/signed-in consented housing requests, transactional references, idempotency/rate limits, private inboxes, guarded stages, advertiser assignment, one-to-three current budget-compatible room suggestions and audit records.
+- Optional guest/signed-in consented housing requests, transactional references, idempotency/rate limits, private inboxes, guarded stages, optional assistance routing, one-to-three current budget-compatible room suggestions and audit records.
 - Private notification outbox with leased retries, protected maintenance endpoint, optional operational email adapter. No outbound messages were sent during development.
 - Opt-in expiring roommate discovery, private raw profiles, reciprocal requests and accepted contact sharing with revoke/block controls.
 - Supplier vetting evidence and a disabled-by-default service enquiry pilot, abuse reports, own-data export, reviewed guide publishing, referrals and an outcomes dashboard.

@@ -1,6 +1,6 @@
 "use client";
 
-import { sharingEligible } from "@/lib/housing";
+import { moveInTotal, sharingEligible } from "@/lib/housing";
 import { useMemo, useState } from "react";
 import { ShieldCheck, Phone, ShieldAlert, Users } from "lucide-react";
 import type { Listing } from "@/types";
@@ -27,6 +27,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
   const [showPhone, setShowPhone] = useState(false);
 
   const revealedPhone = listing.phone_number || listing.whatsapp_number || "";
+  const total = moveInTotal(listing);
   const isVerified = listing.landlord?.verification_status === "verified";
 
   const whatsappUrl = useMemo(
@@ -35,7 +36,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
   );
 
   const handleWhatsAppClick = () => {
-    void recordWhatsAppClick(listing.id);
+    void recordWhatsAppClick(listing.id).catch(() => {});
     try {
       const supabase = createClient();
       void supabase.from("activity_events").insert({
@@ -67,7 +68,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
         <div className="sticky top-24 space-y-4 rounded-2xl border border-gray-200/90 bg-white p-6 shadow-sm">
           <div className="flex items-baseline justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-600">
                 Annual rent
               </p>
               <p className="text-3xl font-black text-[#1B4332]">
@@ -85,6 +86,10 @@ export default function ContactCard({ listing }: ContactCardProps) {
             )}
           </div>
 
+          <p className="text-sm text-gray-700">
+            Initial housing payment:{" "}
+            {total === null ? "total not yet confirmed" : formatNaira(total)}
+          </p>
           {/* Roommate Split Callout */}
           {sharingEligible(listing) && (
             <a
@@ -114,16 +119,24 @@ export default function ContactCard({ listing }: ContactCardProps) {
           )}
 
           <div className="space-y-2.5 pt-2">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={handleWhatsAppClick}
-              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] px-4 py-3.5 text-sm font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
-            >
-              <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-              Contact on WhatsApp
-            </a>
+            {whatsappUrl ? (
+              <a
+                data-testid="listing-whatsapp-desktop"
+                data-listing-whatsapp
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleWhatsAppClick}
+                className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#13783A] hover:bg-[#106532] active:scale-[0.98] px-4 py-3.5 text-sm font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
+              >
+                <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
+                Chat With Agent on WhatsApp
+              </a>
+            ) : (
+              <p role="status">
+                Agent WhatsApp contact is not available for this listing.
+              </p>
+            )}
 
             <button
               type="button"
@@ -137,8 +150,8 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
           {showPhone && (
             <div className="rounded-xl bg-gray-50 p-3.5 text-sm text-gray-800 border border-gray-100 animate-in fade-in slide-in-from-top-1">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Landlord Phone
+              <p className="text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                Advertiser phone
               </p>
               <a
                 href={`tel:${revealedPhone}`}
@@ -175,7 +188,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
       <div className="lg:hidden rounded-2xl border border-gray-200/90 bg-white p-5 shadow-sm space-y-4">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-600">
               Annual rent
             </p>
             <p className="text-2xl font-black text-[#1B4332]">
@@ -188,11 +201,15 @@ export default function ContactCard({ listing }: ContactCardProps) {
           {isVerified && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              Verified
+              Advertiser identity checked
             </span>
           )}
         </div>
 
+        <p className="text-sm text-gray-700">
+          Initial housing payment:{" "}
+          {total === null ? "total not yet confirmed" : formatNaira(total)}
+        </p>
         {/* Roommate Split Callout */}
         {sharingEligible(listing) && (
           <a
@@ -222,16 +239,24 @@ export default function ContactCard({ listing }: ContactCardProps) {
         )}
 
         <div className="space-y-2.5">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={handleWhatsAppClick}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] px-4 py-3.5 text-base font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
-          >
-            <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-            Chat on WhatsApp
-          </a>
+          {whatsappUrl ? (
+            <a
+              data-testid="listing-whatsapp-mobile"
+              data-listing-whatsapp
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleWhatsAppClick}
+              className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#13783A] hover:bg-[#106532] active:scale-[0.98] px-4 py-3.5 text-base font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
+            >
+              <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
+              Chat With Agent on WhatsApp
+            </a>
+          ) : (
+            <p role="status">
+              Agent WhatsApp contact is not available for this listing.
+            </p>
+          )}
 
           {revealedPhone && (
             <div className="flex gap-2">
@@ -241,7 +266,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-[0.98] py-2.5 px-3 text-sm font-semibold text-gray-700 transition-all"
               >
                 <Phone className="h-4 w-4 text-gray-600" />
-                Call Landlord
+                Call Advertiser
               </a>
               <button
                 type="button"
@@ -256,7 +281,7 @@ export default function ContactCard({ listing }: ContactCardProps) {
 
         {showPhone && (
           <div className="rounded-xl bg-gray-50 p-3 text-sm text-gray-800 border border-gray-100 animate-in fade-in slide-in-from-top-1 text-center">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">
               Direct Phone Number
             </p>
             <a
@@ -289,13 +314,18 @@ export default function ContactCard({ listing }: ContactCardProps) {
         </div>
       </div>
 
+      <p className="mt-3 text-sm text-gray-700">
+        Discuss availability, fees and inspection arrangements directly with the
+        agent. HousePlug cannot read or monitor your private WhatsApp
+        conversations.
+      </p>
       {/* ── Mobile Sticky Floating Bottom Bar ── */}
       <div className="lg:hidden">
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/80 bg-white/95 px-4 sm:px-6 py-3.5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="mx-auto max-w-lg flex items-center justify-between gap-3.5 sm:gap-4">
-            <div className="min-w-0 flex-1">
+            <div className="hidden sm:block min-w-0 flex-1">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600">
                   Annual rent
                 </span>
                 {sharingEligible(listing) && (
@@ -318,29 +348,37 @@ export default function ContactCard({ listing }: ContactCardProps) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex w-full sm:w-auto items-center gap-2.5">
               {revealedPhone && (
                 <a
                   href={`tel:${revealedPhone}`}
                   onClick={handlePhoneCall}
                   className="h-12 w-12 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100 active:scale-95 flex items-center justify-center text-gray-700 shadow-sm transition-all"
-                  title="Call Landlord"
-                  aria-label="Call Landlord"
+                  title="Call Advertiser"
+                  aria-label="Call Advertiser"
                 >
                   <Phone className="h-5 w-5 text-gray-700" />
                 </a>
               )}
 
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleWhatsAppClick}
-                className="h-12 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] active:scale-95 px-4 sm:px-5 text-sm sm:text-base font-extrabold text-white shadow-lg shadow-[#25D366]/25 transition-all"
-              >
-                <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-                <span>Chat on WhatsApp</span>
-              </a>
+              {whatsappUrl ? (
+                <a
+                  data-testid="listing-whatsapp-sticky"
+                  data-listing-whatsapp
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleWhatsAppClick}
+                  className="min-h-12 flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-2xl bg-[#13783A] hover:bg-[#106532] active:scale-95 px-4 sm:px-5 text-sm sm:text-base font-extrabold text-white shadow-lg shadow-[#25D366]/25 transition-all"
+                >
+                  <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
+                  <span>Chat With Agent on WhatsApp</span>
+                </a>
+              ) : (
+                <p role="status" className="text-sm">
+                  Agent WhatsApp contact is not available for this listing.
+                </p>
+              )}
             </div>
           </div>
         </div>

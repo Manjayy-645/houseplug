@@ -37,8 +37,10 @@ export async function HousingInbox({
     <section className="space-y-4">
       <h1 className="text-3xl font-bold">Housing requests</h1>
       <p>
-        Requests connect students and advertisers. Students arrange inspections
-        directly.
+        Optional assistance requests only. Students can contact each listing’s
+        advertiser directly on WhatsApp without submitting a request or waiting
+        for assignment. HousePlug does not read private WhatsApp conversations
+        or confirm inspections.
       </p>
       {error ? (
         <p>Request inbox is not available yet.</p>

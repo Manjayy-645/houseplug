@@ -21,13 +21,13 @@ export function RequestStatusActions({
     <div>
       {agents.length > 0 && (
         <label>
-          Matched advertiser
+          Optional assistance routing
           <select
             className="border rounded p-3"
             value={agent}
             onChange={(e) => setAgent(e.target.value)}
           >
-            <option value="">Keep current assignment</option>
+            <option value="">No change (optional)</option>
             {agents.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.full_name}
@@ -65,7 +65,11 @@ export function RequestStatusActions({
             .filter((s) => !requester || s === "cancelled")
             .map((s) => (
               <option key={s} value={s}>
-                {s.replaceAll("_", " ")}
+                {s === "connected"
+                  ? "Reported connection (manual)"
+                  : s === "rented"
+                    ? "Reported rental (manual)"
+                    : s.replaceAll("_", " ")}
               </option>
             ))}
         </select>

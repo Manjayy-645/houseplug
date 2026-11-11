@@ -1,3 +1,4 @@
+import { featureFlags } from "@/lib/feature-flags";
 import Link from "next/link";
 import type { Listing } from "@/types";
 import {
@@ -65,12 +66,14 @@ export function ListingTruthPanel({ listing }: { listing: Listing }) {
           "no current property checks recorded"}
       </p>
       <div className="flex flex-wrap gap-3">
-        <Link
-          className="underline py-3"
-          href={`/housing-assistance?listing=${listing.id}`}
-        >
-          Ask About This Room
-        </Link>
+        {featureFlags.housingRequests && (
+          <Link
+            className="underline py-3"
+            href={`/housing-assistance?listing=${listing.id}`}
+          >
+            Optional housing assistance
+          </Link>
+        )}
         <Link className="underline py-3" href={`/report?listing=${listing.id}`}>
           Report this listing
         </Link>

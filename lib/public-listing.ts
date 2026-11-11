@@ -1,3 +1,4 @@
+import { currentAvailability } from "@/lib/housing";
 import type { Listing, Profile } from "@/types";
 // Explicit allowlist: internal review notes and future database fields never reach client props.
 const fields = [
@@ -49,6 +50,12 @@ export function publicListing(row: Listing): Listing {
   const out: Record<string, unknown> = {};
   for (const k of fields)
     if (k in row) out[k] = (row as unknown as Record<string, unknown>)[k];
+  // These are advertiser-supplied listing contacts, never private account contacts.
+  // Owner/admin previews of unpublished or stale inventory do not publish contacts.
+  if (!currentAvailability(row)) {
+    out.whatsapp_number = "";
+    out.phone_number = "";
+  }
   out.address = row.area;
   const p = row.landlord;
   if (p)

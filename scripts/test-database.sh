@@ -11,6 +11,7 @@ for attempt in $(seq 1 30); do
 done
 apply(){ docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 --single-transaction < "$1"; }
 apply tests/fixtures/base-schema.sql
+apply supabase/migrations/020_real_time_tracking.sql
 apply supabase/migrations/20261111020101_houseplug_profile_and_internal_function_security.sql
 apply supabase/migrations/20261111023137_housing_truth_and_conversion.sql
 apply supabase/migrations/20261111025356_payment_fulfilment_recovery.sql

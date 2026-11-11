@@ -76,7 +76,9 @@ export default async function Page() {
       <h1 className="text-3xl font-bold">Housing request outcomes</h1>
       <p>
         Requests and reported connections are separate from WhatsApp clicks.
-        HousePlug does not schedule or certify inspections.
+        HousePlug cannot read private WhatsApp conversations and does not
+        schedule or certify inspections. Connections and rentals shown here are
+        separately reported outcomes, not observations of WhatsApp activity.
       </p>
       <div className="grid sm:grid-cols-4 gap-4">
         {[

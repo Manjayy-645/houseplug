@@ -8,5 +8,10 @@
       "path": "/api/cron/housing",
       "schedule": "15 9 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feat/master-brief-implementation": false
+    }
+  }
 }

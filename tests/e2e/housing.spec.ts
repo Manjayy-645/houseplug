@@ -52,13 +52,223 @@ test("total budget filtering, single occupancy and no synthetic inventory", asyn
   await expect(page.getByText("Move-in total: ₦400,000")).toBeVisible();
   await page.goto(`/listing/${listing}`);
   await expect(
-    page.getByText("Initial housing payment: ₦400,000"),
+    page.getByText("Initial housing payment: ₦400,000").first(),
   ).toBeVisible();
   await expect(page.getByText("Split:", { exact: false })).toHaveCount(0);
   await expect(page.getByText("Private fixture address")).toHaveCount(0);
+  await expect(page.getByText("No agent fee for this listing")).toHaveCount(0);
+  await expect(
+    page.getByText("Agency fee: ₦150,000", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByText("Immediate", { exact: true })).toHaveCount(0);
   const demo = await page.goto("/listing/1");
   expect(demo?.status()).toBe(404);
 });
+// This reader is deliberately restricted to the disposable local test gateway.
+async function fixtureRows(
+  request: import("@playwright/test").APIRequestContext,
+  path: string,
+) {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (
+    !base ||
+    new URL(base).hostname !== "127.0.0.1" ||
+    new URL(base).port !== "54421"
+  )
+    throw Error("Disposable QA database required");
+  const response = await request.get(`${base}/rest/v1/${path}`, {
+    headers: {
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  return response.json();
+}
+
+test("a guest contacts the responsible agent directly on WhatsApp without a request or assignment", async ({
+  page,
+  context,
+  request,
+}) => {
+  test.setTimeout(90_000);
+  const snapshot = async () => ({
+    requests: await fixtureRows(
+      request,
+      "housing_requests?select=id,status,assigned_agent_id&order=id",
+    ),
+    events: await fixtureRows(request, "lead_events?select=id,event&order=id"),
+    outbox: await fixtureRows(
+      request,
+      "notification_outbox?select=id,event&order=id",
+    ),
+  });
+  const before = await snapshot();
+  const baseline = (
+    await fixtureRows(
+      request,
+      `listings?select=whatsapp_clicks&id=eq.${listing}`,
+    )
+  )[0].whatsapp_clicks;
+  await context.route("https://wa.me/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<p>Local WhatsApp link test. No message sent.</p>",
+    }),
+  );
+  const formRequests: string[] = [];
+  page.on("request", (r) => {
+    if (r.url().includes("/api/housing-requests") && r.method() === "POST")
+      formRequests.push(r.url());
+  });
+  let clicks = 0;
+  for (const width of [320, 375, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/browse?university=uniport&max_total=450000");
+    await page
+      .getByRole("link", { name: "View Room Details", exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`/listing/${listing}$`));
+    await expect(
+      page.getByText(
+        "HousePlug cannot read or monitor your private WhatsApp conversations.",
+        { exact: false },
+      ),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: /Submit Housing Request|Book inspection|Confirm inspection/i,
+      }),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    const cta = page.getByTestId(
+      width < 1024 ? "listing-whatsapp-sticky" : "listing-whatsapp-desktop",
+    );
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAccessibleName("Chat With Agent on WhatsApp");
+    const url = new URL((await cta.getAttribute("href"))!);
+    expect(url.origin).toBe("https://wa.me");
+    expect(url.pathname).toBe("/2348012345678");
+    const message = url.searchParams.get("text")!;
+    expect(message).toContain("Test fixture room");
+    expect(message).toContain(`Listing reference: ${listing}`);
+    expect(message).toContain(`https://www.houseplug.ng/listing/${listing}`);
+    const html = await page.content();
+    expect(html).not.toContain("08087654321");
+    expect(html).not.toContain("agent@example.invalid");
+    const [popup] = await Promise.all([
+      page.waitForEvent("popup"),
+      cta.click(),
+    ]);
+    await popup.waitForLoadState();
+    expect(new URL(popup.url()).pathname).toBe("/2348012345678");
+    await popup.close();
+    clicks++;
+    await expect
+      .poll(
+        async () =>
+          (
+            await fixtureRows(
+              request,
+              `listings?select=whatsapp_clicks&id=eq.${listing}`,
+            )
+          )[0].whatsapp_clicks,
+      )
+      .toBe(baseline + clicks);
+    await page.screenshot({
+      path: `test-results/direct-contact-${width}.png`,
+      fullPage: true,
+    });
+  }
+  await expect
+    .poll(
+      async () =>
+        (
+          await fixtureRows(
+            request,
+            `listings?select=whatsapp_clicks&id=eq.${listing}`,
+          )
+        )[0].whatsapp_clicks,
+    )
+    .toBe(baseline + 3);
+  await expect
+    .poll(
+      async () =>
+        (
+          await fixtureRows(
+            request,
+            `funnel_events?select=event&event=eq.whatsapp_click&listing_id=eq.${listing}`,
+          )
+        ).length,
+    )
+    .toBe(1);
+  expect(await snapshot()).toEqual(before);
+  expect(formRequests).toEqual([]);
+  for (const event of [
+    "qualified_enquiry_created",
+    "inspection_confirmed",
+    "rental_outcome_confirmed",
+  ]) {
+    const forged = await page.request.post("/api/funnel-events", {
+      headers: { Origin: new URL(page.url()).origin },
+      data: { event, session_id: randomUUID(), listing_id: listing },
+    });
+    expect(forged.status()).toBe(400);
+  }
+});
+
+test("WhatsApp navigation survives tracking failure and never becomes a booking form", async ({
+  page,
+  context,
+}) => {
+  await context.route("https://wa.me/**", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<p>Local WhatsApp test</p>",
+    }),
+  );
+  await page.route("**/api/funnel-events", (route) => route.abort());
+  await page.route("**/*", (route) =>
+    route.request().method() === "POST" &&
+    route.request().headers()["next-action"]
+      ? route.abort()
+      : route.fallback(),
+  );
+  await page.goto(`/listing/${listing}`);
+  const cta = page.getByTestId("listing-whatsapp-desktop");
+  const [popup] = await Promise.all([page.waitForEvent("popup"), cta.click()]);
+  await popup.waitForLoadState();
+  expect(new URL(popup.url()).hostname).toBe("wa.me");
+  await popup.close();
+  await expect(page).toHaveURL(new RegExp(`/listing/${listing}$`));
+  await expect(
+    page.getByRole("button", { name: /submit|book|confirm inspection/i }),
+  ).toHaveCount(0);
+});
+
+test("unpublished and expired contacts stay private; missing WhatsApp has an honest empty state", async ({
+  page,
+}) => {
+  for (const id of [
+    "20000000-0000-4000-8000-000000000002",
+    "20000000-0000-4000-8000-000000000004",
+  ]) {
+    await page.goto(`/listing/${id}`);
+    await expect(page.locator("a[data-listing-whatsapp]")).toHaveCount(0);
+    expect(await page.content()).not.toContain("08087654321");
+  }
+  await page.goto("/listing/20000000-0000-4000-8000-000000000003");
+  await expect(
+    page
+      .getByText("Agent WhatsApp contact is not available for this listing.")
+      .first(),
+  ).toBeVisible();
+  await expect(page.locator("a[data-listing-whatsapp]")).toHaveCount(0);
+  await expect(page.locator('a[href^="https://wa.me/"]')).toHaveCount(0);
+});
+
 test("guest request persists, returns reference, and is idempotent", async ({
   page,
 }) => {
@@ -101,7 +311,7 @@ test("guest request persists, returns reference, and is idempotent", async ({
   expect(retry.status()).toBe(201);
   expect((await retry.json()).reference).toBe(saved.reference);
 });
-test("administrator sees private inbox; unrelated student cannot alter a request", async ({
+test("optional assistance needs no agent assignment; private requests stay authorized", async ({
   browser,
   baseURL,
 }) => {
@@ -132,10 +342,14 @@ test("administrator sees private inbox; unrelated student cannot alter a request
     headers: { Origin: baseURL! },
     data: {
       status: "qualified",
-      assigned_agent_id: "10000000-0000-4000-8000-000000000003",
     },
   });
   expect(qualified.status()).toBe(200);
+  const appointment = await p.request.patch(`/api/housing-requests/${id}`, {
+    headers: { Origin: baseURL! },
+    data: { status: "inspection_confirmed" },
+  });
+  expect(appointment.status()).toBe(400);
   const matched = await p.request.post(`/api/housing-requests/${id}/matches`, {
     headers: { Origin: baseURL! },
     data: { listing_ids: [listing] },
@@ -145,17 +359,13 @@ test("administrator sees private inbox; unrelated student cannot alter a request
   await expect(
     p.getByRole("link", { name: "View suggested room" }),
   ).toBeVisible();
-  const agent = await browser.newContext();
-  await login(agent, "agent");
-  const ap = await agent.newPage();
-  const connected = await ap.request.patch(
+  const connected = await p.request.patch(
     `${baseURL}/api/housing-requests/${id}`,
     { headers: { Origin: baseURL! }, data: { status: "connected" } },
   );
   expect(connected.status()).toBe(200);
   await admin.close();
   await other.close();
-  await agent.close();
 });
 test("canonical host, sitemap and guides do not expose previews or private request pages", async ({
   page,

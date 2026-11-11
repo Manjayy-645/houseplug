@@ -1,6 +1,6 @@
 # HousePlug dependency map and pull-request implementation plan
 
-Planning deliverable only. No application changes, migrations, external notifications, PR creation or deployment performed. Estimates are sequencing, not promised dates; a staffed operator and schema access are delivery dependencies.
+Original discovery plan, updated for the founder’s direct student-to-agent WhatsApp requirement on 11 November 2026. Implementation is in draft PR #3; current coverage is in houseplug-release-runbook.md. Agent assignment and inspection management are not dependencies of property contact. Do not merge or deploy until this correction is reviewed.
 
 ## Dependency map
 
@@ -26,16 +26,16 @@ flowchart TD
  Security --> Events[N0 privacy-safe events and notification outbox]
  Events --> Lead[L0 housing requests and triage]
  Policy --> Lead
- Lead --> Inspect[L1 agent-confirmed inspection pilot]
- Avail --> Inspect
+ Eligibility --> Direct[L1 direct listing WhatsApp contact]
+ Events --> Direct
  Eligibility --> Home[C0 mobile homepage]
- Lead --> Home
  Search --> Home
  Audit --> Host[E0 canonical host / robots / sitemap]
  Host --> SEO[E1 technical SEO]
  Eligibility --> SEO
  SEO --> Hubs[G0 UNIPORT and reviewed guides]
- Inspect --> Dash[D0 attended-inspection dashboard]
+ Direct --> Dash[D0 clicks and separately reported optional outcomes]
+ Lead -. optional assistance .-> Dash
  Dash --> Grow[P2 referrals and controlled experiments]
  Security --> Room[R0 roommate privacy then R1 accepted connections]
  Eligibility --> Services[P2 vetted service pilot]
@@ -67,7 +67,7 @@ Every PR: one concrete behavior, pinned base, targeted tests, affected routes an
 | P2 | Atomic payment fulfilment and retry | lib/billing.ts, fulfilment/outbox state migration, redacted logging | Concurrent/replayed callback once; simulated mid-write crash recovers; reconciliation dry-run; preserve payment audit; no blind revert of financial state |
 | A2 | N0 event schema + safe flags + notification outbox | minimal server event utility/storage, explicit flags, redacted payloads, notification retry | Duplicate events and retry, no PII/consent leakage, flags off fail safely; support fixture and retention tests |
 | C1 | L0 persisted housing assistance and admin triage | housing request schema/actions/API/UI, admin triage, reference IDs, consent | Idempotent saved request, denied cross-user access, spam/validation, successful commit before success UI; flag off preserves records |
-| C2 | L1 agent-approved inspections | inspection state machine/storage, own-agent panel, scheduling/outbox/escalation | Agent approve/cancel/reschedule/collision; unavailable before confirm; no-show/attendance/outcome; real staffed staging rehearsal; stop new bookings while preserving confirmed ones on rollback |
+| C2 | L1 direct WhatsApp contact, preserving existing functionality | Listing contact CTA, prefilled message helper, click tracking and regression tests | Guest contacts the responsible advertiser without login, a request, assignment, payment or booking; name/reference/URL included; click does not create an enquiry or outcome; optional assistance remains separate |
 | C3 | C0 homepage redesign | app/page.tsx, hero/search/home components and relevant styles | Exact brief copy, eligible supply and empty campus assistance, 320/360/375/768/1280, keyboard, a11y; flag reverts layout but retains truth fixes |
 | D1 | E1 SEO/performance/accessibility | metadata/schema, image/rendering and automated SEO checks | Rich Results semantic review, indexability/status/sitemap smoke, measured lab tests; real-user CWV remains separately measured |
 | D2 | G0 UNIPORT/area hubs and guides | new hub/editorial routes reusing listing eligibility | Published original reviewed content and meaningful supply; noindex/hold empty hubs; redirects only to true successors |
@@ -92,8 +92,8 @@ S0 is the higher-severity investigation and should begin alongside T0; if deploy
 5. Review staged diff, privacy/authz/mobile/test evidence and operator runbook. Production migrations and financial/legal/policy changes have separate owner sign-off.
 6. Release by small cohort with redacted error/outcome metrics; stop new workflow intake on rollback while preserving existing requests/payment history.
 
-Never use a rollback that restores public private-data access, deletes financial history, fabricates unknown fields or loses confirmed appointments. Prefer forward repairs for additive schema/financial state.
+Never use a rollback that restores public private-data access, deletes financial history, fabricates unknown fields or loses consented assistance requests. Prefer forward repairs for additive schema/financial state.
 
-## Approval boundary
+## Review boundary
 
-The user's current request authorizes audit/planning only. The brief additionally says “request approval before proceeding” and requires owner sign-off for payment architecture, verification promises, fees, user-data policies and production migrations (§20 and opening scope). These are future implementation gates, not reasons to leave this audit incomplete. Review A0, then explicitly authorize one bounded ticket/PR. No permission to deploy is implied.
+The founder authorizes this product correction on the existing implementation branch. Keep PR #3 draft. Do not merge, deploy, apply production SQL, enable new charges or send messages. See houseplug-direct-contact-model.md for the current product contract and its acceptance tests.

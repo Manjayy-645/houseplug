@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { SITE_URL } from "@/lib/site";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -45,12 +46,10 @@ export function buildWhatsAppLink(
       : digits
         ? "234" + digits
         : "";
-  if (!/^234[789][01]\d{8}$/.test(normalized))
-    return listingId
-      ? `/housing-assistance?listing=${encodeURIComponent(listingId)}`
-      : "/housing-assistance";
+  // A missing advertiser contact must never masquerade as a WhatsApp link.
+  if (!/^234[789][01]\d{8}$/.test(normalized)) return "";
   const urlSuffix = listingId
-    ? `\nhttps://www.houseplug.ng/listing/${listingId}`
+    ? `\nListing reference: ${listingId}\n${SITE_URL}/listing/${encodeURIComponent(listingId)}`
     : "";
   const message = encodeURIComponent(
     `Hi, I found your listing on HousePlug - ${listingTitle}. Is it still available?${urlSuffix}`,

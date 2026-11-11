@@ -477,7 +477,8 @@ export default async function ListingDetailPage({
 
             {/* Agent fee — driven by the fee fields on the listing (only agents
                 ever set fixed/negotiable), so it shows regardless of viewport. */}
-            {!listing.fees_complete &&
+            {!listing.fee_items?.length &&
+              !listing.fees_complete &&
               (listing.agent_fee_type === "fixed" ||
                 listing.agent_fee_type === "negotiable") && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
@@ -504,18 +505,6 @@ export default async function ListingDetailPage({
                       . Discuss directly with the agent.
                     </p>
                   )}
-                </div>
-              )}
-
-            {listing.landlord?.role === "agent" &&
-              listing.agent_fee_type === "none" && (
-                <div className="rounded-2xl border border-green-200 bg-green-50 p-5">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-green-700 shrink-0" />
-                    <p className="text-sm font-semibold text-green-800">
-                      No agent fee for this listing
-                    </p>
-                  </div>
                 </div>
               )}
 
