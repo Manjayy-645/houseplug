@@ -1,0 +1,182 @@
+{
+  "command": "npm run lint:all",
+  "errors": 48,
+  "warnings": 39,
+  "files_with_errors": [
+    {
+      "file": "app/(auth)/forgot-password/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(auth)/reset-password/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/card/[username]/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/contact/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/housing-assistance/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/roommates/[id]/contact-button.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/roommates/[id]/page.tsx",
+      "errors": 1,
+      "rules": [
+        "@typescript-eslint/no-explicit-any"
+      ]
+    },
+    {
+      "file": "app/(main)/roommates/create/create-form.tsx",
+      "errors": 5,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/(main)/roommates/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/admin/listings/create/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/admin/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/landlord/analytics/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/landlord/reviews/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/landlord/verification/page.tsx",
+      "errors": 6,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/maintenance/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/offline/page.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "app/student/dashboard/page.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/admin/review-table.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/landlord/marketing-card-preview.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/landlord/review-reply-form.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/pwa/InstallPrompt.tsx",
+      "errors": 1,
+      "rules": [
+        "@typescript-eslint/no-explicit-any"
+      ]
+    },
+    {
+      "file": "components/search/UniversityCombobox.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/services/my-campus-service.tsx",
+      "errors": 4,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/top-matches.tsx",
+      "errors": 2,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    },
+    {
+      "file": "components/university/SuggestUniversityModal.tsx",
+      "errors": 1,
+      "rules": [
+        "react/no-unescaped-entities"
+      ]
+    }
+  ]
+}

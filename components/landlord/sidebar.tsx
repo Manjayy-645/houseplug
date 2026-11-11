@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import {
   CreditCard,
   Eye,
@@ -17,62 +17,80 @@ import {
   ShieldCheck,
   AlertCircle,
   Search,
-  ExternalLink
-} from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import type { Plan, Profile } from "@/types"
+  ExternalLink,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import type { Plan, Profile } from "@/types";
 
 type SidebarProps = {
-  plan: Plan
-  listingCount: number
-  verificationStatus?: Profile["verification_status"]
-}
+  plan: Plan;
+  listingCount: number;
+  verificationStatus?: Profile["verification_status"];
+};
 
 const navItems = [
+  { href: "/landlord/requests", label: "Housing Requests", icon: Search },
   { href: "/landlord/dashboard", label: "My Rooms", icon: LayoutDashboard },
   { href: "/landlord/listings/new", label: "Add New", icon: Plus },
-  { href: "/landlord/subscription", label: "Plan", icon: CreditCard }
-]
+  { href: "/landlord/subscription", label: "Plan", icon: CreditCard },
+];
 
 const planDisplay: Record<string, string> = {
-  free: 'Free Plan',
-  pro: 'Pro Plan',
-  business: 'Business Plan',
-}
+  free: "Free Plan",
+  pro: "Pro Plan",
+  business: "Business Plan",
+};
 
-export function LandlordSidebar({ plan, listingCount, verificationStatus }: SidebarProps) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+export function LandlordSidebar({
+  plan,
+  listingCount,
+  verificationStatus,
+}: SidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const isUnverified = verificationStatus === "unverified" || verificationStatus === "rejected"
+  const isUnverified =
+    verificationStatus === "unverified" || verificationStatus === "rejected";
 
   const onLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden w-[220px] flex-col bg-[#1B4332] text-white lg:flex sticky top-0 h-screen">
         <div className="border-b border-white/15 px-4 py-5 flex items-center gap-2">
-          <Image src="/logo.png" alt="HousePlug Logo" width={32} height={32} className="rounded-lg bg-white p-0.5" />
+          <Image
+            src="/logo.png"
+            alt="HousePlug Logo"
+            width={32}
+            height={32}
+            className="rounded-lg bg-white p-0.5"
+          />
           <div>
-            <Link href="/landlord/dashboard" className="text-xl font-bold hover:text-[#F59E0B] transition">
+            <Link
+              href="/landlord/dashboard"
+              className="text-xl font-bold hover:text-[#F59E0B] transition"
+            >
               HousePlug
             </Link>
-            <p className="text-[10px] text-white/70 uppercase font-black tracking-widest">Landlord</p>
+            <p className="text-[10px] text-white/70 uppercase font-black tracking-widest">
+              Landlord
+            </p>
           </div>
         </div>
 
         <nav className="flex-1 space-y-1 px-2 py-3">
           {navItems.map((item) => {
-            const Icon = item.icon
-            const active = pathname === item.href
-            const showWarning = item.href === "/landlord/verification" && isUnverified
+            const Icon = item.icon;
+            const active = pathname === item.href;
+            const showWarning =
+              item.href === "/landlord/verification" && isUnverified;
 
             return (
               <Link
@@ -88,9 +106,11 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
                   <Icon className="h-4 w-4" />
                   <span>{item.label}</span>
                 </div>
-                {showWarning && <AlertCircle className="h-4 w-4 text-[#F59E0B]" />}
+                {showWarning && (
+                  <AlertCircle className="h-4 w-4 text-[#F59E0B]" />
+                )}
               </Link>
-            )
+            );
           })}
 
           {/* Divider */}
@@ -109,12 +129,17 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
 
         <div className="space-y-3 border-t border-white/15 p-3">
           <div className="rounded-md bg-white/10 p-3 text-xs">
-            <p className="font-semibold uppercase tracking-wide text-white/80">{planDisplay[plan] || 'Free Plan'}</p>
+            <p className="font-semibold uppercase tracking-wide text-white/80">
+              {planDisplay[plan] || "Free Plan"}
+            </p>
             <p className="mt-1 text-white/90">
-              {listingCount} {listingCount === 1 ? 'Room' : 'Rooms'}
+              {listingCount} {listingCount === 1 ? "Room" : "Rooms"}
             </p>
             {plan === "free" ? (
-              <Link href="/landlord/subscription" className="mt-2 inline-block font-semibold text-[#F59E0B] hover:underline">
+              <Link
+                href="/landlord/subscription"
+                className="mt-2 inline-block font-semibold text-[#F59E0B] hover:underline"
+              >
                 Upgrade &rarr;
               </Link>
             ) : null}
@@ -134,57 +159,77 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/landlord/dashboard" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
+          <Image
+            src="/logo.png"
+            alt="HousePlug Logo"
+            width={28}
+            height={28}
+            className="rounded-lg"
+          />
           <span className="font-bold text-[#1B4332]">Landlord Console</span>
         </Link>
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-gray-600 active:bg-gray-50 rounded-lg">
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-1 text-gray-600 active:bg-gray-50 rounded-lg"
+        >
+          {isMenuOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </header>
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
         <>
-          <div className="fixed inset-0 z-30 lg:hidden" onClick={() => setIsMenuOpen(false)} />
+          <div
+            className="fixed inset-0 z-30 lg:hidden"
+            onClick={() => setIsMenuOpen(false)}
+          />
           <div className="absolute right-4 top-[65px] z-40 w-64 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl lg:hidden">
             <nav className="flex flex-col space-y-4">
-               <div className="rounded-xl bg-[#1B4332]/5 p-4 border border-[#1B4332]/10">
-                 <p className="text-xs font-bold text-[#1B4332] uppercase tracking-widest">Active Plan</p>
-                 <div className="flex items-center justify-between mt-1">
-                   <p className="text-lg font-black text-[#1B4332] capitalize">{planDisplay[plan] || 'Free Plan'}</p>
-                 </div>
-                 {plan === 'free' && (
-                   <Link 
-                    href="/landlord/subscription" 
+              <div className="rounded-xl bg-[#1B4332]/5 p-4 border border-[#1B4332]/10">
+                <p className="text-xs font-bold text-[#1B4332] uppercase tracking-widest">
+                  Active Plan
+                </p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-lg font-black text-[#1B4332] capitalize">
+                    {planDisplay[plan] || "Free Plan"}
+                  </p>
+                </div>
+                {plan === "free" && (
+                  <Link
+                    href="/landlord/subscription"
                     onClick={() => setIsMenuOpen(false)}
                     className="mt-3 block text-center rounded-lg bg-[#F59E0B] py-2 text-xs font-black text-gray-900"
-                   >
-                     Upgrade to Pro
-                   </Link>
-                 )}
-               </div>
+                  >
+                    Upgrade to Pro
+                  </Link>
+                )}
+              </div>
 
-               <Link
-                 href="/landlord/subscription"
-                 onClick={() => setIsMenuOpen(false)}
-                 className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white text-gray-700 shadow-sm transition active:scale-95"
-               >
-                 <div className="flex items-center gap-3 font-bold text-sm">
-                    <CreditCard className="h-4 w-4 text-gray-400" />
-                    <span>View all plans</span>
-                 </div>
-               </Link>
+              <Link
+                href="/landlord/subscription"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-white text-gray-700 shadow-sm transition active:scale-95"
+              >
+                <div className="flex items-center gap-3 font-bold text-sm">
+                  <CreditCard className="h-4 w-4 text-gray-400" />
+                  <span>View all plans</span>
+                </div>
+              </Link>
 
-               {/* Divider */}
-               <div className="border-t border-gray-100" />
+              {/* Divider */}
+              <div className="border-t border-gray-100" />
 
-               <button
-                 onClick={onLogout}
-                 className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border-2 border-red-50 text-red-600 font-bold text-sm active:bg-red-50 transition"
-               >
-                 <LogOut className="h-4 w-4" />
-                 Sign Out
-               </button>
+              <button
+                onClick={onLogout}
+                className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border-2 border-red-50 text-red-600 font-bold text-sm active:bg-red-50 transition"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
             </nav>
           </div>
         </>
@@ -195,12 +240,17 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
         {[
           { href: "/browse", icon: LayoutDashboard, label: "Home" },
           { href: "/landlord/analytics", icon: Eye, label: "Stats" },
-          { href: "/landlord/listings/new", icon: Plus, label: "Add", highlight: true },
+          {
+            href: "/landlord/listings/new",
+            icon: Plus,
+            label: "Add",
+            highlight: true,
+          },
           { href: "/landlord/subscription", icon: CreditCard, label: "Plan" },
-          { href: "/landlord/profile", icon: User, label: "Profile" }
+          { href: "/landlord/profile", icon: User, label: "Profile" },
         ].map((item) => {
-          const Icon = item.icon
-          const active = pathname === item.href
+          const Icon = item.icon;
+          const active = pathname === item.href;
           if (item.highlight) {
             return (
               <Link
@@ -210,7 +260,7 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
               >
                 <Icon className="h-6 w-6" />
               </Link>
-            )
+            );
           }
           return (
             <Link
@@ -221,11 +271,13 @@ export function LandlordSidebar({ plan, listingCount, verificationStatus }: Side
               }`}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
+              <span className="text-[10px] font-black uppercase tracking-tighter">
+                {item.label}
+              </span>
             </Link>
-          )
+          );
         })}
       </nav>
     </>
-  )
+  );
 }

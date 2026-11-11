@@ -1,73 +1,90 @@
-import Link from "next/link"
-import type { Metadata } from "next"
-import { ChevronLeft, ChevronRight, Users } from "lucide-react"
-import { FilterSidebar } from "@/components/filter-sidebar"
-import { ListingCard } from "@/components/listing-card"
-import { SearchBar } from "@/components/search-bar"
-import { createClient } from "@/lib/supabase/server"
-import { UNIVERSITIES } from "@/lib/constants"
-import { formatRoomType } from "@/lib/utils"
-import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
-import type { Listing } from "@/types"
+import { publicListing } from "@/lib/public-listing";
+import Link from "next/link";
+import { inventoryQuery } from "@/lib/public-inventory";
+import { siteUrl } from "@/lib/site";
+import type { Metadata } from "next";
+import { ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { FilterSidebar } from "@/components/filter-sidebar";
+import { ListingCard } from "@/components/listing-card";
+import { SearchBar } from "@/components/search-bar";
+import { createClient } from "@/lib/supabase/server";
+import { UNIVERSITIES } from "@/lib/constants";
+import { formatRoomType } from "@/lib/utils";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import type { Listing } from "@/types";
 
 type BrowsePageProps = {
   searchParams: {
-    q?: string
-    university?: string
-    room_type?: string
-    min_price?: string
-    max_price?: string
-    distance?: string
-    landlord_id?: string
-    sort?: "newest" | "price_asc" | "price_desc"
-    page?: string
-  }
-}
+    q?: string;
+    university?: string;
+    room_type?: string;
+    min_price?: string;
+    max_price?: string;
+    distance?: string;
+    landlord_id?: string;
+    sort?: "newest" | "price_asc" | "price_desc" | "total_asc" | "recommended";
+    max_total?: string;
+    verified?: string;
+    amenities?: string;
+    occupants?: string;
+    page?: string;
+  };
+};
 
-const PER_PAGE = 12
+const PER_PAGE = 12;
 
-export const revalidate = 60 // revalidate every 60 seconds
+export const revalidate = 60; // revalidate every 60 seconds
 
-export async function generateMetadata({ searchParams }: BrowsePageProps): Promise<Metadata> {
-  const university = searchParams.university?.trim()
-  const q = searchParams.q?.trim()
-  const roomType = searchParams.room_type?.trim()
+export async function generateMetadata({
+  searchParams,
+}: BrowsePageProps): Promise<Metadata> {
+  const university = searchParams.university?.trim();
+  const q = searchParams.q?.trim();
+  const roomType = searchParams.room_type?.trim();
 
   const matchedUni = UNIVERSITIES.find(
     (u) =>
       u.id.toLowerCase() === university?.toLowerCase() ||
-      u.shortName.toLowerCase() === university?.toLowerCase()
-  )
+      u.shortName.toLowerCase() === university?.toLowerCase(),
+  );
 
-  let title = "Student Accommodation in Port Harcourt"
+  let title = "Browse Student Housing in Port Harcourt";
   let description =
-    "Search student lodges, self-cons and apartments near UniPort, RSU, IAUE and KenPoly. Compare details and contact listing agents directly on WhatsApp."
+    "Search student lodges, self-cons, and apartments near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with landlords & agents.";
 
   if (matchedUni && roomType) {
-    const formattedType = formatRoomType(roomType as any)
-    title = `${formattedType} near ${matchedUni.shortName} (${matchedUni.area})`
-    description = `Find ${formattedType.toLowerCase()} accommodation near ${matchedUni.name} in ${matchedUni.area}. Contact listing agents directly on WhatsApp.`
+    const formattedType = formatRoomType(roomType as any);
+    title = `${formattedType} near ${matchedUni.shortName} (${matchedUni.area})`;
+    description = `Find ${formattedType.toLowerCase()} accommodation near ${matchedUni.name} in ${matchedUni.area}. Connect directly with landlords on WhatsApp.`;
   } else if (matchedUni) {
-    title = `Student Housing near ${matchedUni.shortName} (${matchedUni.area})`
-    description = `Browse off-campus student accommodation, self-cons and lodges near ${matchedUni.name} in ${matchedUni.area}. Direct WhatsApp contact with agents.`
+    title = `Student Housing near ${matchedUni.shortName} (${matchedUni.area})`;
+    description = `Browse off-campus student accommodation, self-cons, and lodges near ${matchedUni.name} in ${matchedUni.area}. Direct WhatsApp contact with landlords.`;
   } else if (q) {
-    title = `"${q}" — Student Lodges & Accommodation`
-    description = `Search results for "${q}" on HousePlug. Student accommodation near Port Harcourt universities.`
+    title = `"${q}" — Student Lodges & Accommodation`;
+    description = `Search results for "${q}" on HousePlug. Student accommodation across Nigerian universities.`;
   } else if (roomType) {
-    const formattedType = formatRoomType(roomType as any)
-    title = `${formattedType} Student Housing in Port Harcourt`
-    description = `Browse ${formattedType.toLowerCase()} student accommodation near universities in Port Harcourt on HousePlug.`
+    const formattedType = formatRoomType(roomType as any);
+    title = `${formattedType} Student Housing in Port Harcourt`;
+    description = `Browse ${formattedType.toLowerCase()} student accommodations across universities in Port Harcourt on HousePlug.`;
   }
 
-  const queryParams = new URLSearchParams()
-  if (university) queryParams.set("university", university)
-  if (roomType) queryParams.set("room_type", roomType)
-  const queryString = queryParams.toString()
+  const queryParams = new URLSearchParams();
+  if (university) queryParams.set("university", university);
+  if (roomType) queryParams.set("room_type", roomType);
+  if (Number(searchParams.page) > 1)
+    queryParams.set("page", String(Math.floor(Number(searchParams.page))));
+  const queryString = queryParams.toString();
   const canonicalUrl = queryString
     ? `https://www.houseplug.ng/browse?${queryString}`
-    : "https://www.houseplug.ng/browse"
+    : "https://www.houseplug.ng/browse";
 
   return {
+    robots: {
+      index: !Object.entries(searchParams).some(
+        ([k, v]) => !!v && !["page"].includes(k),
+      ),
+      follow: true,
+    },
     title,
     description,
     alternates: {
@@ -86,110 +103,137 @@ export async function generateMetadata({ searchParams }: BrowsePageProps): Promi
       title: `${title} | HousePlug`,
       description,
     },
-  }
+  };
 }
 
 export default async function BrowsePage({ searchParams }: BrowsePageProps) {
-  const supabase = createClient()
+  const supabase = createClient();
 
-  const q = searchParams.q?.trim()
-  const university = searchParams.university?.trim()
-  const roomTypeStr = searchParams.room_type?.trim()
-  const minPrice = Number(searchParams.min_price)
-  const maxPrice = Number(searchParams.max_price)
-  const distance = searchParams.distance?.trim()
-  const landlordId = searchParams.landlord_id?.trim()
-  const sort = searchParams.sort ?? "newest"
-  const page = Math.max(Number(searchParams.page) || 1, 1)
-  const from = (page - 1) * PER_PAGE
-  const to = from + PER_PAGE - 1
+  const q = searchParams.q?.trim();
+  const university = searchParams.university?.trim();
+  const roomTypeStr = searchParams.room_type?.trim();
+  const minPrice = Number(searchParams.min_price);
+  const maxPrice = Number(searchParams.max_price);
+  const distance = searchParams.distance?.trim();
+  const landlordId = searchParams.landlord_id?.trim();
+  const sort = searchParams.sort ?? "newest";
+  const page = Math.min(
+    10000,
+    Math.max(Math.floor(Number(searchParams.page)) || 1, 1),
+  );
+  const from = (page - 1) * PER_PAGE;
+  const to = from + PER_PAGE - 1;
 
-  let query = supabase
-    .from("listings")
-    .select(`
-      *,
-      landlord:profiles(full_name, verification_status, role),
-      reviews(rating)
-    `, { count: "exact" })
-    .eq("status", "active")
-
+  let query = inventoryQuery();
   if (q) {
     // Split the query into individual words and require ALL words to match somewhere
     // This makes the search order-independent and much more robust.
-    const terms = q.trim().split(/\s+/).filter(Boolean)
-    terms.forEach(term => {
+    const terms = q.trim().split(/\s+/).filter(Boolean);
+    terms.forEach((term) => {
       // Remove characters that might break PostgREST syntax (commas, quotes, parentheses, backslashes)
-      const safeTerm = term.replace(/[,'\"()\\\\]/g, '')
+      const safeTerm = term.replace(/[,'\"()\\\\]/g, "");
       if (safeTerm) {
-        query = query.or(`address.ilike.%${safeTerm}%,area.ilike.%${safeTerm}%,landmark.ilike.%${safeTerm}%,title.ilike.%${safeTerm}%`)
+        query = query.or(
+          `address.ilike.%${safeTerm}%,area.ilike.%${safeTerm}%,landmark.ilike.%${safeTerm}%,title.ilike.%${safeTerm}%`,
+        );
       }
-    })
+    });
   }
-  if (university) query = query.eq("university", university)
+  if (university) query = query.eq("university", university);
   if (roomTypeStr) {
-    const types = roomTypeStr.split(',').filter(Boolean)
+    const types = roomTypeStr.split(",").filter(Boolean);
     if (types.length > 0) {
-      query = query.in("room_type", types)
+      query = query.in("room_type", types);
     }
   }
-  if (!Number.isNaN(minPrice) && minPrice > 0) query = query.gte("price_yearly", minPrice)
-  if (!Number.isNaN(maxPrice) && maxPrice > 0) query = query.lte("price_yearly", maxPrice)
-  if (distance) query = query.eq("distance_from_gate", distance)
-  if (landlordId) query = query.eq("landlord_id", landlordId)
+  if (!Number.isNaN(minPrice) && minPrice > 0)
+    query = query.gte("price_yearly", minPrice);
+  if (!Number.isNaN(maxPrice) && maxPrice > 0)
+    query = query.lte("price_yearly", maxPrice);
+  if (searchParams.max_total && Number(searchParams.max_total) > 0)
+    query = query
+      .lte("total_initial_payment", Number(searchParams.max_total))
+      .eq("fees_complete", true);
+  if (searchParams.verified === "1")
+    query = query
+      .not("authority_checked_at", "is", null)
+      .gt("evidence_expires_at", new Date().toISOString());
+  if (searchParams.amenities)
+    query = query.contains(
+      "amenities",
+      searchParams.amenities.split(",").filter((v) => /^[a-z_]+$/.test(v)),
+    );
+  if (searchParams.occupants && Number(searchParams.occupants) >= 2)
+    query = query
+      .eq("sharing_allowed", true)
+      .gte("occupancy", Number(searchParams.occupants));
+  if (distance) query = query.eq("distance_from_gate", distance);
+  if (landlordId) query = query.eq("landlord_id", landlordId);
 
-  query = query.order("is_featured", { ascending: false })
-  query = query.order("is_urgent", { ascending: false })
-  if (sort === "price_asc") query = query.order("price_yearly", { ascending: true })
-  else if (sort === "price_desc") query = query.order("price_yearly", { ascending: false })
-  else query = query.order("created_at", { ascending: false })
+  if (sort === "recommended")
+    query = query.order("is_featured", { ascending: false });
+  if (sort === "total_asc")
+    query = query
+      .not("total_initial_payment", "is", null)
+      .order("total_initial_payment", { ascending: true });
+  else if (sort === "price_asc")
+    query = query.order("price_yearly", { ascending: true });
+  else if (sort === "price_desc")
+    query = query.order("price_yearly", { ascending: false });
+  else query = query.order("created_at", { ascending: false });
 
-  const { data, count } = await query.range(from, to)
-  let listings = (data ?? []) as unknown as Listing[]
-  const total = count ?? 0
+  const { data, count } = await query.range(from, to);
+  let listings = (data ?? []) as unknown as Listing[];
+  const total = count ?? 0;
 
   // Fetch saved listings for the logged in user
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (user && listings.length > 0) {
-    const listingIds = listings.map(l => l.id)
+    const listingIds = listings.map((l) => l.id);
     const { data: savedData } = await supabase
       .from("saved_listings")
       .select("listing_id")
       .eq("user_id", user.id)
-      .in("listing_id", listingIds)
-    
+      .in("listing_id", listingIds);
+
     if (savedData && savedData.length > 0) {
-      const savedSet = new Set(savedData.map(s => s.listing_id))
-      listings = listings.map(l => ({
+      const savedSet = new Set(savedData.map((s) => s.listing_id));
+      listings = listings.map((l) => ({
         ...l,
-        is_saved: savedSet.has(l.id)
-      }))
+        is_saved: savedSet.has(l.id),
+      }));
     }
   }
-  const totalPages = Math.max(Math.ceil(total / PER_PAGE), 1)
+  const totalPages = Math.max(Math.ceil(total / PER_PAGE), 1);
 
-  const selectedUniversity = UNIVERSITIES.find(u => u.id === university)
+  const selectedUniversity = UNIVERSITIES.find((u) => u.id === university);
 
-  const previousPage = Math.max(page - 1, 1)
-  const nextPage = Math.min(page + 1, totalPages)
+  const previousPage = Math.max(page - 1, 1);
+  const nextPage = Math.min(page + 1, totalPages);
   const buildPageLink = (targetPage: number) => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
     Object.entries(searchParams).forEach(([key, value]) => {
-      if (!value) return
-      params.set(key, value)
-    })
-    if (targetPage > 1) params.set("page", String(targetPage))
-    else params.delete("page")
-    return `/browse?${params.toString()}`
-  }
+      if (!value) return;
+      params.set(key, value);
+    });
+    if (targetPage > 1) params.set("page", String(targetPage));
+    else params.delete("page");
+    return `/browse?${params.toString()}`;
+  };
 
   const breadcrumbItems = [
     { name: "Home", url: "/" },
     { name: "Browse Housing", url: "/browse" },
-  ]
+  ];
   if (university) {
-    const uniObj = UNIVERSITIES.find(u => u.id === university)
+    const uniObj = UNIVERSITIES.find((u) => u.id === university);
     if (uniObj) {
-      breadcrumbItems.push({ name: uniObj.shortName, url: `/browse?university=${uniObj.id}` })
+      breadcrumbItems.push({
+        name: uniObj.shortName,
+        url: `/browse?university=${uniObj.id}`,
+      });
     }
   }
 
@@ -214,6 +258,44 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
           </div>
 
           <section className="space-y-4">
+            <form className="flex flex-wrap gap-3 items-end" method="GET">
+              {Object.entries(searchParams)
+                .filter(
+                  ([k, v]) => v && !["page", "sort", "occupants"].includes(k),
+                )
+                .map(([k, v]) => (
+                  <input type="hidden" name={k} value={v} key={k} />
+                ))}
+              <label>
+                Sort rooms
+                <select
+                  name="sort"
+                  defaultValue={sort}
+                  className="block rounded-lg border bg-white p-3"
+                >
+                  <option value="newest">Recently confirmed</option>
+                  <option value="price_asc">Annual rent: low to high</option>
+                  <option value="price_desc">Annual rent: high to low</option>
+                  <option value="total_asc">Initial cost: low to high</option>
+                  <option value="recommended">Sponsored first</option>
+                </select>
+              </label>
+              <label>
+                Permitted sharing
+                <select
+                  name="occupants"
+                  defaultValue={searchParams.occupants || ""}
+                  className="block rounded-lg border bg-white p-3"
+                >
+                  <option value="">Any occupancy</option>
+                  <option value="2">Two occupants allowed</option>
+                  <option value="3">Three occupants allowed</option>
+                </select>
+              </label>
+              <button className="rounded-lg bg-[#1B4332] text-white p-3">
+                Apply sorting
+              </button>
+            </form>
             {/* Roommate Promo Banner on Browse Page */}
             <div className="bg-gradient-to-r from-emerald-50 to-amber-50 border border-emerald-100/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-2">
               <div className="flex items-center gap-4 text-center sm:text-left">
@@ -221,12 +303,16 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                   <Users className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">Need someone to split the rent?</h3>
-                  <p className="text-gray-500 text-xs sm:text-sm">Find verified roommates from your university.</p>
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+                    Need someone to split the rent?
+                  </h3>
+                  <p className="text-gray-500 text-xs sm:text-sm">
+                    Find students looking for shared housing.
+                  </p>
                 </div>
               </div>
-              <Link 
-                href="/roommates" 
+              <Link
+                href="/roommates"
                 className="bg-[#1B4332] text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-emerald-900 transition-colors w-full sm:w-auto text-center shrink-0"
               >
                 Find Roommates
@@ -235,35 +321,53 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
             <div className="flex flex-col gap-2 px-1">
               <h1 className="text-2xl font-black text-gray-900 tracking-tight">
-                {selectedUniversity 
-                  ? `Rooms near ${selectedUniversity.shortName}` 
-                  : "All Student Rooms across Nigeria"}
+                {selectedUniversity
+                  ? `Rooms near ${selectedUniversity.shortName}`
+                  : "Student Rooms in Port Harcourt"}
               </h1>
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-gray-600">
                   {total} {total === 1 ? "room" : "rooms"} found
-                  {selectedUniversity ? ` near ${selectedUniversity.shortName}` : ""}
+                  {selectedUniversity
+                    ? ` near ${selectedUniversity.shortName}`
+                    : ""}
                 </p>
-                <div className="hidden sm:block text-xs text-gray-500 bg-emerald-50 px-2 py-1 rounded-full text-emerald-700 font-semibold border border-emerald-100">Featured first</div>
+                <p className="text-xs text-gray-500">
+                  Sponsored placements are labeled
+                </p>
               </div>
             </div>
 
             {listings.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
                 <p className="text-base font-medium text-gray-800">
-                  No rooms found. Try a different search or adjust your filters.
+                  No confirmed rooms match these filters. Try nearby areas or a
+                  different budget.
                 </p>
+                <Link
+                  href="/housing-assistance"
+                  className="underline block py-4"
+                >
+                  Request Housing Assistance
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {listings.map((listing, index) => (
-                  <ListingCard key={listing.id} listing={listing} index={index} />
+                  <ListingCard
+                    key={listing.id}
+                    listing={publicListing(listing)}
+                    index={index}
+                  />
                 ))}
               </div>
             )}
 
             {totalPages > 1 ? (
-              <nav className="flex items-center justify-center gap-2 py-8" aria-label="Pagination">
+              <nav
+                className="flex items-center justify-center gap-2 py-8"
+                aria-label="Pagination"
+              >
                 <Link
                   href={buildPageLink(previousPage)}
                   aria-disabled={page <= 1}
@@ -279,21 +383,23 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
 
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(p =>
-                      p === 1 ||
-                      p === totalPages ||
-                      Math.abs(p - page) <= 1
+                    .filter(
+                      (p) =>
+                        p === 1 || p === totalPages || Math.abs(p - page) <= 1,
                     )
                     .reduce<(number | "...")[]>((acc, p, i, arr) => {
                       if (i > 0 && p - (arr[i - 1] as number) > 1) {
-                        acc.push("...")
+                        acc.push("...");
                       }
-                      acc.push(p)
-                      return acc
+                      acc.push(p);
+                      return acc;
                     }, [])
                     .map((p, i) =>
                       p === "..." ? (
-                        <span key={`ellipsis-${i}`} className="px-2 text-gray-400">
+                        <span
+                          key={`ellipsis-${i}`}
+                          className="px-2 text-gray-400"
+                        >
                           …
                         </span>
                       ) : (
@@ -308,7 +414,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                         >
                           {p}
                         </Link>
-                      )
+                      ),
                     )}
                 </div>
 
@@ -330,5 +436,5 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
         </div>
       </div>
     </main>
-  )
+  );
 }

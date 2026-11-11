@@ -2,6 +2,8 @@
 
 Audit date: 11 November 2026 (Africa/Lagos). Target: HOUSEPLUG_CODEX_MASTER_BRIEF.md v1.0, read completely. Repository: Manjayy-645/houseplug, main snapshot `d7458c002e68fbdf81dbe67c59ead344680ea93d`.
 
+> Product update, 11 November 2026: this audit preserves the original discovery evidence. Requirements for an agent-confirmed inspection engine are superseded by direct student-to-agent WhatsApp contact. No booking, platform assignment or appointment confirmation is required. See [current product contract](houseplug-direct-contact-model.md) and [implementation coverage](houseplug-release-runbook.md).
+
 ## Scope and evidence limits
 
 269 text source/configuration/migration files retrieved at the pinned commit. Full tree inventoried: 432 entries, including directories. This is a read-only source snapshot, not an authenticated Git checkout. No application code, production data, infrastructure, GitHub branches or deployments changed. Documentation prepared for PR A0; no remote PR opened.
@@ -12,7 +14,7 @@ No authenticated production database, SQL grants/policy catalog, applied migrati
 
 ## Executive recommendation
 
-Keep Next.js, Supabase, existing listing routes, dashboards and working WhatsApp discovery. Start with security validation and narrow containment, listing truth, then a persisted housing request and agent-confirmed inspection pilot. Do not begin with a broad homepage rebuild or new payment architecture.
+Keep Next.js, Supabase, existing listing routes, dashboards and working WhatsApp discovery. Start with security validation and narrow containment, listing truth, then preserve direct WhatsApp contact with accurate click tracking and optional consented housing assistance. Do not begin with a broad homepage rebuild or new payment architecture.
 
 Immediate sequence: A0 documentation → S0 staging authorization probe/containment → T0 remove synthetic listings → T1 conservative split suppression → T2 scoped trust/cost wording → Q0 functional search repair. In parallel approve fee/verification policy and inventory sampling, then additive fees/evidence/freshness contracts. Build the measurable enquiry journey before growth features.
 

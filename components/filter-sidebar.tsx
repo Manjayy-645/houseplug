@@ -1,101 +1,116 @@
-"use client"
+"use client";
 
-import { useMemo, useState, useId } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import * as Dialog from "@radix-ui/react-dialog"
-import { SlidersHorizontal, X } from "lucide-react"
+import { useMemo, useState, useId } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import * as Dialog from "@radix-ui/react-dialog";
+import { SlidersHorizontal, X } from "lucide-react";
 
-import { UNIVERSITIES, ROOM_TYPES, DISTANCE_OPTIONS, AMENITIES } from "@/lib/constants"
-import { UniversityCombobox } from "@/components/search/UniversityCombobox"
+import {
+  UNIVERSITIES,
+  ROOM_TYPES,
+  DISTANCE_OPTIONS,
+  AMENITIES,
+} from "@/lib/constants";
+import { UniversityCombobox } from "@/components/search/UniversityCombobox";
 
 function SidebarContent({ mobile = false }: { mobile?: boolean }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const id = useId()
-  const [university, setUniversity] = useState(searchParams.get("university") ?? "")
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = useId();
+  const [university, setUniversity] = useState(
+    searchParams.get("university") ?? "",
+  );
   const [roomTypes, setRoomTypes] = useState<string[]>(
     (searchParams.get("room_type") ?? "")
       .split(",")
       .map((item) => item.trim())
-      .filter(Boolean)
-  )
-  const [minPrice, setMinPrice] = useState(searchParams.get("min_price") ?? "")
-  const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "")
-  const [distance, setDistance] = useState(searchParams.get("distance") ?? "")
-  const [verifiedOnly, setVerifiedOnly] = useState(searchParams.get("verified") !== "0")
+      .filter(Boolean),
+  );
+  const [minPrice, setMinPrice] = useState(searchParams.get("min_price") ?? "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") ?? "");
+  const [distance, setDistance] = useState(searchParams.get("distance") ?? "");
+  const [verifiedOnly, setVerifiedOnly] = useState(
+    searchParams.get("verified") === "1",
+  );
   const [amenities, setAmenities] = useState<string[]>(
     (searchParams.get("amenities") ?? "")
       .split(",")
       .map((item) => item.trim())
-      .filter(Boolean)
-  )
+      .filter(Boolean),
+  );
 
   const boxClass = useMemo(
     () =>
       mobile
         ? "rounded-xl border border-gray-200 bg-white p-4"
         : "sticky top-6 rounded-2xl border border-gray-200 bg-white p-4",
-    [mobile]
-  )
+    [mobile],
+  );
 
   const applyFilters = () => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (university) params.set("university", university)
-    else params.delete("university")
+    const params = new URLSearchParams(searchParams.toString());
+    if (university) params.set("university", university);
+    else params.delete("university");
 
-    if (roomTypes.length > 0) params.set("room_type", roomTypes.join(","))
-    else params.delete("room_type")
+    if (roomTypes.length > 0) params.set("room_type", roomTypes.join(","));
+    else params.delete("room_type");
 
-    if (minPrice) params.set("min_price", minPrice)
-    else params.delete("min_price")
+    if (minPrice) params.set("min_price", minPrice);
+    else params.delete("min_price");
 
-    if (maxPrice) params.set("max_price", maxPrice)
-    else params.delete("max_price")
+    if (maxPrice) params.set("max_price", maxPrice);
+    else params.delete("max_price");
 
-    if (distance) params.set("distance", distance)
-    else params.delete("distance")
+    if (distance) params.set("distance", distance);
+    else params.delete("distance");
 
-    if (verifiedOnly) params.set("verified", "1")
-    else params.set("verified", "0")
+    if (verifiedOnly) params.set("verified", "1");
+    else params.set("verified", "0");
 
-    if (amenities.length > 0) params.set("amenities", amenities.join(","))
-    else params.delete("amenities")
+    if (amenities.length > 0) params.set("amenities", amenities.join(","));
+    else params.delete("amenities");
 
-    params.delete("page")
-    router.push(`${pathname}?${params.toString()}`)
-  }
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   const resetFilters = () => {
-    setUniversity("")
-    setRoomTypes([])
-    setMinPrice("")
-    setMaxPrice("")
-    setDistance("")
-    setVerifiedOnly(true)
-    setAmenities([])
-    router.push(pathname)
-  }
+    setUniversity("");
+    setRoomTypes([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setDistance("");
+    setVerifiedOnly(false);
+    setAmenities([]);
+    router.push(pathname);
+  };
 
   const toggleAmenity = (value: string) => {
     setAmenities((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-    )
-  }
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
+    );
+  };
 
   const toggleRoomType = (value: string) => {
     setRoomTypes((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-    )
-  }
+      prev.includes(value)
+        ? prev.filter((item) => item !== value)
+        : [...prev, value],
+    );
+  };
 
   return (
     <aside className={boxClass}>
       <div className="space-y-5">
         <section>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">University</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
+            University
+          </h3>
           <div className="space-y-2">
-            <UniversityCombobox 
+            <UniversityCombobox
               value={university}
               onChange={setUniversity}
               placeholder="All Universities"
@@ -105,10 +120,15 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Room Type</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
+            Room Type
+          </h3>
           <div className="space-y-2">
             {ROOM_TYPES.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
+              <label
+                key={option.value}
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
                 <input
                   type="checkbox"
                   checked={roomTypes.includes(option.value)}
@@ -122,7 +142,9 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Price Range</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
+            Annual rent range
+          </h3>
           <div className="grid grid-cols-2 gap-2">
             <input
               type="number"
@@ -143,11 +165,14 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
 
         <section>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
-            Distance from Campus
+            Advertiser-estimated distance
           </h3>
           <div className="space-y-2">
             {DISTANCE_OPTIONS.map((option) => (
-              <label key={option.label} className="flex items-center gap-2 text-sm text-gray-700">
+              <label
+                key={option.label}
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
                 <input
                   type="radio"
                   name={`distance-${id}`}
@@ -174,7 +199,9 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Verification</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
+            Verification
+          </h3>
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
               type="checkbox"
@@ -182,15 +209,20 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
               onChange={(event) => setVerifiedOnly(event.target.checked)}
               className="h-4 w-4 rounded border-gray-300 text-[#1B4332] focus:ring-[#1B4332]"
             />
-            Verified listings only
+            Authority to list checked
           </label>
         </section>
 
         <section>
-          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">Amenities</h3>
+          <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-700">
+            Amenities
+          </h3>
           <div className="space-y-2">
             {AMENITIES.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
+              <label
+                key={option.value}
+                className="flex items-center gap-2 text-sm text-gray-700"
+              >
                 <input
                   type="checkbox"
                   checked={amenities.includes(option.value)}
@@ -220,7 +252,7 @@ function SidebarContent({ mobile = false }: { mobile?: boolean }) {
         </button>
       </div>
     </aside>
-  )
+  );
 }
 
 export function FilterSidebar() {
@@ -245,7 +277,9 @@ export function FilterSidebar() {
             <Dialog.Overlay className="fixed inset-0 z-40 bg-black/30" />
             <Dialog.Content className="fixed inset-y-0 right-0 z-50 w-[88%] max-w-sm overflow-y-auto bg-[#F9FAFB] p-4 shadow-2xl">
               <div className="mb-3 flex items-center justify-between">
-                <Dialog.Title className="text-lg font-semibold text-gray-900">Filters</Dialog.Title>
+                <Dialog.Title className="text-lg font-semibold text-gray-900">
+                  Filters
+                </Dialog.Title>
                 <Dialog.Close asChild>
                   <button type="button" className="rounded p-1 text-gray-700">
                     <X className="h-5 w-5" />
@@ -258,5 +292,5 @@ export function FilterSidebar() {
         </Dialog.Root>
       </div>
     </>
-  )
+  );
 }

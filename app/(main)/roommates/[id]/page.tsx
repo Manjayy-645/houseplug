@@ -1,27 +1,44 @@
-import { notFound } from "next/navigation"
-import { createClient, createServiceClient } from "@/lib/supabase/server"
-import { BadgeCheck, User, Home, MapPin, Sparkles, ShieldCheck, ArrowLeft, Building, ArrowRight } from "lucide-react"
-import Link from "next/link"
-import { RoommateContactButton } from "./contact-button"
-import { ShareButton } from "./share-button"
-import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld"
+import { RoommateConnectionButton } from "@/components/roommate-connection-button";
+import { notFound } from "next/navigation";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import {
+  BadgeCheck,
+  User,
+  Home,
+  MapPin,
+  Sparkles,
+  ShieldCheck,
+  ArrowLeft,
+  Building,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
+import { ShareButton } from "./share-button";
+import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld";
 
-import { Metadata } from "next"
+import { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const supabase = createServiceClient()
-  
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const supabase = createServiceClient();
+
   const { data: roommate } = await supabase
     .from("roommate_profiles")
     .select("intent, university, budget_min, budget_max, user_id")
     .eq("id", params.id)
-    .single()
+    .eq("status", "active")
+    .eq("visibility_consent", true)
+    .gt("expires_at", new Date().toISOString())
+    .single();
 
   if (!roommate) {
     return {
       title: "Roommate Profile | HousePlug",
       description: "View roommate profile on HousePlug.",
-    }
+    };
   }
 
   // Fetch user's name for a personal share preview
@@ -29,26 +46,28 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     .from("profiles")
     .select("full_name, avatar_url")
     .eq("id", roommate.user_id)
-    .single()
+    .single();
 
-  const firstName = userProfile?.full_name?.split(" ")[0] || "A student"
-  
-  const title = roommate.intent === "have_room"
-    ? `${firstName} has a room near ${roommate.university} — wanna move in? | HousePlug`
-    : `${firstName} needs a roommate near ${roommate.university} — wanna team up? | HousePlug`
+  const firstName = userProfile?.full_name?.split(" ")[0] || "A student";
 
-  const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString('en-NG')} – ₦${roommate.budget_max.toLocaleString('en-NG')}/yr near ${roommate.university}. Connect and team up for housing!`
-  
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
+  const title =
+    roommate.intent === "have_room"
+      ? `${firstName} has a room near ${roommate.university} — wanna move in? | HousePlug`
+      : `${firstName} needs a roommate near ${roommate.university} — wanna team up? | HousePlug`;
+
+  const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString("en-NG")} – ₦${roommate.budget_max.toLocaleString("en-NG")}/yr near ${roommate.university}. Connect and team up for housing!`;
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.houseplug.ng";
   // Dynamic OG image endpoint — renders a branded PNG card on the fly,
   // converting .webp avatars server-side so WhatsApp always gets a valid preview.
-  const ogImageUrl = `${baseUrl}/api/og/roommate?id=${params.id}`
+  const ogImageUrl = `${baseUrl}/api/og/roommate?id=${params.id}`;
 
-  const displayName = userProfile?.full_name || "Student"
+  const displayName = userProfile?.full_name?.split(" ")[0] || "Student";
 
   return {
     title,
     description,
+    robots: { index: false, follow: false },
     alternates: {
       canonical: `${baseUrl}/roommates/${params.id}`,
     },
@@ -67,48 +86,55 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
           height: 630,
           type: "image/png",
           alt: `${displayName} Roommate Profile on HousePlug`,
-        }
-      ]
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
       images: [ogImageUrl],
-    }
-  }
+    },
+  };
 }
 
-export default async function RoommateProfilePage({ params }: { params: { id: string } }) {
-  const supabase = createClient()
-  const serviceClient = createServiceClient()
-  
-  const { data: { session } } = await supabase.auth.getSession()
-  const currentUserId = session?.user?.id
-  const isGuest = !currentUserId
+export default async function RoommateProfilePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const supabase = createClient();
+  const serviceClient = createServiceClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const currentUserId = session?.user?.id;
+  const isGuest = !currentUserId;
 
   // Fetch current user's role (only if logged in)
-  let currentUserRole: string | null = null
+  let currentUserRole: string | null = null;
   if (currentUserId) {
     const { data: currentUserProfile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", currentUserId)
-      .single()
-    currentUserRole = currentUserProfile?.role ?? null
+      .single();
+    currentUserRole = currentUserProfile?.role ?? null;
   }
 
   // Fetch roommate profile using service client to guarantee availability
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: roommate } = await serviceClient
     .from("roommate_profiles")
     .select("*")
     .eq("id", params.id)
     .eq("status", "active")
-    .single()
+    .eq("visibility_consent", true)
+    .gt("expires_at", new Date().toISOString())
+    .single();
 
   if (!roommate) {
-    notFound()
+    notFound();
   }
 
   // Fetch user profile using serviceClient so RLS never hides public profile info
@@ -116,16 +142,26 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
     .from("profiles")
     .select("id, full_name, avatar_url, verification_status")
     .eq("id", roommate.user_id)
-    .single()
+    .single();
 
   const data = {
     ...roommate,
     // Strictly protect phone_number for guests
-    phone_number: isGuest ? "" : roommate.phone_number,
-    profile: userProfile || { full_name: "Student", avatar_url: null, verification_status: "unverified" }
-  }
+    phone_number: "",
+    room_address: "",
+    profile: userProfile
+      ? {
+          ...userProfile,
+          full_name: userProfile.full_name?.split(" ")[0] || "Student",
+        }
+      : {
+          full_name: "Student",
+          avatar_url: null,
+          verification_status: "unverified",
+        },
+  };
 
-  const isVerified = data.profile.verification_status === "verified"
+  const isVerified = data.profile.verification_status === "verified";
 
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
@@ -141,24 +177,37 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
         username={data.profile.full_name}
         role="student"
         image={data.profile.avatar_url}
-        description={`Student near ${data.university} seeking a roommate. Budget: ₦${data.budget_min.toLocaleString('en-NG')} – ₦${data.budget_max.toLocaleString('en-NG')}/year.`}
+        description={`Student near ${data.university} seeking a roommate. Budget: ₦${data.budget_min.toLocaleString("en-NG")} – ₦${data.budget_max.toLocaleString("en-NG")}/year.`}
       />
       <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/roommates" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-semibold transition-colors">
+          <Link
+            href="/roommates"
+            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-semibold transition-colors"
+          >
             <ArrowLeft className="h-4 w-4" /> Back to listings
           </Link>
-          <ShareButton url={`https://houseplug.ng/roommates/${params.id}`} firstName={data.profile.full_name?.split(" ")[0]} intent={data.intent} />
+          <ShareButton
+            url={`https://www.houseplug.ng/roommates/${params.id}`}
+            firstName={data.profile.full_name?.split(" ")[0]}
+            intent={data.intent}
+          />
         </div>
-        
+
         <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Header */}
-          <div className={`px-6 py-4 flex items-center justify-between text-white ${data.intent === 'have_room' ? 'bg-[#F59E0B]' : 'bg-[#1B4332]'}`}>
+          <div
+            className={`px-6 py-4 flex items-center justify-between text-white ${data.intent === "have_room" ? "bg-[#F59E0B]" : "bg-[#1B4332]"}`}
+          >
             <span className="flex items-center gap-2 text-sm font-black uppercase tracking-wider">
-              {data.intent === 'have_room' ? (
-                <><Home className="h-5 w-5" /> Has a Room</>
+              {data.intent === "have_room" ? (
+                <>
+                  <Home className="h-5 w-5" /> Has a Room
+                </>
               ) : (
-                <><User className="h-5 w-5" /> Looking to Team Up</>
+                <>
+                  <User className="h-5 w-5" /> Looking to Team Up
+                </>
               )}
             </span>
           </div>
@@ -207,14 +256,18 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
                     }}
                     className="flex items-center justify-center bg-[#1B4332] text-white font-black text-2xl uppercase"
                   >
-                    {(data.profile.full_name?.split(" ")[0]?.[0] || "S").toUpperCase()}
+                    {(
+                      data.profile.full_name?.split(" ")[0]?.[0] || "S"
+                    ).toUpperCase()}
                   </div>
                 )}
               </div>
               <div>
                 <h1 className="font-bold text-2xl text-gray-900 flex items-center gap-2">
                   {data.profile.full_name || "Student"}
-                  {isVerified && <BadgeCheck className="h-6 w-6 text-emerald-500" />}
+                  {isVerified && (
+                    <BadgeCheck className="h-6 w-6 text-emerald-500" />
+                  )}
                 </h1>
                 <p className="text-gray-500 font-medium mt-1">
                   {data.gender} • {data.university}
@@ -230,16 +283,23 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
             {/* Budget & Target Overview */}
             <div className="grid grid-cols-2 gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
               <div>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Budget / Rent Share</p>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
+                  Budget / Rent Share
+                </p>
                 <p className="font-black text-[#1B4332] text-xl">
-                  ₦{data.budget_min.toLocaleString()} - ₦{data.budget_max.toLocaleString()}
+                  ₦{data.budget_min.toLocaleString()} - ₦
+                  {data.budget_max.toLocaleString()}
                   <span className="text-sm text-gray-500 font-normal">/yr</span>
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Preferred Roommate</p>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">
+                  Preferred Roommate
+                </p>
                 <p className="font-bold text-gray-800 text-base capitalize">
-                  {data.preferred_gender === "any" ? "Any Gender" : `${data.preferred_gender} Only`}
+                  {data.preferred_gender === "any"
+                    ? "Any Gender"
+                    : `${data.preferred_gender} Only`}
                 </p>
               </div>
             </div>
@@ -276,9 +336,12 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
             {data.intent === "have_room" && data.room_address && (
               <div className="bg-amber-50/60 p-5 rounded-2xl border border-amber-100">
                 <p className="text-xs text-amber-800 font-bold uppercase tracking-wider flex items-center gap-1.5 mb-2">
-                  <MapPin className="h-4 w-4 text-amber-600" /> Room Address / Location
+                  <MapPin className="h-4 w-4 text-amber-600" /> Room Address /
+                  Location
                 </p>
-                <p className="text-base font-semibold text-gray-800">{data.room_address}</p>
+                <p className="text-base font-semibold text-gray-800">
+                  {data.room_address}
+                </p>
               </div>
             )}
 
@@ -301,14 +364,17 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
               </h2>
               <div className="flex flex-wrap gap-2.5">
                 {data.lifestyle_tags.map((tag: string, i: number) => (
-                  <span key={i} className="px-4 py-2 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700">
+                  <span
+                    key={i}
+                    className="px-4 py-2 rounded-xl bg-gray-100 text-sm font-semibold text-gray-700"
+                  >
                     {tag}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-          
+
           {/* Action Footer */}
           <div className="p-6 bg-gray-50 border-t border-gray-100">
             {isGuest ? (
@@ -332,18 +398,11 @@ export default async function RoommateProfilePage({ params }: { params: { id: st
                 </div>
               </div>
             ) : (
-              <RoommateContactButton 
-                phoneNumber={data.phone_number} 
-                firstName={data.profile.full_name?.split(" ")[0] || "there"} 
-                currentUserRole={currentUserRole}
-                targetLodgeTitle={data.target_listing_title}
-                targetLodgeId={data.target_listing_id}
-                campusName={data.university}
-              />
+              <RoommateConnectionButton targetUserId={roommate.user_id} />
             )}
           </div>
         </div>
       </div>
     </main>
-  )
+  );
 }

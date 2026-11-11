@@ -3,6 +3,17 @@
     {
       "path": "/api/cron/stats",
       "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/housing",
+      "schedule": "15 9 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feat/master-brief-implementation": false,
+      "feat/release-integration": false,
+      "fix/restore-houseplug-visuals": false
+    }
+  }
 }

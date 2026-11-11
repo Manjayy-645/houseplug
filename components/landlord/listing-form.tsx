@@ -1,20 +1,22 @@
-"use client"
+"use client";
+import { FeeEditor, initialFees } from "@/components/fee-editor";
+import type { FeeItem } from "@/lib/housing";
 
-import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { GripVertical, Upload, X, Video, Loader2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { UNIVERSITIES } from "@/lib/constants"
-import { AiDescribeButton } from "@/components/listing/ai-describe-button"
-import { notifyAdminsNewListing } from "@/app/actions"
-import { uploadVideo, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
-import { compressImage } from "@/lib/image-compress"
-import type { Listing } from "@/types"
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { GripVertical, Upload, X, Video, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { UNIVERSITIES } from "@/lib/constants";
+import { AiDescribeButton } from "@/components/listing/ai-describe-button";
+import { notifyAdminsNewListing } from "@/app/actions";
+import { uploadVideo, getSafariCompatibleVideoUrl } from "@/lib/cloudinary";
+import { compressImage } from "@/lib/image-compress";
+import type { Listing } from "@/types";
 
-type AgentFeeType = "none" | "fixed" | "negotiable"
+type AgentFeeType = "none" | "fixed" | "negotiable";
 
 const amenityOptions = [
   "water",
@@ -24,14 +26,19 @@ const amenityOptions = [
   "prepaid_meter",
   "kitchen",
   "bathroom",
-  "wifi"
-]
+  "wifi",
+];
 
 const listingSchema = z.object({
-  title: z.string().min(6, "Title is required").max(80, "Maximum 80 characters"),
+  title: z
+    .string()
+    .min(6, "Title is required")
+    .max(80, "Maximum 80 characters"),
   university: z.string().min(1, "University is required"),
   room_type: z.enum(["self_con", "one_bedroom", "two_bedroom", "shared"]),
   price_yearly: z.number().int().positive("Enter a valid yearly price"),
+  price_basis: z.enum(["unconfirmed", "per_bed", "per_room", "per_unit"]),
+  rent_term_months: z.number().int().min(1).max(60).nullable(),
   distance_from_gate: z.enum(["under_5", "5_to_15", "15_to_30", "above_30"]),
   available_from: z.string().min(1, "Select an availability date"),
   address: z.string().min(6, "Address is required"),
@@ -43,71 +50,107 @@ const listingSchema = z.object({
   phone_number: z
     .string()
     .optional()
-    .refine((value) => !value || /^(070|080|081|090)\d{8}$/.test(value), "Invalid phone number"),
+    .refine(
+      (value) => !value || /^(070|080|081|090)\d{8}$/.test(value),
+      "Invalid phone number",
+    ),
   amenities: z.array(z.string()).min(1, "Select at least one amenity"),
   occupancy: z.number().min(1).max(4),
   furnishing: z.enum(["furnished", "semi_furnished", "unfurnished"]),
   floor: z.enum(["ground", "upper"]),
-  description: z.string().min(10, "Description must be at least 10 characters").max(600)
-})
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(600),
+});
 
-type ListingFormValues = z.infer<typeof listingSchema>
+type ListingFormValues = z.infer<typeof listingSchema>;
 
 type PhotoItem = {
-  id: string
-  file?: File
-  url: string
-  uploaded: boolean
-  progress: number
-}
+  id: string;
+  file?: File;
+  url: string;
+  uploaded: boolean;
+  progress: number;
+};
 
 type ListingFormProps = {
-  mode: "create" | "edit"
-  listing?: Listing
-  landlordId: string
-  isPro: boolean
-  isAgent: boolean
-}
+  mode: "create" | "edit";
+  listing?: Listing;
+  landlordId: string;
+  isPro: boolean;
+  isAgent: boolean;
+};
 
 const stepFields: Array<Array<keyof ListingFormValues>> = [
-  ["title", "university", "room_type", "price_yearly", "distance_from_gate", "available_from"],
+  [
+    "title",
+    "university",
+    "room_type",
+    "price_yearly",
+    "price_basis",
+    "rent_term_months",
+    "distance_from_gate",
+    "available_from",
+  ],
   ["address", "area", "landmark", "whatsapp_number", "phone_number"],
   ["amenities", "occupancy", "furnishing", "floor", "description"],
-  []
-]
+  [],
+];
 
-export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: ListingFormProps) {
-  const router = useRouter()
-  const supabase = createClient()
-  const draftKey = mode === "create" ? "houseplug-listing-draft-new" : `houseplug-listing-draft-${listing?.id}`
+export function ListingForm({
+  mode,
+  listing,
+  landlordId,
+  isPro,
+  isAgent,
+}: ListingFormProps) {
+  const router = useRouter();
+  const supabase = createClient();
+  const draftKey =
+    mode === "create"
+      ? "houseplug-listing-draft-new"
+      : `houseplug-listing-draft-${listing?.id}`;
 
-  const [currentStep, setCurrentStep] = useState(0)
-  const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
-  const [agentFeeType, setAgentFeeType] = useState<AgentFeeType>(listing?.agent_fee_type ?? "none")
+  const [currentStep, setCurrentStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [feeItems, setFeeItems] = useState<FeeItem[]>(
+    listing?.fee_items?.length ? listing.fee_items : initialFees,
+  );
+  const [sharingAllowed, setSharingAllowed] = useState(
+    listing?.sharing_allowed ?? false,
+  );
+  const [agentFeeType, setAgentFeeType] = useState<AgentFeeType>(
+    listing?.agent_fee_type ?? "none",
+  );
   const [agentFeeAmount, setAgentFeeAmount] = useState<string>(
-    listing?.agent_fee_amount != null ? String(listing.agent_fee_amount) : ""
-  )
-  const [videoUrl, setVideoUrl] = useState<string | null>(listing?.video_url ?? null)
-  const [videoUploading, setVideoUploading] = useState(false)
+    listing?.agent_fee_amount != null ? String(listing.agent_fee_amount) : "",
+  );
+  const [videoUrl, setVideoUrl] = useState<string | null>(
+    listing?.video_url ?? null,
+  );
+  const [videoUploading, setVideoUploading] = useState(false);
   const [photoItems, setPhotoItems] = useState<PhotoItem[]>(
     (listing?.photos ?? []).map((url, index) => ({
       id: `existing-${index}`,
       url,
       uploaded: true,
-      progress: 100
-    }))
-  )
-  const [draggedId, setDraggedId] = useState<string | null>(null)
-  const [complete, setComplete] = useState(false)
+      progress: 100,
+    })),
+  );
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [complete, setComplete] = useState(false);
 
   const defaultValues: ListingFormValues = {
     title: listing?.title ?? "",
     university: listing?.university ?? "uniport",
     room_type: listing?.room_type ?? "self_con",
     price_yearly: listing?.price_yearly ?? 0,
+    price_basis: listing?.price_basis ?? "unconfirmed",
+    rent_term_months: listing?.rent_term_months ?? null,
     distance_from_gate: listing?.distance_from_gate ?? "under_5",
-    available_from: listing?.available_from?.split('T')[0] ?? "",
+    available_from: listing?.available_from?.split("T")[0] ?? "",
     address: listing?.address ?? "",
     area: listing?.area ?? "",
     landmark: listing?.landmark ?? "",
@@ -117,8 +160,8 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
     occupancy: listing?.occupancy ?? 1,
     furnishing: listing?.furnishing ?? "unfurnished",
     floor: listing?.floor ?? "ground",
-    description: listing?.description ?? ""
-  }
+    description: listing?.description ?? "",
+  };
 
   const {
     register,
@@ -126,134 +169,151 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
     setValue,
     getValues,
     formState: { errors },
-    trigger
+    trigger,
   } = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
-    defaultValues
-  })
+    defaultValues,
+  });
 
   useEffect(() => {
-    if (mode !== "create") return
-    const raw = window.localStorage.getItem(draftKey)
-    if (!raw) return
+    if (mode !== "create") return;
+    const raw = window.localStorage.getItem(draftKey);
+    if (!raw) return;
     try {
-      const parsed = JSON.parse(raw) as Partial<ListingFormValues>
+      const parsed = JSON.parse(raw) as Partial<ListingFormValues>;
       for (const [key, value] of Object.entries(parsed)) {
-        setValue(key as keyof ListingFormValues, value as never)
+        setValue(key as keyof ListingFormValues, value as never);
       }
     } catch {
       // Ignore invalid draft data.
     }
-  }, [draftKey, mode, setValue])
+  }, [draftKey, mode, setValue]);
 
   useEffect(() => {
     const subscription = watch((values) => {
-      window.localStorage.setItem(draftKey, JSON.stringify(values))
-    })
-    return () => subscription.unsubscribe()
-  }, [draftKey, watch])
+      window.localStorage.setItem(draftKey, JSON.stringify(values));
+    });
+    return () => subscription.unsubscribe();
+  }, [draftKey, watch]);
 
-  const titleLength = watch("title")?.length ?? 0
-  const descriptionLength = watch("description")?.length ?? 0
-  const progress = ((currentStep + 1) / 4) * 100
+  const titleLength = watch("title")?.length ?? 0;
+  const descriptionLength = watch("description")?.length ?? 0;
+  const progress = ((currentStep + 1) / 4) * 100;
 
   const nextStep = async () => {
-    const valid = await trigger(stepFields[currentStep])
-    if (!valid) return
-    setCurrentStep((step) => Math.min(step + 1, 3))
-  }
+    const valid = await trigger(stepFields[currentStep]);
+    if (!valid) return;
+    setCurrentStep((step) => Math.min(step + 1, 3));
+  };
 
-  const prevStep = () => setCurrentStep((step) => Math.max(step - 1, 0))
+  const prevStep = () => setCurrentStep((step) => Math.max(step - 1, 0));
 
   const onFilesSelected = (files: FileList | null) => {
-    if (!files) return
-    const selected = Array.from(files).slice(0, Math.max(0, 8 - photoItems.length))
+    if (!files) return;
+    const selected = Array.from(files).slice(
+      0,
+      Math.max(0, 8 - photoItems.length),
+    );
     const mapped: PhotoItem[] = selected.map((file) => ({
       id: `new-${crypto.randomUUID()}`,
       file,
       url: URL.createObjectURL(file),
       uploaded: false,
-      progress: 0
-    }))
-    setPhotoItems((prev) => [...prev, ...mapped])
-  }
+      progress: 0,
+    }));
+    setPhotoItems((prev) => [...prev, ...mapped]);
+  };
 
   const removePhoto = (id: string) => {
-    setPhotoItems((prev) => prev.filter((photo) => photo.id !== id))
-  }
+    setPhotoItems((prev) => prev.filter((photo) => photo.id !== id));
+  };
 
   const reorderPhotos = (fromId: string, toId: string) => {
-    if (fromId === toId) return
+    if (fromId === toId) return;
     setPhotoItems((prev) => {
-      const fromIndex = prev.findIndex((p) => p.id === fromId)
-      const toIndex = prev.findIndex((p) => p.id === toId)
-      if (fromIndex < 0 || toIndex < 0) return prev
-      const next = [...prev]
-      const [moved] = next.splice(fromIndex, 1)
-      next.splice(toIndex, 0, moved)
-      return next
-    })
-  }
+      const fromIndex = prev.findIndex((p) => p.id === fromId);
+      const toIndex = prev.findIndex((p) => p.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
 
   const uploadPhotos = async (listingId: string) => {
-    const uploadedUrls: string[] = []
+    const uploadedUrls: string[] = [];
     for (const item of photoItems) {
       if (item.uploaded) {
-        uploadedUrls.push(item.url)
-        continue
+        uploadedUrls.push(item.url);
+        continue;
       }
-      if (!item.file || !landlordId) continue
+      if (!item.file || !landlordId) continue;
 
       // Downscale + re-encode to WebP before upload to avoid storing full-size
       // originals. Falls back to the original file if it can't do better.
-      const fileToUpload = await compressImage(item.file)
+      const fileToUpload = await compressImage(item.file);
 
-      const safeName = fileToUpload.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')
-      const filePath = `${landlordId}/${listingId}/${Date.now()}-${safeName}`
+      const safeName = fileToUpload.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const filePath = `${landlordId}/${listingId}/${Date.now()}-${safeName}`;
 
       const timer = window.setInterval(() => {
         setPhotoItems((prev) =>
           prev.map((photo) =>
-            photo.id === item.id ? { ...photo, progress: Math.min(photo.progress + 8, 92) } : photo
-          )
-        )
-      }, 120)
+            photo.id === item.id
+              ? { ...photo, progress: Math.min(photo.progress + 8, 92) }
+              : photo,
+          ),
+        );
+      }, 120);
 
-      const { error } = await supabase.storage.from("listings").upload(filePath, fileToUpload, {
-        upsert: false
-      })
-      window.clearInterval(timer)
-      if (error) throw error
+      const { error } = await supabase.storage
+        .from("listings")
+        .upload(filePath, fileToUpload, {
+          upsert: false,
+        });
+      window.clearInterval(timer);
+      if (error) throw error;
 
-      const { data } = supabase.storage.from("listings").getPublicUrl(filePath)
-      uploadedUrls.push(data.publicUrl)
+      const { data } = supabase.storage.from("listings").getPublicUrl(filePath);
+      uploadedUrls.push(data.publicUrl);
       setPhotoItems((prev) =>
-        prev.map((photo) => (photo.id === item.id ? { ...photo, uploaded: true, progress: 100 } : photo))
-      )
+        prev.map((photo) =>
+          photo.id === item.id
+            ? { ...photo, uploaded: true, progress: 100 }
+            : photo,
+        ),
+      );
     }
 
-    return uploadedUrls
-  }
+    return uploadedUrls;
+  };
 
   const onSubmit = async () => {
-    const valid = await trigger()
-    if (!valid) return
+    const valid = await trigger();
+    if (!valid) return;
+    if (mode === "create" && (getValues("price_basis") === "unconfirmed" || getValues("rent_term_months") === null)) {
+      setMessage("Select what the rent covers and enter the rental term before submitting.");
+      return;
+    }
     if (photoItems.length === 0 && !videoUrl) {
-      setMessage("Please upload at least one photo or a video of the property.")
-      return
+      setMessage(
+        "Please upload at least one photo or a video of the property.",
+      );
+      return;
     }
     if (!landlordId) {
-      setMessage("Could not determine landlord account. Please re-login.")
-      return
+      setMessage("Could not determine landlord account. Please re-login.");
+      return;
     }
 
-    setSubmitting(true)
-    setMessage(null)
+    setSubmitting(true);
+    setMessage(null);
 
     try {
-      const values = getValues()
-      const listingId = listing?.id ?? crypto.randomUUID()
-      const photoUrls = await uploadPhotos(listingId)
+      const values = getValues();
+      const listingId = listing?.id ?? crypto.randomUUID();
+      const photoUrls = await uploadPhotos(listingId);
 
       const payload = {
         id: listingId,
@@ -263,73 +323,82 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
         description: values.description,
         room_type: values.room_type,
         price_yearly: values.price_yearly,
+        price_basis: values.price_basis,
+        rent_term_months: values.rent_term_months,
         distance_from_gate: values.distance_from_gate,
         address: values.address,
         area: values.area,
         landmark: values.landmark || null,
         amenities: values.amenities,
         photos: photoUrls,
-        status: mode === "edit" ? (listing?.status || "pending") : "pending",
+        status: mode === "edit" ? listing?.status || "pending" : "pending",
         is_featured: isPro,
         whatsapp_number: values.whatsapp_number,
         phone_number: values.phone_number || null,
         available_from: values.available_from,
         occupancy: values.occupancy,
+        fee_items: feeItems.map((fee) => fee.type === "agency" && isAgent && agentFeeType !== "none" ? { ...fee, amount: agentFeeType === "fixed" && agentFeeAmount ? Number(agentFeeAmount) : null } : fee),
+        sharing_allowed: sharingAllowed,
         furnishing: values.furnishing,
         floor: values.floor,
         agent_fee_type: isAgent ? agentFeeType : null,
         agent_fee_amount:
-          isAgent && agentFeeType !== "none" && agentFeeAmount ? Number(agentFeeAmount) : null,
-        video_url: videoUrl
-      }
+          isAgent && agentFeeType !== "none" && agentFeeAmount
+            ? Number(agentFeeAmount)
+            : null,
+        video_url: videoUrl,
+      };
 
       if (mode === "edit" && listing?.id) {
-        const { error } = await supabase.from("listings").update(payload).eq("id", listing.id)
-        if (error) throw error
-        
+        const { error } = await supabase
+          .from("listings")
+          .update(payload)
+          .eq("id", listing.id);
+        if (error) throw error;
+
         if (listing.status === "rejected") {
           try {
             await fetch("/api/landlord/listings/appeal", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                listingId: listing.id, 
-                appealType: "resubmit", 
-                appealMessage: "Listing edited and resubmitted." 
-              })
-            })
+              body: JSON.stringify({
+                listingId: listing.id,
+                appealType: "resubmit",
+                appealMessage: "Listing edited and resubmitted.",
+              }),
+            });
           } catch (e) {
-            console.error("Failed to submit appeal for resubmission", e)
+            console.error("Failed to submit appeal for resubmission", e);
           }
         }
       } else {
-        const { error } = await supabase.from("listings").insert(payload)
-        if (error) throw error
+        const { error } = await supabase.from("listings").insert(payload);
+        if (error) throw error;
         // Notify admins that a new listing is pending approval (best-effort).
-        void notifyAdminsNewListing(listingId)
+        void notifyAdminsNewListing(listingId);
       }
 
-      window.localStorage.removeItem(draftKey)
-      setComplete(true)
-      router.refresh()
+      window.localStorage.removeItem(draftKey);
+      setComplete(true);
+      router.refresh();
     } catch (error: any) {
-      setMessage(error?.message ?? "Failed to save listing.")
+      setMessage(error?.message ?? "Failed to save listing.");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  const amenities = watch("amenities")
+  const amenities = watch("amenities");
   const canSubmit = useMemo(
     () => !submitting && (photoItems.length > 0 || !!videoUrl),
-    [photoItems.length, submitting, videoUrl]
-  )
+    [photoItems.length, submitting, videoUrl],
+  );
 
   if (complete) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
         <h2 className="text-lg font-semibold text-emerald-900">
-          {mode === "edit" && listing?.status === "active" 
+          {mode === "edit" && listing?.status === "active"
             ? "Your listing changes have been saved."
             : "Submitted for verification. We'll review within 24 hours."}
         </h2>
@@ -341,7 +410,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
           View My Listings
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -349,12 +418,13 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
       <div>
         <div className="mb-2 flex items-center justify-between">
           <p className="text-sm font-medium text-gray-700">Progress</p>
-          <p className="text-sm text-gray-600">
-            Step {currentStep + 1} of 4
-          </p>
+          <p className="text-sm text-gray-600">Step {currentStep + 1} of 4</p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-          <div className="h-full bg-[#1B4332]" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full bg-[#1B4332]"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
 
@@ -364,40 +434,63 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1 block text-sm font-medium">Title</label>
-              <input {...register("title")} placeholder="e.g. Self-con in Choba near Gate" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input
+                {...register("title")}
+                placeholder="e.g. Self-con in Choba near Gate"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
               <p className="mt-1 text-xs text-gray-500">{titleLength}/80</p>
-              {errors.title ? <p className="text-xs text-red-600">{errors.title.message}</p> : null}
+              {errors.title ? (
+                <p className="text-xs text-red-600">{errors.title.message}</p>
+              ) : null}
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium">Nearest university</label>
-              <select 
-                {...register("university")} 
+              <label className="mb-1 block text-sm font-medium">
+                Nearest university
+              </label>
+              <select
+                {...register("university")}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
               >
-                <option value="">Which university is this property closest to?</option>
-                {UNIVERSITIES.map(u => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
+                <option value="">
+                  Which university is this property closest to?
+                </option>
+                {UNIVERSITIES.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
                 ))}
               </select>
-              {errors.university ? <p className="text-xs text-red-600">{errors.university.message}</p> : null}
+              {errors.university ? (
+                <p className="text-xs text-red-600">
+                  {errors.university.message}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Room Type</label>
+              <label className="mb-1 block text-sm font-medium">
+                Room Type
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: "Self-con", value: "self_con" },
                   { label: "1 Bedroom", value: "one_bedroom" },
                   { label: "2 Bedroom", value: "two_bedroom" },
-                  { label: "Shared", value: "shared" }
+                  { label: "Shared", value: "shared" },
                 ].map((room) => (
                   <button
                     key={room.value}
                     type="button"
-                    onClick={() => setValue("room_type", room.value as ListingFormValues["room_type"])}
+                    onClick={() =>
+                      setValue(
+                        "room_type",
+                        room.value as ListingFormValues["room_type"],
+                      )
+                    }
                     className={`rounded-lg border px-2 py-2 text-sm ${
                       watch("room_type") === room.value
                         ? "border-[#1B4332] bg-[#1B4332] text-white"
@@ -408,11 +501,17 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   </button>
                 ))}
               </div>
-              {errors.room_type ? <p className="mt-1 text-xs text-red-600">{errors.room_type.message}</p> : null}
+              {errors.room_type ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.room_type.message}
+                </p>
+              ) : null}
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium">Yearly Price</label>
+              <label className="mb-1 block text-sm font-medium">
+                Listed rent (₦)
+              </label>
               <div className="flex items-center rounded-lg border border-gray-300 px-3">
                 <span className="text-sm text-gray-600">₦</span>
                 <input
@@ -421,25 +520,59 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   className="w-full bg-transparent px-2 py-2 text-sm outline-none"
                 />
               </div>
-              {errors.price_yearly ? <p className="mt-1 text-xs text-red-600">{errors.price_yearly.message}</p> : null}
+              {errors.price_yearly ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.price_yearly.message}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-medium">What does this price cover?
+              <select {...register("price_basis")} className="mt-1 min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm">
+                <option value="unconfirmed">Select what rent covers</option><option value="per_bed">One bed</option><option value="per_room">One room</option><option value="per_unit">Whole unit</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium">Rental term (months)
+              <input type="number" min="1" max="60" {...register("rent_term_months", { setValueAs: (value) => value === "" ? null : Number(value) })} className="mt-1 min-h-11 w-full rounded-lg border border-gray-300 px-3 text-sm" />
+            </label>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Distance from gate</label>
-              <select {...register("distance_from_gate")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <label className="mb-1 block text-sm font-medium">
+                Distance from gate
+              </label>
+              <select
+                {...register("distance_from_gate")}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              >
                 <option value="under_5">Under 5 mins walk</option>
                 <option value="5_to_15">5-15 mins walk</option>
                 <option value="15_to_30">15-30 mins walk</option>
                 <option value="above_30">30+ mins walk</option>
               </select>
-              {errors.distance_from_gate ? <p className="mt-1 text-xs text-red-600">{errors.distance_from_gate.message}</p> : null}
+              {errors.distance_from_gate ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.distance_from_gate.message}
+                </p>
+              ) : null}
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Available from</label>
-              <input type="date" {...register("available_from")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-              {errors.available_from ? <p className="mt-1 text-xs text-red-600">{errors.available_from.message}</p> : null}
+              <label className="mb-1 block text-sm font-medium">
+                Available from
+              </label>
+              <input
+                type="date"
+                {...register("available_from")}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              {errors.available_from ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.available_from.message}
+                </p>
+              ) : null}
             </div>
           </div>
         </section>
@@ -450,41 +583,79 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
           <h3 className="text-lg font-semibold">Step 2 - Location</h3>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Street / compound name</label>
-              <input {...register("address")} placeholder="e.g. No 12, Scholar Street" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-              {errors.address ? <p className="mt-1 text-xs text-red-600">{errors.address.message}</p> : null}
+              <label className="mb-1 block text-sm font-medium">
+                Street / compound name
+              </label>
+              <input
+                {...register("address")}
+                placeholder="e.g. No 12, Scholar Street"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+              {errors.address ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.address.message}
+                </p>
+              ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">Area</label>
-                <input 
-                  {...register("area")} 
-                  placeholder="e.g. Choba, Rumuola, Nkpolu, Woji" 
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" 
+                <input
+                  {...register("area")}
+                  placeholder="e.g. Choba, Rumuola, Nkpolu, Woji"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 />
-                <p className="mt-1 text-[10px] text-gray-500 font-medium italic">Enter the area/neighbourhood your property is in</p>
-                {errors.area ? <p className="text-xs text-red-600">{errors.area.message}</p> : null}
+                <p className="mt-1 text-[10px] text-gray-500 font-medium italic">
+                  Enter the area/neighbourhood your property is in
+                </p>
+                {errors.area ? (
+                  <p className="text-xs text-red-600">{errors.area.message}</p>
+                ) : null}
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Landmark (optional)</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Landmark (optional)
+                </label>
                 <input
                   {...register("landmark")}
                   placeholder="e.g. Behind Choba park"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 />
-                {errors.landmark ? <p className="mt-1 text-xs text-red-600">{errors.landmark.message}</p> : null}
+                {errors.landmark ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.landmark.message}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">WhatsApp number</label>
-                <input {...register("whatsapp_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                {errors.whatsapp_number ? <p className="mt-1 text-xs text-red-600">{errors.whatsapp_number.message}</p> : null}
+                <label className="mb-1 block text-sm font-medium">
+                  WhatsApp number
+                </label>
+                <input
+                  {...register("whatsapp_number")}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                {errors.whatsapp_number ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.whatsapp_number.message}
+                  </p>
+                ) : null}
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Phone number (optional)</label>
-                <input {...register("phone_number")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-                {errors.phone_number ? <p className="mt-1 text-xs text-red-600">{errors.phone_number.message}</p> : null}
+                <label className="mb-1 block text-sm font-medium">
+                  Phone number (optional)
+                </label>
+                <input
+                  {...register("phone_number")}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                {errors.phone_number ? (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.phone_number.message}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -493,12 +664,14 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
 
       {currentStep === 2 ? (
         <section className="space-y-4">
-          <h3 className="text-lg font-semibold">Step 3 - Amenities & Details</h3>
+          <h3 className="text-lg font-semibold">
+            Step 3 - Amenities & Details
+          </h3>
           <div>
             <p className="mb-2 text-sm font-medium">Amenities</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {amenityOptions.map((amenity) => {
-                const selected = amenities.includes(amenity)
+                const selected = amenities.includes(amenity);
                 return (
                   <button
                     key={amenity}
@@ -506,24 +679,34 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                     onClick={() =>
                       setValue(
                         "amenities",
-                        selected ? amenities.filter((item) => item !== amenity) : [...amenities, amenity]
+                        selected
+                          ? amenities.filter((item) => item !== amenity)
+                          : [...amenities, amenity],
                       )
                     }
                     className={`rounded-lg border px-2 py-2 text-xs ${
-                      selected ? "border-[#1B4332] bg-[#1B4332] text-white" : "border-gray-300"
+                      selected
+                        ? "border-[#1B4332] bg-[#1B4332] text-white"
+                        : "border-gray-300"
                     }`}
                   >
                     {amenity.replace("_", " ")}
                   </button>
-                )
+                );
               })}
             </div>
-            {errors.amenities ? <p className="mt-1 text-xs text-red-600">{errors.amenities.message}</p> : null}
+            {errors.amenities ? (
+              <p className="mt-1 text-xs text-red-600">
+                {errors.amenities.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium">Occupancy (1-4 students)</label>
+              <label className="mb-1 block text-sm font-medium">
+                Occupancy (1-4 students)
+              </label>
               <input
                 type="number"
                 min={1}
@@ -531,23 +714,34 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                 {...register("occupancy", { valueAsNumber: true })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#1B4332]"
               />
-              {errors.occupancy ? <p className="mt-1 text-xs text-red-600">{errors.occupancy.message}</p> : null}
+              {errors.occupancy ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.occupancy.message}
+                </p>
+              ) : null}
             </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium">Furnishing</label>
+              <label className="mb-2 block text-sm font-medium">
+                Furnishing
+              </label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { label: "Furnished", value: "furnished" },
                   { label: "Semi", value: "semi_furnished" },
-                  { label: "Unfurnished", value: "unfurnished" }
+                  { label: "Unfurnished", value: "unfurnished" },
                 ].map((item) => (
                   <button
                     key={item.value}
                     type="button"
-                    onClick={() => setValue("furnishing", item.value as ListingFormValues["furnishing"])}
+                    onClick={() =>
+                      setValue(
+                        "furnishing",
+                        item.value as ListingFormValues["furnishing"],
+                      )
+                    }
                     className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${
                       watch("furnishing") === item.value
                         ? "border-[#1B4332] bg-[#1B4332] text-white"
@@ -558,19 +752,28 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   </button>
                 ))}
               </div>
-              {errors.furnishing ? <p className="mt-1 text-xs text-red-600">{errors.furnishing.message}</p> : null}
+              {errors.furnishing ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.furnishing.message}
+                </p>
+              ) : null}
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium">Floor</label>
               <div className="flex gap-2">
                 {[
                   { label: "Ground", value: "ground" },
-                  { label: "Upper", value: "upper" }
+                  { label: "Upper", value: "upper" },
                 ].map((item) => (
                   <button
                     key={item.value}
                     type="button"
-                    onClick={() => setValue("floor", item.value as ListingFormValues["floor"])}
+                    onClick={() =>
+                      setValue(
+                        "floor",
+                        item.value as ListingFormValues["floor"],
+                      )
+                    }
                     className={`flex-1 rounded-lg border px-3 py-2 text-xs font-medium transition ${
                       watch("floor") === item.value
                         ? "border-[#1B4332] bg-[#1B4332] text-white"
@@ -581,33 +784,43 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   </button>
                 ))}
               </div>
-              {errors.floor ? <p className="mt-1 text-xs text-red-600">{errors.floor.message}</p> : null}
+              {errors.floor ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.floor.message}
+                </p>
+              ) : null}
             </div>
           </div>
 
           {isAgent ? (
             <div className="space-y-3 rounded-lg border border-gray-200 p-3">
-              <label className="text-sm font-semibold text-gray-700">Agent Fee</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Agent Fee
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {(["none", "fixed", "negotiable"] as AgentFeeType[]).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setAgentFeeType(type)}
-                    className={`rounded-lg border-2 py-2 text-sm capitalize ${
-                      agentFeeType === type
-                        ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332] font-semibold"
-                        : "border-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
+                {(["none", "fixed", "negotiable"] as AgentFeeType[]).map(
+                  (type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setAgentFeeType(type)}
+                      className={`rounded-lg border-2 py-2 text-sm capitalize ${
+                        agentFeeType === type
+                          ? "border-[#1B4332] bg-[#1B4332]/5 text-[#1B4332] font-semibold"
+                          : "border-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ),
+                )}
               </div>
               {(agentFeeType === "fixed" || agentFeeType === "negotiable") && (
                 <div>
                   <label className="text-xs text-gray-500 mb-1 block">
-                    {agentFeeType === "fixed" ? "Fee amount (₦)" : "Starting amount (₦)"}
+                    {agentFeeType === "fixed"
+                      ? "Fee amount (₦)"
+                      : "Starting amount (₦)"}
                   </label>
                   <input
                     type="number"
@@ -627,7 +840,7 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
               <AiDescribeButton
                 isPro={isPro}
                 getPayload={() => {
-                  const v = getValues()
+                  const v = getValues();
                   return {
                     title: v.title,
                     room_type: v.room_type,
@@ -636,39 +849,62 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                     amenities: v.amenities,
                     distance_from_gate: v.distance_from_gate,
                     description: v.description,
-                  }
+                  };
                 }}
-                onApply={(text) => setValue("description", text, { shouldValidate: true })}
+                onApply={(text) =>
+                  setValue("description", text, { shouldValidate: true })
+                }
               />
             </div>
             <textarea
-              {...register("description")} 
-              rows={4} 
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:rows-6" 
+              {...register("description")}
+              rows={4}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm md:rows-6"
               placeholder="Describe the room, compound, security, and proximity to campus..."
             />
             <div className="mt-1 flex justify-between">
-              <p className="text-xs text-gray-500">{descriptionLength}/600 (min 10)</p>
-              {errors.description ? <p className="text-xs text-red-600">{errors.description.message}</p> : null}
+              <p className="text-xs text-gray-500">
+                {descriptionLength}/600 (min 10)
+              </p>
+              {errors.description ? (
+                <p className="text-xs text-red-600">
+                  {errors.description.message}
+                </p>
+              ) : null}
             </div>
           </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <FeeEditor value={feeItems} onChange={setFeeItems} />
+            <p className="mt-3 text-xs text-amber-950">These are advertiser-entered amounts. HousePlug checks them before a complete move-in total is shown.</p>
+          </div>
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 text-sm">
+            <input type="checkbox" checked={sharingAllowed} onChange={(event) => setSharingAllowed(event.target.checked)} className="mt-1" />
+            I confirm the property permits more than one occupant to share this unit. Students must still agree the arrangement independently.
+          </label>
         </section>
       ) : null}
 
       {currentStep === 3 ? (
         <section className="space-y-5">
           <div>
-            <h3 className="text-lg font-semibold">Step 4 - Photos &amp; Video</h3>
+            <h3 className="text-lg font-semibold">
+              Step 4 - Photos &amp; Video
+            </h3>
             <p className="text-xs text-gray-500">
-              Upload at least one photo or video. Video recommended for faster inquiries.
+              Upload at least one photo or video. Video recommended for faster
+              inquiries.
             </p>
           </div>
 
           {/* Video first — the priority */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-semibold text-gray-700">Property Video</label>
-              <span className="rounded-full bg-[#F59E0B] px-2 py-0.5 text-xs font-medium text-white">Recommended</span>
+              <label className="text-sm font-semibold text-gray-700">
+                Property Video
+              </label>
+              <span className="rounded-full bg-[#F59E0B] px-2 py-0.5 text-xs font-medium text-white">
+                Recommended
+              </span>
             </div>
             <p className="text-xs text-gray-500">
               A short video tour gets 3x more inquiries. Max 100MB. MP4, MOV.
@@ -677,31 +913,33 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
             {!videoUrl && !videoUploading && (
               <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:border-[#1B4332]">
                 <Video className="w-6 h-6 text-gray-400" />
-                <span className="text-sm font-medium text-gray-600">Click to upload video</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Click to upload video
+                </span>
                 <input
                   type="file"
                   accept="video/mp4,video/quicktime"
                   className="hidden"
                   onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
+                    const file = e.target.files?.[0];
+                    if (!file) return;
                     if (file.size > 100 * 1024 * 1024) {
-                      setMessage("Video must be under 100MB")
-                      return
+                      setMessage("Video must be under 100MB");
+                      return;
                     }
-                    setMessage(null)
-                    setVideoUploading(true)
+                    setMessage(null);
+                    setVideoUploading(true);
                     try {
-                      const url = await uploadVideo(file)
-                      setVideoUrl(url)
+                      const url = await uploadVideo(file);
+                      setVideoUrl(url);
                     } catch (err) {
                       setMessage(
                         err instanceof Error
                           ? `Video upload failed: ${err.message}`
-                          : "Video upload failed. Please try again."
-                      )
+                          : "Video upload failed. Please try again.",
+                      );
                     } finally {
-                      setVideoUploading(false)
+                      setVideoUploading(false);
                     }
                   }}
                 />
@@ -717,7 +955,11 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
 
             {videoUrl && (
               <div className="relative rounded-xl overflow-hidden border">
-                <video src={getSafariCompatibleVideoUrl(videoUrl)} controls className="w-full max-h-64 object-cover" />
+                <video
+                  src={getSafariCompatibleVideoUrl(videoUrl)}
+                  controls
+                  className="w-full max-h-64 object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => setVideoUrl(null)}
@@ -734,13 +976,21 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
           <div className="space-y-3">
             <label className="text-sm font-semibold text-gray-700">
               Photos
-              <span className="ml-1 text-xs font-normal text-gray-400">(optional if video uploaded)</span>
+              <span className="ml-1 text-xs font-normal text-gray-400">
+                (optional if video uploaded)
+              </span>
             </label>
 
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-8 text-sm text-gray-600">
               <Upload className="h-4 w-4" />
               Upload photos (max 8)
-              <input type="file" accept="image/*" multiple className="hidden" onChange={(event) => onFilesSelected(event.target.files)} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(event) => onFilesSelected(event.target.files)}
+              />
             </label>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -751,13 +1001,17 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   onDragStart={() => setDraggedId(photo.id)}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => {
-                    if (draggedId) reorderPhotos(draggedId, photo.id)
-                    setDraggedId(null)
+                    if (draggedId) reorderPhotos(draggedId, photo.id);
+                    setDraggedId(null);
                   }}
                   className="overflow-hidden rounded-lg border border-gray-200 bg-white"
                 >
                   <div className="relative h-24">
-                    <img src={photo.url} alt={`Photo ${index + 1}`} className="h-full w-full object-cover" />
+                    <img
+                      src={photo.url}
+                      alt={`Photo ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
                     <button
                       type="button"
                       onClick={() => removePhoto(photo.id)}
@@ -774,7 +1028,10 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
                   <div className="flex items-center gap-1 px-2 py-1">
                     <GripVertical className="h-3 w-3 text-gray-400" />
                     <div className="h-1.5 flex-1 overflow-hidden rounded bg-gray-100">
-                      <div className="h-full bg-[#1B4332]" style={{ width: `${photo.progress}%` }} />
+                      <div
+                        className="h-full bg-[#1B4332]"
+                        style={{ width: `${photo.progress}%` }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -787,7 +1044,9 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
       {message ? <p className="text-sm text-red-600">{message}</p> : null}
 
       {Object.keys(errors).length ? (
-        <p className="text-sm text-red-600">Please fix the highlighted fields before continuing.</p>
+        <p className="text-sm text-red-600">
+          Please fix the highlighted fields before continuing.
+        </p>
       ) : null}
 
       <div className="flex items-center justify-between">
@@ -803,15 +1062,22 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
           <button
             type="button"
             onClick={() => {
-              window.localStorage.setItem(draftKey, JSON.stringify(getValues()))
-              setMessage("Draft saved locally.")
+              window.localStorage.setItem(
+                draftKey,
+                JSON.stringify(getValues()),
+              );
+              setMessage("Draft saved locally.");
             }}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
             Save as draft
           </button>
           {currentStep < 3 ? (
-            <button type="button" onClick={nextStep} className="rounded-lg bg-[#1B4332] px-4 py-2 text-sm font-semibold text-white">
+            <button
+              type="button"
+              onClick={nextStep}
+              className="rounded-lg bg-[#1B4332] px-4 py-2 text-sm font-semibold text-white"
+            >
               Continue
             </button>
           ) : (
@@ -821,12 +1087,15 @@ export function ListingForm({ mode, listing, landlordId, isPro, isAgent }: Listi
               onClick={onSubmit}
               className="rounded-lg bg-[#1B4332] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {submitting ? "Submitting..." : mode === "edit" ? "Save Changes" : "Submit Listing"}
+              {submitting
+                ? "Submitting..."
+                : mode === "edit"
+                  ? "Save Changes"
+                  : "Submit Listing"}
             </button>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }
-

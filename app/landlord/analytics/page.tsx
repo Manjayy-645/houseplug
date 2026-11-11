@@ -53,13 +53,14 @@ export default async function LandlordAnalyticsPage() {
   // Total Views is the free teaser; everything else is Pro-only.
   const teaser: Stat = { name: "Total Room Views", value: totalViews, icon: MousePointerClick, color: "text-blue-600", desc: "Total times your rooms were seen" }
   const gatedStats: Stat[] = [
-    { name: "WhatsApp Clicks", value: totalClicks, icon: Users, color: "text-green-600", desc: "Potential leads/contacts" },
+    { name: "WhatsApp Clicks", value: totalClicks, icon: Users, color: "text-green-600", desc: "Outbound WhatsApp link clicks" },
     { name: "Reviews Received", value: reviewCount || 0, icon: MessageSquare, color: "text-purple-600", desc: "Student feedback count" },
-    { name: "Avg. Engagement", value: `${engagement}%`, icon: BarChart3, color: "text-orange-600", desc: "Views to contact ratio" },
+    { name: "WhatsApp Click-Through", value: `${engagement}%`, icon: BarChart3, color: "text-orange-600", desc: "WhatsApp clicks divided by listing views" },
   ]
 
   const detailed = (
     <div className="space-y-10">
+      <p className="text-sm text-gray-700">WhatsApp clicks measure link activity only. They do not confirm a message, enquiry, inspection or rental. HousePlug cannot read or monitor private WhatsApp conversations.</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {gatedStats.map((stat) => (
           <StatCard key={stat.name} stat={stat} />
@@ -78,7 +79,7 @@ export default async function LandlordAnalyticsPage() {
                     <th className="px-6 py-4 font-semibold text-gray-600">Status</th>
                     <th className="px-6 py-4 font-semibold text-gray-600">Views</th>
                     <th className="px-6 py-4 font-semibold text-gray-600">Clicks</th>
-                    <th className="px-6 py-4 font-semibold text-gray-600">Conv.</th>
+                    <th className="px-6 py-4 font-semibold text-gray-600">Clicks / views</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">

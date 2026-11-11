@@ -1,8 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import Link from "next/link"
-import { createPortal } from "react-dom"
+import { sharingEligible } from "@/lib/housing";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { createPortal } from "react-dom";
 import {
   Users,
   Sparkles,
@@ -20,21 +22,21 @@ import {
   Loader2,
   AlertCircle,
   CheckCheck,
-} from "lucide-react"
-import { formatNaira } from "@/lib/utils"
-import { UNIVERSITIES } from "@/lib/constants"
-import { fireCelebrationConfetti } from "@/lib/confetti"
+} from "lucide-react";
+import { formatNaira } from "@/lib/utils";
+import { UNIVERSITIES } from "@/lib/constants";
+import { fireCelebrationConfetti } from "@/lib/confetti";
 import {
   computeComprehensiveMatchScore,
   isBudgetCompatibleWithLodge,
   buildLodgeRoommateWhatsAppLink,
   formatWhatsAppPhone,
-} from "@/lib/roommate-matching"
+} from "@/lib/roommate-matching";
 import {
   attachListingToRoommateProfile,
   removeListingFromRoommateProfile,
-} from "@/app/roommate-actions"
-import type { Listing } from "@/types"
+} from "@/app/roommate-actions";
+import type { Listing } from "@/types";
 
 const WhatsAppIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg
@@ -45,48 +47,48 @@ const WhatsAppIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   >
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.052 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
   </svg>
-)
+);
 
 export interface CampusRoommate {
-  id: string
-  user_id?: string
-  intent: string
-  university: string
-  budget_min: number
-  budget_max: number
-  gender: string
-  preferred_gender: string
-  lifestyle_tags?: string[] | null
-  bio?: string | null
-  phone_number?: string
-  room_address?: string | null
-  target_listing_id?: string | null
-  target_listing_title?: string | null
+  id: string;
+  user_id?: string;
+  intent: string;
+  university: string;
+  budget_min: number;
+  budget_max: number;
+  gender: string;
+  preferred_gender: string;
+  lifestyle_tags?: string[] | null;
+  bio?: string | null;
+  phone_number?: string;
+  room_address?: string | null;
+  target_listing_id?: string | null;
+  target_listing_title?: string | null;
   profile?: {
-    id?: string
-    full_name: string
-    avatar_url: string | null
-    verification_status: string
-  } | null
+    id?: string;
+    full_name: string;
+    avatar_url: string | null;
+    verification_status: string;
+  } | null;
 }
 
 interface RoommateSplitSectionProps {
-  listing: Listing
-  campusRoommates?: CampusRoommate[]
-  currentUserId?: string | null
-  currentUserRole?: string | null
+  listing: Listing;
+  campusRoommates?: CampusRoommate[];
+  currentUserId?: string | null;
+  currentUserRole?: string | null;
   currentUserRoommateProfile?: {
-    id: string
-    university: string
-    budget_min: number
-    budget_max: number
-    gender: string
-    preferred_gender: string
-    lifestyle_tags: string[]
-    target_listing_id?: string | null
-    target_listing_title?: string | null
-    room_address?: string | null
-  } | null
+    id: string;
+    university: string;
+    budget_min: number;
+    budget_max: number;
+    gender: string;
+    preferred_gender: string;
+    lifestyle_tags: string[];
+    target_listing_id?: string | null;
+    target_listing_title?: string | null;
+    room_address?: string | null;
+  } | null;
 }
 
 export function RoommateSplitSection({
@@ -96,72 +98,72 @@ export function RoommateSplitSection({
   currentUserRole,
   currentUserRoommateProfile,
 }: RoommateSplitSectionProps) {
-  const [splitCount, setSplitCount] = useState<2 | 3>(2)
-  const [copied, setCopied] = useState(false)
-  const [showGuestModal, setShowGuestModal] = useState(false)
-  const [showRoleModal, setShowRoleModal] = useState(false)
-  const [isAttaching, setIsAttaching] = useState(false)
-  const [isDetaching, setIsDetaching] = useState(false)
-  const [isAttachedLocal, setIsAttachedLocal] = useState<boolean | null>(null)
+  const [splitCount, setSplitCount] = useState<2 | 3>(2);
+  const [copied, setCopied] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [isAttaching, setIsAttaching] = useState(false);
+  const [isDetaching, setIsDetaching] = useState(false);
+  const [isAttachedLocal, setIsAttachedLocal] = useState<boolean | null>(null);
 
   const campusObj = UNIVERSITIES.find(
     (u) =>
       u.id.toLowerCase() === listing.university.toLowerCase() ||
       u.shortName.toLowerCase() === listing.university.toLowerCase() ||
-      u.name.toLowerCase() === listing.university.toLowerCase()
-  )
-  const campusName = campusObj?.shortName || listing.university
+      u.name.toLowerCase() === listing.university.toLowerCase(),
+  );
+  const campusName = campusObj?.shortName || listing.university;
 
-  const splitPrice = Math.round(listing.price_yearly / splitCount)
-  const savings = listing.price_yearly - splitPrice
-  const monthlyApprox = Math.round(splitPrice / 12)
+  const splitPrice = Math.round(listing.price_yearly / splitCount);
+  const savings = listing.price_yearly - splitPrice;
+  const monthlyApprox = Math.round(splitPrice / 12);
 
   const isUserAttached =
     isAttachedLocal !== null
       ? isAttachedLocal
-      : currentUserRoommateProfile?.target_listing_id === listing.id
+      : currentUserRoommateProfile?.target_listing_id === listing.id;
 
   // Pre-formatted invite text for general WhatsApp share
-  const shareText = `Hey! I found this lodge on HousePlug: "${listing.title}" in ${listing.area} near ${campusName}. Total rent is ${formatNaira(listing.price_yearly)}/year — if we split it (${splitCount} of us), that's just ${formatNaira(splitPrice)}/year each! Check out photos and details here: https://houseplug.ng/listing/${listing.id}`
+  const shareText = `Hey! I found this lodge on HousePlug: "${listing.title}" in ${listing.area} near ${campusName}. Total rent is ${formatNaira(listing.price_yearly)}/year — if we split it (${splitCount} of us), that's just ${formatNaira(splitPrice)}/year each! Check out photos and details here: https://houseplug.ng/listing/${listing.id}`;
 
-  const whatsappInviteUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`
+  const whatsappInviteUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
 
   // Direct link to create a roommate request with pre-filled lodge data
   const createRoommateUrl = `/roommates/create?intent=teaming_up&university=${encodeURIComponent(
-    campusObj?.name || listing.university
+    campusObj?.name || listing.university,
   )}&budget=${splitPrice}&address=${encodeURIComponent(
-    `${listing.title}, ${listing.area}`
-  )}&listing_id=${listing.id}&listing_title=${encodeURIComponent(listing.title)}`
+    `${listing.title}, ${listing.area}`,
+  )}&listing_id=${listing.id}&listing_title=${encodeURIComponent(listing.title)}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
+    navigator.clipboard.writeText(shareText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   // Handle One-Click "I Want to Split This Lodge"
   const handleToggleAttachLodge = async () => {
     if (!currentUserId) {
-      setShowGuestModal(true)
-      return
+      setShowGuestModal(true);
+      return;
     }
     if (currentUserRole !== "student") {
-      setShowRoleModal(true)
-      return
+      setShowRoleModal(true);
+      return;
     }
 
     if (isUserAttached) {
-      setIsDetaching(true)
+      setIsDetaching(true);
       try {
-        await removeListingFromRoommateProfile(listing.id)
-        setIsAttachedLocal(false)
+        await removeListingFromRoommateProfile(listing.id);
+        setIsAttachedLocal(false);
       } catch (err) {
-        console.error(err)
+        console.error(err);
       } finally {
-        setIsDetaching(false)
+        setIsDetaching(false);
       }
     } else {
-      setIsAttaching(true)
+      setIsAttaching(true);
       try {
         const res = await attachListingToRoommateProfile({
           listingId: listing.id,
@@ -169,34 +171,34 @@ export function RoommateSplitSection({
           university: campusName,
           area: listing.area,
           priceYearly: listing.price_yearly,
-        })
+        });
         if (res.success) {
-          setIsAttachedLocal(true)
-          fireCelebrationConfetti()
+          setIsAttachedLocal(true);
+          fireCelebrationConfetti();
         }
       } catch (err) {
-        console.error(err)
+        console.error(err);
       } finally {
-        setIsAttaching(false)
+        setIsAttaching(false);
       }
     }
-  }
+  };
 
   // Handle Direct WhatsApp Connect on Roommate Card
   const handleConnectRoommate = (roommate: CampusRoommate) => {
     if (!currentUserId) {
-      setShowGuestModal(true)
-      return
+      setShowGuestModal(true);
+      return;
     }
     if (currentUserRole !== "student") {
-      setShowRoleModal(true)
-      return
+      setShowRoleModal(true);
+      return;
     }
 
-    const phone = roommate.phone_number || ""
+    const phone = roommate.phone_number || "";
     if (!phone) {
-      window.location.href = `/roommates/${roommate.id}`
-      return
+      window.location.href = `/roommates/${roommate.id}`;
+      return;
     }
 
     const waUrl = buildLodgeRoommateWhatsAppLink({
@@ -208,37 +210,47 @@ export function RoommateSplitSection({
       listingId: listing.id,
       splitPrice,
       splitCount,
-    })
+    });
 
-    window.open(waUrl, "_blank")
-  }
+    window.open(waUrl, "_blank");
+  };
 
   // Compute and rank compatible roommates
   const scoredRoommates = useMemo(() => {
     return campusRoommates
       .map((r) => {
-        let matchScore: number | null = null
-        let matchReasons: string[] = []
+        let matchScore: number | null = null;
+        let matchReasons: string[] = [];
 
         if (currentUserRoommateProfile) {
-          const res = computeComprehensiveMatchScore(currentUserRoommateProfile, r, {
-            id: listing.id,
-            title: listing.title,
-            area: listing.area,
-            price_yearly: listing.price_yearly,
-          })
+          const res = computeComprehensiveMatchScore(
+            currentUserRoommateProfile,
+            r,
+            {
+              id: listing.id,
+              title: listing.title,
+              area: listing.area,
+              price_yearly: listing.price_yearly,
+            },
+          );
           if (res.isEligible) {
-            matchScore = res.score
-            matchReasons = res.reasons
+            matchScore = res.score;
+            matchReasons = res.reasons;
           }
         }
 
-        const budgetInfo = isBudgetCompatibleWithLodge(r.budget_min, r.budget_max, splitPrice)
+        const budgetInfo = isBudgetCompatibleWithLodge(
+          r.budget_min,
+          r.budget_max,
+          splitPrice,
+        );
 
         const isExplicitLodgeTarget =
           r.target_listing_id === listing.id ||
           (r.target_listing_title &&
-            r.target_listing_title.toLowerCase().includes(listing.title.toLowerCase()))
+            r.target_listing_title
+              .toLowerCase()
+              .includes(listing.title.toLowerCase()));
 
         return {
           ...r,
@@ -246,23 +258,24 @@ export function RoommateSplitSection({
           matchReasons,
           budgetInfo,
           isExplicitLodgeTarget,
-        }
+        };
       })
       .sort((a, b) => {
         // Priority 1: explicitly targeting this lodge
-        if (a.isExplicitLodgeTarget && !b.isExplicitLodgeTarget) return -1
-        if (!a.isExplicitLodgeTarget && b.isExplicitLodgeTarget) return 1
+        if (a.isExplicitLodgeTarget && !b.isExplicitLodgeTarget) return -1;
+        if (!a.isExplicitLodgeTarget && b.isExplicitLodgeTarget) return 1;
         // Priority 2: pairwise match score
         if (a.matchScore !== null && b.matchScore !== null) {
-          return b.matchScore - a.matchScore
+          return b.matchScore - a.matchScore;
         }
         // Priority 3: exact budget compatibility
-        if (a.budgetInfo.isExact && !b.budgetInfo.isExact) return -1
-        if (!a.budgetInfo.isExact && b.budgetInfo.isExact) return 1
-        return 0
-      })
-  }, [campusRoommates, currentUserRoommateProfile, listing, splitPrice])
+        if (a.budgetInfo.isExact && !b.budgetInfo.isExact) return -1;
+        if (!a.budgetInfo.isExact && b.budgetInfo.isExact) return 1;
+        return 0;
+      });
+  }, [campusRoommates, currentUserRoommateProfile, listing, splitPrice]);
 
+  if (!sharingEligible(listing, splitCount)) return null;
   return (
     <>
       <section
@@ -285,8 +298,9 @@ export function RoommateSplitSection({
               <span className="text-[#1B4332]">Split the rent!</span>
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 font-medium mt-1 max-w-xl leading-relaxed">
-              You don&apos;t have to pay {formatNaira(listing.price_yearly)} alone. Pair up with a
-              fellow {campusName} student, share this lodge, and save big on accommodation.
+              You don&apos;t have to pay {formatNaira(listing.price_yearly)}{" "}
+              alone. Pair up with a fellow {campusName} student, share this
+              lodge, and save big on accommodation.
             </p>
           </div>
 
@@ -305,6 +319,7 @@ export function RoommateSplitSection({
             </button>
             <button
               type="button"
+              disabled={!sharingEligible(listing, 3)}
               onClick={() => setSplitCount(3)}
               className={`flex-1 sm:flex-initial px-4 py-2.5 sm:py-1.5 rounded-xl text-xs font-black transition-all text-center min-h-[40px] sm:min-h-0 flex items-center justify-center ${
                 splitCount === 3
@@ -328,9 +343,13 @@ export function RoommateSplitSection({
               <p className="text-2xl font-black text-gray-400 line-through decoration-red-500/80 decoration-2">
                 {formatNaira(listing.price_yearly)}
               </p>
-              <p className="text-xs text-gray-500 font-medium">100% full cost on you</p>
+              <p className="text-xs text-gray-500 font-medium">
+                100% full cost on you
+              </p>
             </div>
-            <span className="text-[11px] font-semibold text-gray-400">Heavy student burden</span>
+            <span className="text-[11px] font-semibold text-gray-400">
+              Heavy student burden
+            </span>
           </div>
 
           {/* Split Price (Highlighted) */}
@@ -344,11 +363,16 @@ export function RoommateSplitSection({
                 <p className="text-3xl sm:text-4xl font-black tracking-tight text-white">
                   {formatNaira(splitPrice)}
                 </p>
-                <span className="text-xs font-bold text-emerald-200">/ yr per person</span>
+                <span className="text-xs font-bold text-emerald-200">
+                  / yr per person
+                </span>
               </div>
               <p className="text-xs text-emerald-100 font-medium mt-0.5">
-                Approx. <strong className="text-white">{formatNaira(monthlyApprox)}/month</strong> per
-                person
+                Approx.{" "}
+                <strong className="text-white">
+                  {formatNaira(monthlyApprox)}/month
+                </strong>{" "}
+                per person
               </p>
             </div>
 
@@ -359,7 +383,9 @@ export function RoommateSplitSection({
               <span className="text-xl sm:text-2xl font-black text-amber-400">
                 +{formatNaira(savings)}
               </span>
-              <span className="text-[11px] text-emerald-100 block mt-0.5">kept in your pocket</span>
+              <span className="text-[11px] text-emerald-100 block mt-0.5">
+                kept in your pocket
+              </span>
             </div>
           </div>
         </div>
@@ -370,10 +396,16 @@ export function RoommateSplitSection({
             <div className="flex items-start gap-3">
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                  isUserAttached ? "bg-emerald-600 text-white" : "bg-emerald-50 text-emerald-800"
+                  isUserAttached
+                    ? "bg-emerald-600 text-white"
+                    : "bg-emerald-50 text-emerald-800"
                 }`}
               >
-                {isUserAttached ? <CheckCheck className="w-5 h-5" /> : <Zap className="w-5 h-5 text-[#F59E0B]" />}
+                {isUserAttached ? (
+                  <CheckCheck className="w-5 h-5" />
+                ) : (
+                  <Zap className="w-5 h-5 text-[#F59E0B]" />
+                )}
               </div>
               <div>
                 <p className="text-xs font-extrabold text-gray-900">
@@ -432,7 +464,8 @@ export function RoommateSplitSection({
                 </h3>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed mb-3">
-                Send them a ready-to-read WhatsApp message with the photos, details, and the split price.
+                Send them a ready-to-read WhatsApp message with the photos,
+                details, and the split price.
               </p>
             </div>
 
@@ -453,7 +486,11 @@ export function RoommateSplitSection({
                 aria-label="Copy invite text"
                 className="p-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 active:scale-95 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                {copied ? (
+                  <Check className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -470,8 +507,8 @@ export function RoommateSplitSection({
                 </h3>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed mb-3">
-                Post a roommate request for this lodge on HousePlug. We&apos;ll pre-fill the budget and
-                campus for you!
+                Post a roommate request for this lodge on HousePlug. We&apos;ll
+                pre-fill the budget and campus for you!
               </p>
             </div>
 
@@ -509,9 +546,10 @@ export function RoommateSplitSection({
           {scoredRoommates.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {scoredRoommates.map((roommate) => {
-                const displayName = roommate.profile?.full_name || "Verified Student"
-                const avatar = roommate.profile?.avatar_url
-                const isVerified = roommate.profile?.verification_status === "verified"
+                const displayName = roommate.profile?.full_name || "Student";
+                const avatar = roommate.profile?.avatar_url;
+                const isVerified =
+                  roommate.profile?.verification_status === "verified";
 
                 return (
                   <div
@@ -580,7 +618,9 @@ export function RoommateSplitSection({
                             </p>
                             <p className="text-[10px] text-gray-500 font-medium capitalize truncate">
                               {roommate.gender || "Student"} •{" "}
-                              {roommate.intent === "have_room" ? "Has Room" : "Looking to team up"}
+                              {roommate.intent === "have_room"
+                                ? "Has Room"
+                                : "Looking to team up"}
                             </p>
                           </div>
                         </Link>
@@ -588,15 +628,19 @@ export function RoommateSplitSection({
                         {/* Match or Target badge */}
                         {roommate.isExplicitLodgeTarget ? (
                           <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
-                            <Building className="w-2.5 h-2.5" /> Wants this lodge
+                            <Building className="w-2.5 h-2.5" /> Wants this
+                            lodge
                           </span>
                         ) : roommate.matchScore !== null ? (
                           <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200">
-                            <Zap className="w-3 h-3 text-[#F59E0B]" /> {roommate.matchScore}% Match
+                            <Zap className="w-3 h-3 text-[#F59E0B]" />{" "}
+                            {roommate.matchScore}% Match
                           </span>
                         ) : (
                           <span className="shrink-0 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                            {roommate.budgetInfo.isExact ? "Budget Match" : "Active"}
+                            {roommate.budgetInfo.isExact
+                              ? "Budget Match"
+                              : "Active"}
                           </span>
                         )}
                       </div>
@@ -607,23 +651,25 @@ export function RoommateSplitSection({
                           Roommate Budget
                         </span>
                         <span className="text-xs font-black text-[#1B4332]">
-                          {formatNaira(roommate.budget_min)} – {formatNaira(roommate.budget_max)}
+                          {formatNaira(roommate.budget_min)} –{" "}
+                          {formatNaira(roommate.budget_max)}
                         </span>
                       </div>
 
                       {/* Lifestyle tags */}
-                      {roommate.lifestyle_tags && roommate.lifestyle_tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {roommate.lifestyle_tags.slice(0, 3).map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[9px] bg-gray-100 text-gray-700 font-semibold px-2 py-0.5 rounded-md"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {roommate.lifestyle_tags &&
+                        roommate.lifestyle_tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {roommate.lifestyle_tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[9px] bg-gray-100 text-gray-700 font-semibold px-2 py-0.5 rounded-md"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                     </div>
 
                     {/* Pre-filled WhatsApp CTA Button - Touch Friendly */}
@@ -645,13 +691,14 @@ export function RoommateSplitSection({
                       </Link>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-emerald-300/60 bg-white/70 p-5 text-center">
               <p className="text-xs text-gray-600 font-medium mb-3">
-                No roommate requests posted for <strong>{campusName}</strong> yet today.
+                No roommate requests posted for <strong>{campusName}</strong>{" "}
+                yet today.
               </p>
               <Link
                 href={createRoommateUrl}
@@ -688,8 +735,8 @@ export function RoommateSplitSection({
                   Sign in with your Student Account
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mb-6 leading-relaxed">
-                  To protect student phone numbers from spam and ensure safety, WhatsApp contact is
-                  reserved for verified student accounts.
+                  To protect student phone numbers from spam and ensure safety,
+                  WhatsApp contact is reserved for verified student accounts.
                 </p>
 
                 <div className="space-y-2.5">
@@ -708,7 +755,7 @@ export function RoommateSplitSection({
                 </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )
         : null}
 
@@ -731,10 +778,12 @@ export function RoommateSplitSection({
                   </button>
                 </div>
 
-                <h3 className="text-lg font-black text-gray-900 mb-1.5">Students Only</h3>
+                <h3 className="text-lg font-black text-gray-900 mb-1.5">
+                  Students Only
+                </h3>
                 <p className="text-xs sm:text-sm text-gray-600 mb-6 leading-relaxed">
-                  The roommate connection feature is exclusively available to verified student
-                  accounts.
+                  The roommate connection feature is exclusively available to
+                  verified student accounts.
                 </p>
 
                 <button
@@ -746,9 +795,9 @@ export function RoommateSplitSection({
                 </button>
               </div>
             </div>,
-            document.body
+            document.body,
           )
         : null}
     </>
-  )
+  );
 }
