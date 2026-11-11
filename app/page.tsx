@@ -27,12 +27,12 @@ import {
 } from "lucide-react";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Student Hostels & Rooms in Port Harcourt | HousePlug",
+  title: "Student Housing, Roommates & Services in Nigeria | HousePlug",
   description:
-    "Find student accommodation near UniPort and RSU. Compare room details and costs, then contact the listing agent directly on WhatsApp.",
+    "Browse student rooms near UniPort and RSU, explore other Nigerian campuses, find roommates and housing services. Contact the listing agent directly on WhatsApp.",
   alternates: { canonical: siteUrl() },
   openGraph: {
-    title: "Student Hostels & Rooms in Port Harcourt | HousePlug",
+    title: "Student Housing, Roommates & Services in Nigeria | HousePlug",
     url: siteUrl(),
   },
 };
@@ -75,6 +75,13 @@ export default async function Home() {
       ),
     ]);
     rooms = ((data ?? []) as Listing[]).filter((l) => promotionEligible(l));
+    if (rooms.length === 0) {
+      const { data: legacyRows } = await inventoryQuery()
+        .eq("legacy_inventory", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      rooms = (legacyRows ?? []) as Listing[];
+    }
     for (const [id, n] of campusCounts) counts[id] = n;
   } catch {}
   return (
@@ -98,7 +105,7 @@ export default async function Home() {
           <div className="absolute inset-0 -z-10 bg-gradient-to-t from-primary via-primary/80 to-primary/20" />
           <div className="mx-auto max-w-7xl px-5 py-10 text-center sm:px-6 sm:py-16 lg:px-12 lg:py-24">
             <p className="mb-4 text-[10px] font-extrabold tracking-[0.2em] text-amber-200 sm:text-xs">
-              STUDENT ACCOMMODATION IN PORT HARCOURT
+              STUDENT HOUSING NEAR NIGERIAN CAMPUSES
             </p>
             <h1 className="mx-auto mb-5 max-w-4xl text-[2rem] font-black leading-[1.1] tracking-tight drop-shadow-sm sm:text-5xl lg:text-6xl">
               Find a Room <span className="text-hp-amber">Near Campus</span>{" "}
@@ -221,7 +228,7 @@ export default async function Home() {
                   {counts[u.id] ? (
                     <>
                       <p className="mb-4 mt-4 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                        {counts[u.id]} confirmed, eligible{" "}
+                        {counts[u.id]} listed{" "}
                         {counts[u.id] === 1 ? "room" : "rooms"}
                       </p>
                       <Link
@@ -235,7 +242,7 @@ export default async function Home() {
                   ) : (
                     <>
                       <p className="mb-3 mt-4 text-xs leading-relaxed text-gray-600">
-                        No confirmed rooms available here right now. Tell us
+                        No rooms listed here right now. Tell us
                         what you need and we’ll help you check.
                       </p>
                       <Link
@@ -265,11 +272,11 @@ export default async function Home() {
                 id="rooms-heading"
                 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl lg:text-4xl"
               >
-                Explore Available Student Rooms
+                Explore Student Rooms
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-gray-600 sm:text-base">
-                Compare current rooms, disclosed move-in costs and the checks
-                recorded for each property.
+                Compare listed rooms and disclosed costs. Confirm availability
+                and all rental terms directly with the agent.
               </p>
             </div>
             <Link

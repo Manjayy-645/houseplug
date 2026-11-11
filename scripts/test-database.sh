@@ -13,7 +13,9 @@ apply(){ docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 --singl
 apply tests/fixtures/base-schema.sql
 apply supabase/migrations/020_real_time_tracking.sql
 apply supabase/migrations/20261111020101_houseplug_profile_and_internal_function_security.sql
-apply supabase/migrations/20261111023137_housing_truth_and_conversion.sql
-apply supabase/migrations/20261111025356_payment_fulfilment_recovery.sql
+apply tests/fixtures/legacy-listing.sql
+apply supabase/migrations/20261111215630_housing_truth_and_conversion.sql
+apply supabase/migrations/20261111215644_payment_fulfilment_recovery.sql
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/housing_truth_conversion.sql
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/payment_fulfilment.sql
+docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/service_listing.sql

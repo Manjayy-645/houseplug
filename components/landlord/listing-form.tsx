@@ -37,6 +37,8 @@ const listingSchema = z.object({
   university: z.string().min(1, "University is required"),
   room_type: z.enum(["self_con", "one_bedroom", "two_bedroom", "shared"]),
   price_yearly: z.number().int().positive("Enter a valid yearly price"),
+  price_basis: z.enum(["unconfirmed", "per_bed", "per_room", "per_unit"]),
+  rent_term_months: z.number().int().min(1).max(60).nullable(),
   distance_from_gate: z.enum(["under_5", "5_to_15", "15_to_30", "above_30"]),
   available_from: z.string().min(1, "Select an availability date"),
   address: z.string().min(6, "Address is required"),
@@ -86,6 +88,8 @@ const stepFields: Array<Array<keyof ListingFormValues>> = [
     "university",
     "room_type",
     "price_yearly",
+    "price_basis",
+    "rent_term_months",
     "distance_from_gate",
     "available_from",
   ],
@@ -143,6 +147,8 @@ export function ListingForm({
     university: listing?.university ?? "uniport",
     room_type: listing?.room_type ?? "self_con",
     price_yearly: listing?.price_yearly ?? 0,
+    price_basis: listing?.price_basis ?? "unconfirmed",
+    rent_term_months: listing?.rent_term_months ?? null,
     distance_from_gate: listing?.distance_from_gate ?? "under_5",
     available_from: listing?.available_from?.split("T")[0] ?? "",
     address: listing?.address ?? "",
@@ -286,6 +292,10 @@ export function ListingForm({
   const onSubmit = async () => {
     const valid = await trigger();
     if (!valid) return;
+    if (mode === "create" && (getValues("price_basis") === "unconfirmed" || getValues("rent_term_months") === null)) {
+      setMessage("Select what the rent covers and enter the rental term before submitting.");
+      return;
+    }
     if (photoItems.length === 0 && !videoUrl) {
       setMessage(
         "Please upload at least one photo or a video of the property.",
@@ -313,6 +323,8 @@ export function ListingForm({
         description: values.description,
         room_type: values.room_type,
         price_yearly: values.price_yearly,
+        price_basis: values.price_basis,
+        rent_term_months: values.rent_term_months,
         distance_from_gate: values.distance_from_gate,
         address: values.address,
         area: values.area,
@@ -325,7 +337,7 @@ export function ListingForm({
         phone_number: values.phone_number || null,
         available_from: values.available_from,
         occupancy: values.occupancy,
-        fee_items: feeItems,
+        fee_items: feeItems.map((fee) => fee.type === "agency" && isAgent && agentFeeType !== "none" ? { ...fee, amount: agentFeeType === "fixed" && agentFeeAmount ? Number(agentFeeAmount) : null } : fee),
         sharing_allowed: sharingAllowed,
         furnishing: values.furnishing,
         floor: values.floor,
@@ -498,7 +510,7 @@ export function ListingForm({
 
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Yearly Price
+                Listed rent (₦)
               </label>
               <div className="flex items-center rounded-lg border border-gray-300 px-3">
                 <span className="text-sm text-gray-600">₦</span>
@@ -514,6 +526,17 @@ export function ListingForm({
                 </p>
               ) : null}
             </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-medium">What does this price cover?
+              <select {...register("price_basis")} className="mt-1 min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm">
+                <option value="unconfirmed">Select what rent covers</option><option value="per_bed">One bed</option><option value="per_room">One room</option><option value="per_unit">Whole unit</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium">Rental term (months)
+              <input type="number" min="1" max="60" {...register("rent_term_months", { setValueAs: (value) => value === "" ? null : Number(value) })} className="mt-1 min-h-11 w-full rounded-lg border border-gray-300 px-3 text-sm" />
+            </label>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -850,6 +873,14 @@ export function ListingForm({
               ) : null}
             </div>
           </div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <FeeEditor value={feeItems} onChange={setFeeItems} />
+            <p className="mt-3 text-xs text-amber-950">These are advertiser-entered amounts. HousePlug checks them before a complete move-in total is shown.</p>
+          </div>
+          <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 text-sm">
+            <input type="checkbox" checked={sharingAllowed} onChange={(event) => setSharingAllowed(event.target.checked)} className="mt-1" />
+            I confirm the property permits more than one occupant to share this unit. Students must still agree the arrangement independently.
+          </label>
         </section>
       ) : null}
 

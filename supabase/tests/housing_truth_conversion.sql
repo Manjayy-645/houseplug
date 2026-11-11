@@ -2,6 +2,10 @@ BEGIN;
 DO $$
 DECLARE owner_id uuid:=gen_random_uuid();student_id uuid:=gen_random_uuid();other_id uuid:=gen_random_uuid();staff_id uuid:=gen_random_uuid();listing_id uuid:=gen_random_uuid();h record;h2 record;payload jsonb;cnt integer;
 BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.listings WHERE id='22222222-2222-4222-8222-222222222222' AND status='active' AND availability_state='active' AND legacy_inventory AND price_yearly=85000 AND agent_fee_type='negotiable' AND agent_fee_amount IS NULL AND last_confirmed_at IS NULL AND availability_expires_at IS NULL AND created_at='2026-06-17T08:42:05Z') THEN RAISE EXCEPTION 'Historical listing or its recorded values were rewritten';END IF;
+ PERFORM set_config('role','anon',true);
+ SELECT count(*) INTO cnt FROM public.listings WHERE id='22222222-2222-4222-8222-222222222222';IF cnt<>1 THEN RAISE EXCEPTION 'Historical listing disappeared from public discovery';END IF;
+ PERFORM set_config('role','postgres',true);
  INSERT INTO auth.users(id,email) VALUES(owner_id,'owner@example.invalid'),(student_id,'student@example.invalid'),(other_id,'other@example.invalid'),(staff_id,'staff@example.invalid');
  INSERT INTO public.profiles(id,email,full_name,role) VALUES(owner_id,'owner@example.invalid','Owner','landlord'),(student_id,'student@example.invalid','Student','student'),(other_id,'other@example.invalid','Other','student'),(staff_id,'staff@example.invalid','Staff','admin') ON CONFLICT(id) DO UPDATE SET role=excluded.role;
  INSERT INTO public.listings(id,landlord_id,price_yearly,university,area,status,availability_state,last_confirmed_at,availability_expires_at,fee_items,fees_complete)
@@ -10,7 +14,7 @@ BEGIN
  IF public.houseplug_fee_total(250000,'[{"type":"agency","amount":150000,"mandatory":true},{"type":"inspection","amount":7000,"mandatory":false}]',true)<>400000 THEN RAISE EXCEPTION 'Cost mismatch';END IF;
  payload:=jsonb_build_object('submission_key',gen_random_uuid(),'user_id',student_id,'listing_id',listing_id,'university','uniport','area','Aluu','total_budget',400000,'move_in_date','2099-01-01','contact_name','Test Student','contact_phone','08012345678','contact_consent',true);
  PERFORM set_config('role','service_role',true);
- PERFORM public.review_listing_truth(listing_id,staff_id,jsonb_build_object('fee_items','[{"type":"agency","amount":150000,"mandatory":true}]'::jsonb,'fees_complete',true,'fee_source','Advertiser signed fee schedule','evidence_pointer','private://review-fixture','renewal_amount',250000,'sharing_allowed',false,'occupancy',1,'confirm_availability',true,'confirm_media',true,'availability_days',14,'evidence_days',90,'authority_checked',true,'physically_inspected',false));
+ PERFORM public.review_listing_truth(listing_id,staff_id,jsonb_build_object('fee_items','[{"type":"agency","amount":150000,"mandatory":true}]'::jsonb,'fees_complete',true,'fee_source','Advertiser signed fee schedule','evidence_pointer','private://review-fixture','renewal_amount',250000,'price_basis','per_room','rent_term_months',12,'sharing_allowed',false,'occupancy',1,'confirm_availability',true,'confirm_media',true,'availability_days',14,'evidence_days',90,'authority_checked',true,'physically_inspected',false));
  IF (SELECT fee_source FROM public.listings WHERE id=listing_id)='Advertiser signed fee schedule' THEN RAISE EXCEPTION 'Private fee source exposed on public row';END IF;
  IF has_table_privilege('anon','houseplug_private.listing_fee_reviews','SELECT') THEN RAISE EXCEPTION 'Private review source readable anonymously';END IF;
  PERFORM public.confirm_listing_availability(listing_id,owner_id,true);

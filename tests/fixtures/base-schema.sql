@@ -14,6 +14,11 @@ CREATE POLICY owner_listings_update ON public.listings FOR UPDATE USING(landlord
 CREATE TABLE public.roommate_profiles(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES public.profiles(id),status text DEFAULT 'active',university text,phone_number text,budget_min integer,budget_max integer,gender text,preferred_gender text,bio text,lifestyle_tags jsonb DEFAULT '[]',room_address text,room_photos text[] DEFAULT '{}',intent text,target_listing_id uuid REFERENCES public.listings(id),target_listing_title text,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
 ALTER TABLE public.roommate_profiles ENABLE ROW LEVEL SECURITY;
 CREATE TABLE public.service_providers(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid REFERENCES public.profiles(id),status text DEFAULT 'active',business_name text,category text,university text,whatsapp_number text,created_at timestamptz DEFAULT now());
+ALTER TABLE public.service_providers ADD COLUMN description text,ADD COLUMN pricing_type text DEFAULT 'starting_from',ADD COLUMN price_amount integer,ADD COLUMN price_unit text,ADD COLUMN is_student_owned boolean DEFAULT false,ADD COLUMN updated_at timestamptz DEFAULT now();
+ALTER TABLE public.service_providers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY service_owner_insert ON public.service_providers FOR INSERT TO authenticated WITH CHECK(user_id=auth.uid());
+CREATE POLICY service_owner_update ON public.service_providers FOR UPDATE TO authenticated USING(user_id=auth.uid()) WITH CHECK(user_id=auth.uid());
+CREATE POLICY service_public_read ON public.service_providers FOR SELECT USING(status='active' OR user_id=auth.uid());
 CREATE TABLE public.platform_settings(key text PRIMARY KEY,value text);INSERT INTO public.platform_settings VALUES('maintenance_mode','false');
 CREATE TABLE public.reviews(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),listing_id uuid REFERENCES public.listings(id),rating integer,reviewer_name text,review_text text,created_at timestamptz DEFAULT now());
 GRANT USAGE ON SCHEMA auth,public TO anon,authenticated,service_role;

@@ -1,4 +1,4 @@
--- Additive application schema. Historical rows remain unconfirmed until reviewed.
+-- Preserve legacy active listings without inventing a review timestamp.
 SET LOCAL lock_timeout='5s';
 CREATE SCHEMA IF NOT EXISTS houseplug_private;
 REVOKE ALL ON SCHEMA houseplug_private FROM PUBLIC,anon,authenticated;
@@ -27,6 +27,7 @@ ALTER TABLE public.listings
  ADD COLUMN IF NOT EXISTS rent_term_months integer CHECK(rent_term_months BETWEEN 1 AND 60),
  ADD COLUMN IF NOT EXISTS sharing_allowed boolean NOT NULL DEFAULT false,
  ADD COLUMN IF NOT EXISTS availability_state text NOT NULL DEFAULT 'unconfirmed' CHECK(availability_state IN ('unconfirmed','draft','pending_review','active','paused','under_offer','rented','expired','removed')),
+ ADD COLUMN IF NOT EXISTS legacy_inventory boolean NOT NULL DEFAULT false,
  ADD COLUMN IF NOT EXISTS last_confirmed_at timestamptz,
  ADD COLUMN IF NOT EXISTS availability_expires_at timestamptz,
  ADD COLUMN IF NOT EXISTS media_confirmed_at timestamptz,
@@ -35,6 +36,10 @@ ALTER TABLE public.listings
  ADD COLUMN IF NOT EXISTS evidence_expires_at timestamptz,
  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now(),
  ADD COLUMN IF NOT EXISTS total_initial_payment bigint GENERATED ALWAYS AS (public.houseplug_fee_total(price_yearly,fee_items,fees_complete)) STORED;
+-- The existing price and fee fields remain untouched. These rows stay visible for
+-- direct contact, but no freshness, fee-completeness or property-check claim is added.
+UPDATE public.listings SET legacy_inventory=true,availability_state='active'
+WHERE status='active' AND last_confirmed_at IS NULL;
 CREATE INDEX IF NOT EXISTS listings_current_inventory ON public.listings(university,area,availability_expires_at) WHERE status='active' AND availability_state='active';
 CREATE TABLE public.verification_evidence (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),listing_id uuid REFERENCES public.listings(id) ON DELETE CASCADE,
@@ -180,14 +185,14 @@ BEGIN
  NEW.updated_at:=now();
  IF current_user IN ('anon','authenticated') THEN
   IF TG_OP='INSERT' THEN
-   NEW.status:='pending';NEW.availability_state:='pending_review';NEW.is_featured:=false;NEW.show_on_home:=false;
-   NEW.fees_complete:=false;NEW.price_basis:='unconfirmed';NEW.rent_term_months:=NULL;NEW.last_fee_verified_at:=NULL;NEW.price_verified_by:=NULL;
+   NEW.status:='pending';NEW.availability_state:='pending_review';NEW.legacy_inventory:=false;NEW.is_featured:=false;NEW.show_on_home:=false;
+   NEW.fees_complete:=false;NEW.last_fee_verified_at:=NULL;NEW.price_verified_by:=NULL;
    NEW.media_confirmed_at:=NULL;NEW.authority_checked_at:=NULL;NEW.physically_inspected_at:=NULL;NEW.evidence_expires_at:=NULL;
    NEW.last_confirmed_at:=NULL;NEW.availability_expires_at:=NULL;
   ELSE
    IF NEW.landlord_id IS DISTINCT FROM OLD.landlord_id OR NEW.id IS DISTINCT FROM OLD.id OR ROW(NEW.media_confirmed_at,NEW.authority_checked_at,NEW.physically_inspected_at,NEW.evidence_expires_at,NEW.last_fee_verified_at,NEW.price_verified_by) IS DISTINCT FROM ROW(OLD.media_confirmed_at,OLD.authority_checked_at,OLD.physically_inspected_at,OLD.evidence_expires_at,OLD.last_fee_verified_at,OLD.price_verified_by) THEN RAISE EXCEPTION 'Admin review required' USING ERRCODE='42501'; END IF;
    IF NEW.status='active' AND OLD.status NOT IN ('active','unavailable') THEN RAISE EXCEPTION 'Cannot self-publish listing' USING ERRCODE='42501';END IF;
-   NEW.is_featured:=OLD.is_featured;NEW.show_on_home:=OLD.show_on_home;NEW.fees_complete:=OLD.fees_complete;
+   NEW.is_featured:=OLD.is_featured;NEW.show_on_home:=OLD.show_on_home;NEW.fees_complete:=OLD.fees_complete;NEW.legacy_inventory:=OLD.legacy_inventory;
    NEW.last_confirmed_at:=OLD.last_confirmed_at;NEW.availability_expires_at:=OLD.availability_expires_at;
    IF ROW(NEW.price_yearly,NEW.price_basis,NEW.rent_term_months,NEW.fee_items,NEW.agent_fee_type,NEW.agent_fee_amount,NEW.description,NEW.title,NEW.address,NEW.area,NEW.university,NEW.video_url,NEW.photos,NEW.sharing_allowed,NEW.occupancy) IS DISTINCT FROM ROW(OLD.price_yearly,OLD.price_basis,OLD.rent_term_months,OLD.fee_items,OLD.agent_fee_type,OLD.agent_fee_amount,OLD.description,OLD.title,OLD.address,OLD.area,OLD.university,OLD.video_url,OLD.photos,OLD.sharing_allowed,OLD.occupancy) THEN
     NEW.status:='pending';NEW.availability_state:='pending_review';NEW.fees_complete:=false;NEW.last_fee_verified_at:=NULL;
@@ -235,6 +240,7 @@ BEGIN
  SELECT * INTO l FROM public.listings WHERE id=listing_id FOR UPDATE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Listing not found';END IF;
  IF jsonb_typeof(payload->'fee_items')<>'array' OR nullif(payload->>'fee_source','') IS NULL OR nullif(payload->>'evidence_pointer','') IS NULL THEN RAISE EXCEPTION 'Review evidence required';END IF;
+ IF (payload->>'confirm_availability')::boolean AND (coalesce(payload->>'price_basis','unconfirmed')='unconfirmed' OR nullif(payload->>'rent_term_months','') IS NULL OR NOT coalesce((payload->>'fees_complete')::boolean,false)) THEN RAISE EXCEPTION 'Rent basis, term and mandatory fees must be confirmed before publishing';END IF;
  IF (payload->>'fees_complete')::boolean AND public.houseplug_fee_total(l.price_yearly,payload->'fee_items',true) IS NULL THEN RAISE EXCEPTION 'Unknown mandatory fees';END IF;
  expiry:=stamp+make_interval(days=>least(365,greatest(1,(payload->>'evidence_days')::integer)));
  UPDATE public.verification_evidence e SET revoked_at=stamp,revocation_reason='Superseded by property review' WHERE e.listing_id=review_listing_truth.listing_id AND revoked_at IS NULL;
@@ -245,7 +251,7 @@ BEGIN
  END LOOP;
  INSERT INTO houseplug_private.listing_fee_reviews(listing_id,reviewer_id,source,evidence_pointer) VALUES(l.id,reviewer_id,payload->>'fee_source',payload->>'evidence_pointer');
  UPDATE public.listings SET fee_items=payload->'fee_items',fees_complete=(payload->>'fees_complete')::boolean,fee_source='Source reviewed by HousePlug',renewal_amount=(payload->>'renewal_amount')::bigint,
- price_basis=coalesce(payload->>'price_basis','unconfirmed'),rent_term_months=(payload->>'rent_term_months')::integer,
+ price_basis=coalesce(payload->>'price_basis','unconfirmed'),rent_term_months=(payload->>'rent_term_months')::integer,legacy_inventory=false,
  last_fee_verified_at=stamp,price_verified_by=reviewer_id,sharing_allowed=(payload->>'sharing_allowed')::boolean,occupancy=(payload->>'occupancy')::integer,
  status=CASE WHEN (payload->>'confirm_availability')::boolean THEN 'active' ELSE status END,
  availability_state=CASE WHEN (payload->>'confirm_availability')::boolean THEN 'active' ELSE 'unconfirmed' END,
@@ -300,7 +306,7 @@ REVOKE ALL ON FUNCTION public.houseplug_record_lead_event() FROM PUBLIC,anon,aut
 CREATE TRIGGER houseplug_record_lead_event AFTER INSERT ON public.lead_events FOR EACH ROW EXECUTE FUNCTION public.houseplug_record_lead_event();
 REVOKE UPDATE,DELETE ON public.lead_events FROM service_role;
 CREATE POLICY published_current_inventory ON public.listings AS RESTRICTIVE FOR SELECT TO anon,authenticated
-USING(landlord_id=(select auth.uid()) OR (select public.is_admin()) OR (status='active' AND availability_state='active' AND last_confirmed_at<=now() AND availability_expires_at>now()));
+USING(landlord_id=(select auth.uid()) OR (select public.is_admin()) OR (status='active' AND availability_state='active' AND ((legacy_inventory AND last_confirmed_at IS NULL) OR (last_confirmed_at<=now() AND availability_expires_at>now()))));
 
 CREATE OR REPLACE FUNCTION public.claim_housing_outbox(batch_size integer DEFAULT 20)
 RETURNS SETOF public.notification_outbox LANGUAGE sql SECURITY INVOKER SET search_path=pg_catalog,public,pg_temp AS $$
@@ -339,20 +345,28 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=reviewer_id AND role IN ('admin','super_admin') AND NOT coalesce(banned,false) AND NOT coalesce(is_banned,false)) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501';END IF;
  IF nullif(trim(payload->>'evidence_reference'),'') IS NULL THEN RAISE EXCEPTION 'Review evidence required';END IF;
  INSERT INTO public.supplier_reviews(service_id,reviewer_id,approved,evidence_reference,expires_at) VALUES(service_id,reviewer_id,(payload->>'approved')::boolean,payload->>'evidence_reference',expiry);
- UPDATE public.service_providers SET vetted_at=CASE WHEN (payload->>'approved')::boolean THEN now() ELSE NULL END,vetting_expires_at=CASE WHEN (payload->>'approved')::boolean THEN expiry ELSE NULL END,safety_requirements=payload->>'safety_requirements',service_hours=payload->>'service_hours' WHERE id=service_id;
+ UPDATE public.service_providers SET status=CASE WHEN (payload->>'approved')::boolean THEN 'active' ELSE 'paused' END,vetted_at=CASE WHEN (payload->>'approved')::boolean THEN now() ELSE NULL END,vetting_expires_at=CASE WHEN (payload->>'approved')::boolean THEN expiry ELSE NULL END,safety_requirements=payload->>'safety_requirements',service_hours=payload->>'service_hours' WHERE id=service_id;
 END $$;
 REVOKE ALL ON FUNCTION public.review_supplier(uuid,uuid,jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.review_supplier(uuid,uuid,jsonb) TO service_role;
 CREATE OR REPLACE FUNCTION public.houseplug_guard_supplier() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog AS $$
 BEGIN
+ IF TG_OP='INSERT' OR ROW(NEW.category,NEW.pricing_type,NEW.price_amount,NEW.price_unit,NEW.whatsapp_number) IS DISTINCT FROM ROW(OLD.category,OLD.pricing_type,OLD.price_amount,OLD.price_unit,OLD.whatsapp_number) THEN
+  IF NEW.category NOT IN ('moving','cleaning','repairs','painting','laundry','gas_refill') OR NEW.pricing_type NOT IN ('fixed','starting_from') OR NEW.price_amount IS NULL OR NEW.price_amount<=0 OR nullif(trim(NEW.price_unit),'') IS NULL OR NEW.whatsapp_number !~ '^0(70|80|81|90|91)[0-9]{8}$' THEN RAISE EXCEPTION 'Use a supported housing-service category, disclosed price and valid contact' USING ERRCODE='23514';END IF;
+ END IF;
  IF current_user IN ('anon','authenticated') THEN
-  IF TG_OP='INSERT' THEN NEW.vetted_at:=NULL;NEW.vetting_expires_at:=NULL;NEW.is_verified:=false;NEW.listing_paid:=false;NEW.is_boosted:=false;
-  ELSIF ROW(NEW.user_id,NEW.vetted_at,NEW.vetting_expires_at,NEW.is_verified,NEW.listing_paid,NEW.listing_expires_at,NEW.is_boosted,NEW.boost_type,NEW.boost_expires_at) IS DISTINCT FROM ROW(OLD.user_id,OLD.vetted_at,OLD.vetting_expires_at,OLD.is_verified,OLD.listing_paid,OLD.listing_expires_at,OLD.is_boosted,OLD.boost_type,OLD.boost_expires_at) THEN RAISE EXCEPTION 'Trusted provider review or payment required' USING ERRCODE='42501';END IF;
+  IF TG_OP='INSERT' THEN NEW.status:='pending';NEW.vetted_at:=NULL;NEW.vetting_expires_at:=NULL;NEW.is_verified:=false;NEW.listing_paid:=false;NEW.is_boosted:=false;
+  ELSIF ROW(NEW.user_id,NEW.vetted_at,NEW.vetting_expires_at,NEW.is_verified,NEW.listing_paid,NEW.listing_expires_at,NEW.is_boosted,NEW.boost_type,NEW.boost_expires_at) IS DISTINCT FROM ROW(OLD.user_id,OLD.vetted_at,OLD.vetting_expires_at,OLD.is_verified,OLD.listing_paid,OLD.listing_expires_at,OLD.is_boosted,OLD.boost_type,OLD.boost_expires_at) THEN RAISE EXCEPTION 'Trusted provider review or payment required' USING ERRCODE='42501';
+  ELSIF ROW(NEW.business_name,NEW.category,NEW.university,NEW.description,NEW.pricing_type,NEW.price_amount,NEW.price_unit,NEW.whatsapp_number) IS DISTINCT FROM ROW(OLD.business_name,OLD.category,OLD.university,OLD.description,OLD.pricing_type,OLD.price_amount,OLD.price_unit,OLD.whatsapp_number) THEN NEW.status:='pending';NEW.vetted_at:=NULL;NEW.vetting_expires_at:=NULL;
+  ELSIF NEW.status='active' AND OLD.status<>'active' THEN RAISE EXCEPTION 'Admin review required' USING ERRCODE='42501';END IF;
  END IF;
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION public.houseplug_guard_supplier() FROM PUBLIC,anon,authenticated;
 CREATE TRIGGER houseplug_guard_supplier BEFORE INSERT OR UPDATE ON public.service_providers FOR EACH ROW EXECUTE FUNCTION public.houseplug_guard_supplier();
+ALTER TABLE public.service_providers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY published_service_contact ON public.service_providers AS RESTRICTIVE FOR SELECT TO anon,authenticated
+USING(user_id=(select auth.uid()) OR (select public.is_admin()) OR (status='active' AND vetted_at IS NOT NULL AND vetting_expires_at>now() AND (listing_expires_at IS NULL OR listing_expires_at>now())));
 CREATE OR REPLACE FUNCTION public.houseplug_suspend_inventory() RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog AS $$
 BEGIN
  IF coalesce(NEW.banned,false) OR coalesce(NEW.is_banned,false) THEN
@@ -369,7 +383,7 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM public.profiles WHERE id=actor_id AND role IN ('landlord','agent') AND NOT coalesce(banned,false) AND NOT coalesce(is_banned,false)) THEN RAISE EXCEPTION 'Forbidden' USING ERRCODE='42501';END IF;
  SELECT * INTO l FROM public.listings WHERE id=listing_id FOR UPDATE;
  IF NOT FOUND OR l.landlord_id<>actor_id OR l.status NOT IN ('active','unavailable') THEN RAISE EXCEPTION 'Approved owner listing required' USING ERRCODE='42501';END IF;
- UPDATE public.listings SET status=CASE WHEN available THEN 'active' ELSE 'unavailable' END,availability_state=CASE WHEN available THEN 'active' ELSE 'paused' END,last_confirmed_at=CASE WHEN available THEN now() ELSE last_confirmed_at END,availability_expires_at=CASE WHEN available THEN now()+interval '14 days' ELSE now() END WHERE id=l.id;
+ UPDATE public.listings SET status=CASE WHEN available THEN 'active' ELSE 'unavailable' END,availability_state=CASE WHEN available THEN 'active' ELSE 'paused' END,legacy_inventory=CASE WHEN available THEN false ELSE legacy_inventory END,last_confirmed_at=CASE WHEN available THEN now() ELSE last_confirmed_at END,availability_expires_at=CASE WHEN available THEN now()+interval '14 days' ELSE now() END WHERE id=l.id;
  INSERT INTO public.verification_evidence(listing_id,dimension,checked_at,expires_at,reviewer_id,evidence_pointer)
  VALUES(l.id,'availability_confirmed',now(),now()+interval '14 days',actor_id,CASE WHEN available THEN 'Advertiser self-confirmed availability in dashboard' ELSE 'Advertiser marked property unavailable' END);
 END $$;

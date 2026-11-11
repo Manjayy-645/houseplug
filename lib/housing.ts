@@ -20,6 +20,7 @@ export type HousingTruth = {
   sharing_allowed?: boolean;
   occupancy?: number;
   availability_state?: string;
+  legacy_inventory?: boolean;
   last_confirmed_at?: string | null;
   availability_expires_at?: string | null;
   media_confirmed_at?: string | null;
@@ -70,6 +71,14 @@ export function currentAvailability(
     Number.isFinite(checked) &&
     checked <= now &&
     expiry > now
+  );
+}
+export function publicContactAvailable(listing: HousingTruth, now = Date.now()): boolean {
+  return currentAvailability(listing, now) || (
+    listing.status === "active" &&
+    listing.availability_state === "active" &&
+    listing.legacy_inventory === true &&
+    !listing.last_confirmed_at
   );
 }
 export function promotionEligible(

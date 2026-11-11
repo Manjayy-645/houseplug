@@ -12,8 +12,7 @@ export function inventoryQuery() {
     .eq("landlord.is_banned", false)
     .in("landlord.role", ["landlord", "agent"])
     .eq("availability_state", "active")
-    .lte("last_confirmed_at", new Date().toISOString())
-    .gt("availability_expires_at", new Date().toISOString());
+    .or(`and(legacy_inventory.eq.true,last_confirmed_at.is.null),and(last_confirmed_at.lte.${new Date().toISOString()},availability_expires_at.gt.${new Date().toISOString()})`);
 }
 
 export async function eligibleCampusCount(campus: string) {
@@ -29,12 +28,6 @@ export async function eligibleCampusCount(campus: string) {
     .eq("university", campus)
     .eq("status", "active")
     .eq("availability_state", "active")
-    .lte("last_confirmed_at", new Date().toISOString())
-    .gt("availability_expires_at", new Date().toISOString())
-    .eq("fees_complete", true)
-    .not("total_initial_payment", "is", null)
-    .not("media_confirmed_at", "is", null)
-    .not("authority_checked_at", "is", null)
-    .gt("evidence_expires_at", new Date().toISOString());
+    .or(`and(legacy_inventory.eq.true,last_confirmed_at.is.null),and(last_confirmed_at.lte.${new Date().toISOString()},availability_expires_at.gt.${new Date().toISOString()})`);
   return count ?? 0;
 }

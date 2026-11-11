@@ -4,8 +4,8 @@ import { siteUrl } from "@/lib/site";
 import { ServiceDiscovery, type DiscoveryService } from "@/components/services/service-discovery";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Campus Services in Port Harcourt",
-  description: "Find local movers, cleaners and other campus service providers near Port Harcourt universities. Discuss scope and prices directly with each provider.",
+  title: "Housing Services Near Campus in Nigeria",
+  description: "Find movers, cleaners and other housing service providers near Nigerian campuses. Compare listed starting prices and discuss the work directly with each provider.",
   alternates: { canonical: siteUrl("/services") },
 };
 export default async function Page({
@@ -27,12 +27,7 @@ export default async function Page({
       console.error("[SERVICES] Eligible provider lookup failed:", error.code);
     } else {
       const current = (data ?? []).filter((s) => !s.listing_expires_at || Date.parse(s.listing_expires_at) > Date.now());
-      const counts = new Map<string, number>();
-      for (const s of current) {
-        const key = s.university + ":" + s.category;
-        counts.set(key, (counts.get(key) ?? 0) + 1);
-      }
-      services = current.filter((s) => (counts.get(s.university + ":" + s.category) ?? 0) >= 3);
+      services = current;
     }
   }
   const categories = [...new Set(services.map((s) => s.category))];

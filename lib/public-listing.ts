@@ -1,4 +1,4 @@
-import { currentAvailability } from "@/lib/housing";
+import { publicContactAvailable } from "@/lib/housing";
 import type { Listing, Profile } from "@/types";
 // Explicit allowlist: internal review notes and future database fields never reach client props.
 const fields = [
@@ -40,6 +40,7 @@ const fields = [
   "sharing_allowed",
   "last_confirmed_at",
   "availability_state",
+  "legacy_inventory",
   "availability_expires_at",
   "media_confirmed_at",
   "authority_checked_at",
@@ -54,7 +55,7 @@ export function publicListing(row: Listing): Listing {
     if (k in row) out[k] = (row as unknown as Record<string, unknown>)[k];
   // These are advertiser-supplied listing contacts, never private account contacts.
   // Owner/admin previews of unpublished or stale inventory do not publish contacts.
-  if (!currentAvailability(row)) {
+  if (!publicContactAvailable(row)) {
     out.whatsapp_number = "";
     out.phone_number = "";
   }

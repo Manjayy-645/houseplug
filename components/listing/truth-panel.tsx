@@ -16,7 +16,11 @@ export function ListingTruthPanel({ listing }: { listing: Listing }) {
     >
       <h2 className="text-xl font-bold">Know the costs before you inspect</h2>
       <p>
-        Annual rent: <strong>{formatNaira(listing.price_yearly)}</strong>
+        Listed rent: <strong>{formatNaira(listing.price_yearly)}</strong>
+      </p>
+      <p>
+        Price basis and term: {listing.price_basis === "per_bed" ? "per bed" : listing.price_basis === "per_room" ? "per room" : listing.price_basis === "per_unit" ? "whole unit" : "not yet confirmed"}
+        {listing.rent_term_months ? ` · ${listing.rent_term_months} months` : " · term not yet confirmed"}
       </p>
       {(listing.fee_items ?? []).map((f, i) => (
         <p key={i}>

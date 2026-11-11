@@ -69,3 +69,11 @@ test("draft, rented, paused and expired public projections suppress advertiser c
     assert.equal(result.phone_number, "");
   }
 });
+test("historical active listing keeps direct contact without a fabricated review date", () => {
+  const legacy = publicListing({ ...row, legacy_inventory: true, last_confirmed_at: null, availability_expires_at: null } as Listing);
+  assert.equal(legacy.whatsapp_number, "08012345678");
+  assert.equal(legacy.last_confirmed_at, null);
+  assert.equal(legacy.landlord?.phone, undefined);
+  const paused = publicListing({ ...legacy, status: "unavailable" } as Listing);
+  assert.equal(paused.whatsapp_number, "");
+});

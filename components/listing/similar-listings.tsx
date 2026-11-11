@@ -21,7 +21,7 @@ export default async function SimilarListings({
     )
     .eq("status", "active")
     .eq("availability_state", "active")
-    .gt("availability_expires_at", new Date().toISOString())
+    .or(`and(legacy_inventory.eq.true,last_confirmed_at.is.null),and(last_confirmed_at.lte.${new Date().toISOString()},availability_expires_at.gt.${new Date().toISOString()})`)
     .eq("room_type", roomType)
     .neq("id", currentListingId)
     .order("is_featured", { ascending: false })

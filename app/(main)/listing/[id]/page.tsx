@@ -1,6 +1,6 @@
 import { publicListing } from "@/lib/public-listing";
 import Link from "next/link";
-import { sharingEligible, currentAvailability } from "@/lib/housing";
+import { sharingEligible, publicContactAvailable } from "@/lib/housing";
 import { ListingTruthPanel } from "@/components/listing/truth-panel";
 import { Star, Flame, Users, Info, Check, EyeOff } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -217,7 +217,7 @@ export default async function ListingDetailPage({
   const isOwner =
     user && listingRowData && user.id === listingRowData.landlord_id;
   const canView =
-    currentAvailability(listingRowData ?? {}) || isAdmin || isOwner;
+    publicContactAvailable(listingRowData ?? {}) || isAdmin || isOwner;
 
   if (!listingRowData || !canView) notFound();
 

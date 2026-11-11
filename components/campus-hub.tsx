@@ -44,7 +44,8 @@ export async function CampusHub({
         {area ? `in ${neighbourhoods[area]}` : `near ${u.shortName}`}
       </h1>
       <p>
-        Compare room details, confirmed availability and initial housing costs.
+        Compare room details and listed costs. Confirm availability and the full
+        move-in total with the agent.
         Check the route to your campus gate and arrange any inspection directly
         with the landlord or agent.
       </p>
@@ -70,7 +71,7 @@ export async function CampusHub({
       ) : (
         <div className="rounded-xl border bg-white p-6">
           <p>
-            No confirmed rooms available here right now. Tell us what you need
+            No rooms listed here right now. Tell us what you need
             and we’ll help you check.
           </p>
           <Link

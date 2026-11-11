@@ -71,8 +71,8 @@ const sessions = Object.fromEntries(
 );
 const migrations = [
   "20261111020101_houseplug_profile_and_internal_function_security.sql",
-  "20261111023137_housing_truth_and_conversion.sql",
-  "20261111025356_payment_fulfilment_recovery.sql",
+  "20261111215630_housing_truth_and_conversion.sql",
+  "20261111215644_payment_fulfilment_recovery.sql",
 ];
 try {
   docker(["network", "create", network]);

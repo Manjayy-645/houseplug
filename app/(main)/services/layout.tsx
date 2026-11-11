@@ -4,14 +4,14 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 export const metadata: Metadata = {
   title: "Campus Services, Artisans & Movers in Nigeria",
   description:
-    "Find trusted plumbers, electricians, carpenters, painters, and movers near UniPort, RSU, IAUE, and KenPoly. Verified campus service providers for students and landlords.",
+    "Find housing-related movers, cleaners, repairers and laundry services near Nigerian campuses. Compare listed prices and contact reviewed providers directly.",
   alternates: {
     canonical: "https://www.houseplug.ng/services",
   },
   openGraph: {
     title: "Campus Services & Artisans | HousePlug",
     description:
-      "Find trusted student campus services, movers, plumbers, and electricians near Port Harcourt universities.",
+      "Explore housing-related services near Nigerian campuses and contact providers directly.",
     url: "https://www.houseplug.ng/services",
     siteName: "HousePlug",
     locale: "en_NG",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Campus Services & Artisans | HousePlug",
     description:
-      "Find verified artisans, campus movers, and repair services for university students.",
+      "Find movers, cleaners and repair services near campus.",
   },
 };
 

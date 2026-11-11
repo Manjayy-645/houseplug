@@ -28,16 +28,6 @@ export default async function Page({ params }: { params: { id: string } }) {
     (s.listing_expires_at && Date.parse(s.listing_expires_at) < Date.now())
   )
     notFound();
-  const { count } = await createServiceClient()
-    .from("service_providers")
-    .select("id", { count: "exact", head: true })
-    .eq("category", s.category)
-    .eq("university", s.university)
-    .eq("status", "active")
-    .not("vetted_at", "is", null)
-    .gt("vetting_expires_at", new Date().toISOString())
-    .or(`listing_expires_at.is.null,listing_expires_at.gt.${new Date().toISOString()}`);
-  if ((count ?? 0) < 3) notFound();
   return (
     <main className="min-h-screen bg-[#F9FAFB] pb-20">
       <section className="bg-[#1B4332] px-4 pb-20 pt-28 text-white sm:pt-32">

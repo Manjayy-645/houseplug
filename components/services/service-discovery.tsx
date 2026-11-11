@@ -77,7 +77,7 @@ export function ServiceDiscovery({ services, categories, category, university }:
               <p className="mt-2 text-sm text-gray-600">Showing {services.length} currently eligible {services.length === 1 ? "provider" : "providers"}.</p>
             </div>
             <Link href="/services/manage" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#1B4332]/20 bg-white px-4 text-sm font-bold text-[#1B4332] hover:bg-emerald-50">
-              Manage your service <ArrowUpRight className="h-4 w-4" />
+              List a housing service free <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
           {services.length > 0 ? (
@@ -102,9 +102,9 @@ export function ServiceDiscovery({ services, categories, category, university }:
             <div className="rounded-3xl border border-gray-100 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#1B4332]"><Wrench className="h-8 w-8" /></div>
               <h3 className="mt-6 text-xl font-black text-gray-900 sm:text-2xl">Providers are being reviewed</h3>
-              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-gray-600">We&apos;re checking local providers before opening each category. If you need help now, you can suggest a service for us to consider.</p>
-              <Link href="/contact" className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-6 text-sm font-bold text-white hover:bg-[#143728]">
-                Suggest a service <ArrowRight className="h-4 w-4" />
+              <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-gray-600">No reviewed providers are live yet. If you offer a housing-related service, you can submit it for free.</p>
+              <Link href="/services/manage" className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#1B4332] px-6 text-sm font-bold text-white hover:bg-[#143728]">
+                List your service <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           )}

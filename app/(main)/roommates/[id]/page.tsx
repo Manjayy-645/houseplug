@@ -13,7 +13,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
-import { RoommateContactButton } from "./contact-button";
 import { ShareButton } from "./share-button";
 import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld";
 
@@ -30,6 +29,9 @@ export async function generateMetadata({
     .from("roommate_profiles")
     .select("intent, university, budget_min, budget_max, user_id")
     .eq("id", params.id)
+    .eq("status", "active")
+    .eq("visibility_consent", true)
+    .gt("expires_at", new Date().toISOString())
     .single();
 
   if (!roommate) {
@@ -122,7 +124,6 @@ export default async function RoommateProfilePage({
   }
 
   // Fetch roommate profile using service client to guarantee availability
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: roommate } = await serviceClient
     .from("roommate_profiles")
     .select("*")

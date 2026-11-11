@@ -2,7 +2,7 @@
 
 ## Founder decisions (11 November 2026)
 
-The governing contract is [direct student-to-agent WhatsApp contact](houseplug-direct-contact-model.md). The listing’s primary action is “Chat With Agent on WhatsApp.” Optional assistance, internal routing and reported outcomes never gate this action. HousePlug cannot monitor private conversations. Keep PR #3 draft; no merge or deployment until this correction is reviewed.
+The governing contract is [direct student-to-agent WhatsApp contact](houseplug-direct-contact-model.md). The listing’s primary action is “Chat With Agent on WhatsApp.” Optional assistance, internal routing and reported outcomes never gate this action. HousePlug cannot monitor private conversations. The direct-contact correction passed local browser and database review before this release.
 
 HousePlug takes housing requests and connects students with advertisers. Students arrange inspections independently. This supersedes the brief's appointment, attendance, collision, reminder and inspection SLA engine. No appointment booking or inspection completion claim is implemented. Automatic Vercel deployments are disabled specifically for `feat/master-brief-implementation` in vercel.json during review; other branches retain their existing behavior. The meaningful stages are submitted → qualified → matching → connected → reported rental / closed. A reported rental is not independent proof of a move-in.
 
@@ -15,7 +15,8 @@ Canonical origin: https://www.houseplug.ng. Retention controls remain configurab
 - Optional guest/signed-in consented housing requests, transactional references, idempotency/rate limits, private inboxes, guarded stages, optional assistance routing, one-to-three current budget-compatible room suggestions and audit records.
 - Private notification outbox with leased retries, protected maintenance endpoint, optional operational email adapter. No outbound messages were sent during development.
 - Opt-in expiring roommate discovery, private raw profiles, reciprocal requests and accepted contact sharing with revoke/block controls.
-- Supplier vetting evidence and a disabled-by-default service enquiry pilot, abuse reports, own-data export, reviewed guide publishing, referrals and an outcomes dashboard.
+- Free, priced housing-service submission by any signed-in member; contact is public only after admin review. Supplier vetting evidence, abuse reports, own-data export, reviewed guide publishing, referrals and an outcomes dashboard.
+- Eight additional real campuses in Lagos, Oyo, Osun, Enugu, Edo and Kaduna; empty campus pages do not claim inventory or enter the sitemap. Roommate discovery filters by campus and contact remains reciprocal and consent-based.
 - Existing payment products receive exact server-order validation and recoverable fulfilment leases. No rent holding, escrow, student enquiry charge or new paid product.
 
 ## Coverage and remaining work
@@ -43,20 +44,18 @@ This is a broad implementation branch, not a declaration that every operational 
 
 New migrations, not applied to production in this turn:
 
-1. `20261111023137_housing_truth_and_conversion.sql`
-2. `20261111025356_payment_fulfilment_recovery.sql`
+1. `20261111215630_housing_truth_and_conversion.sql`
+2. `20261111215644_payment_fulfilment_recovery.sql`
 
 The previously applied `20261111020101_houseplug_profile_and_internal_function_security.sql` must not be applied twice. Local tests replay it against a sanitized compatibility schema, not an assertion that all historical migrations cleanly rebuild production.
 
-**Coordinated release required.** New profile/listing foreign keys make legacy PostgREST profile joins ambiguous; this application uses explicit landlord FK hints. New RLS also intentionally restricts old public profile/roommate reads. Do not apply the schema while an older public application is serving unchecked. Rehearse in staging with a masked production clone, inspect `pg_policies`, constraints, service provider columns, trigger names and function ownership. Split expansion and restrictive policies into separate migrations if zero-downtime rollout is required.
+**Current release state.** Both migrations above were applied to production Supabase on 11 November 2026. Local disposable Postgres, browser and production-build checks passed before application rollout. The live post-migration query found 71 listings, including 70 active legacy listings with their direct contacts intact, and zero fabricated review dates. The SQL did not replace recorded prices, rent terms or fees. The older application may have reduced discovery until its matching application build is live; finish the rollout promptly and verify public browse and listing contact.
 
-1. Take a verified backup/PITR restore point. Record row counts and existing policies. Test restore in staging.
-2. Keep housing intake, notifications, services, analytics and retention flags false. Prepare the matching application build.
-3. Use a maintenance window or staged expansion/restriction sequence. Apply through Supabase migration tooling, reload PostgREST, deploy the matching build, then run the smoke tests.
-4. Review actual inventory in the admin queue. Existing inventory is deliberately not assumed fresh, fees-complete or physically inspected. Unreviewed rows may disappear from public discovery.
-5. Enable intake only with operator access and support coverage. Enable operational email only after provider/domain and delivery/retry tests. Set CRON_SECRET and verify the scheduled route; no client secret.
-6. Enable services only after at least three eligible suppliers per displayed category and operational/legal review. Leave retention off until approved durations and deletion procedures exist.
-7. Verify www redirects, preview noindex, consent copy, support channel, metadata, sitemap and real request authorization. Observe errors and payment fulfilment states.
+1. Deploy the matching application build and verify www redirects, browse, a legacy listing's direct WhatsApp link, roommate consent, service submission and service review.
+2. Review real inventory in the admin queue as evidence becomes available. Legacy listings stay discoverable with their recorded prices and direct contact, but without fresh-review, fee-completeness or property-inspection claims.
+3. Keep paid checkout paused while Paystack is disabled. Keep notification sending and automatic retention deletion off until configured and operationally reviewed.
+4. Review each new service provider before publishing their contact. Do not treat a service click as a completed booking or job.
+5. Monitor errors, payment fulfilment states, privacy policies and availability expiry after release.
 
 All environment names and defaults are in `.env.example`; never commit values. `HOUSING_REQUEST_HASH_KEY` must be a strong server secret, different from payment/service credentials. No production keys are required by the isolated test runner.
 

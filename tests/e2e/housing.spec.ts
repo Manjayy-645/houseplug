@@ -3,6 +3,34 @@ import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 const listing = "20000000-0000-4000-8000-000000000001";
 const sessions = JSON.parse(process.env.HOUSEPLUG_TEST_SESSIONS || "{}");
+test("any signed-in student can submit a priced housing service; contact opens after review", async ({ page }) => {
+  await login(page.context(), "student");
+  const payload = { business_name: "Campus Move Help", category: "moving", university: "uniport", description: "Help moving boxes and bags between lodges near campus.", pricing_type: "starting_from", price_amount: 5000, price_unit: "per trip", whatsapp_number: "08012345678" };
+  const created = await page.request.post("/api/services", { headers: { origin: "http://127.0.0.1:3100" }, data: payload });
+  expect(created.status()).toBe(201);
+  const { id } = await created.json();
+  await page.context().clearCookies();
+  await page.goto("/services");
+  await expect(page.getByText("Campus Move Help")).toHaveCount(0);
+  await login(page.context(), "admin");
+  const approved = await page.request.patch(`/api/admin/suppliers/${id}`, { headers: { origin: "http://127.0.0.1:3100" }, data: { approved: true, days: 365, evidence_reference: "local fixture review", safety_requirements: "Secure loads and agree the route and full fee before the trip.", service_hours: "Confirm with provider" } });
+  expect(approved.status()).toBe(200);
+  await page.context().clearCookies();
+  await page.goto("/services");
+  await expect(page.getByText("Campus Move Help")).toBeVisible();
+  await page.getByRole("link", { name: "View service details" }).click();
+  const href = await page.getByRole("link", { name: "Chat with provider on WhatsApp" }).getAttribute("href");
+  expect(href).toContain("wa.me/2348012345678");
+  expect(decodeURIComponent(href!)).toContain(`/services/${id}`);
+});
+test("legacy room stays discoverable with its listed rent and direct agent contact", async ({ page }) => {
+  await page.goto("/listing/20000000-0000-4000-8000-000000000005");
+  await expect(page.getByText("₦85,000").first()).toBeVisible();
+  await expect(page.getByText(/not yet confirmed/i).first()).toBeVisible();
+  const link = page.getByRole("link", { name: "Chat With Agent on WhatsApp" }).first();
+  await expect(link).toBeVisible();
+  expect(await link.getAttribute("href")).toContain("wa.me/2348012345678");
+});
 async function login(context: any, role: string) {
   const session = sessions[role];
   await context.addCookies([

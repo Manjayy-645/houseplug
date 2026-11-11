@@ -100,8 +100,10 @@ export default async function RoommatesPage({
   const q =
     typeof searchParams.q === "string" ? searchParams.q.toLowerCase() : null;
   const verifiedOnly = searchParams.verified === "true";
+  const campus = typeof searchParams.campus === "string" ? searchParams.campus : null;
 
   if (intent) query = query.eq("intent", intent);
+  if (campus) query = query.eq("university", campus);
   if (gender) query = query.ilike("gender", gender);
   // Text search on university or bio
   if (q) query = query.or(`university.ilike.%${q}%,bio.ilike.%${q}%`);
@@ -198,9 +200,9 @@ export default async function RoommatesPage({
               .
             </h1>
             <p className="text-base md:text-lg text-white/80 mb-8 max-w-xl leading-relaxed">
-              Whether you already have a place and need someone to split the
-              rent, or you're looking for a partner to hunt for an apartment
-              together — we've got you covered.
+              Have a room that permits sharing, or want to search together?
+              Compare campuses and budgets, then request a private connection.
+              Contact details are shared only after both students agree.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -227,8 +229,8 @@ export default async function RoommatesPage({
                   You&apos;re browsing as a guest
                 </p>
                 <p className="text-gray-500 text-sm">
-                  Create a free student account to contact roommates directly on
-                  WhatsApp.
+                  Create a free student account to request a private roommate
+                  connection. Contact details require mutual agreement.
                 </p>
               </div>
             </div>
