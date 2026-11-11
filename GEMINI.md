@@ -23,6 +23,11 @@ houseplug.ng
 - **Text:** #111827
 - **Verified Badge:** #10B981
 
+## Visual Change Workflow
+- Before a large visual change, capture and show baseline screenshots at 375px, 768px and 1440px.
+- Use the approved original HousePlug design as the visual reference and preserve its green/amber branding.
+- Capture the same viewports after the change and include the comparison in the pull request.
+
 ## Core Engineering Rules
 - **Routing:** Always use App Router (`/app`), never the Pages router.
 - **Rendering:** Use Server Components by default. Use `"use client"` only for interactivity.

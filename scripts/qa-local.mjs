@@ -1,15 +1,27 @@
 import { execFileSync, spawn } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import http from "node:http";
+import { resolve } from "node:path";
+const captureLabel = process.env.HOUSEPLUG_CAPTURE_LABEL;
+const appDir = resolve(process.env.HOUSEPLUG_CAPTURE_APP_DIR || process.cwd());
+const legacyCapture = Boolean(
+  captureLabel && process.env.HOUSEPLUG_CAPTURE_LEGACY === "true",
+);
 import { createHmac, randomUUID } from "node:crypto";
 const suffix = randomUUID().slice(0, 8),
   pg = `houseplug-qa-pg-${suffix}`,
   api = `houseplug-qa-api-${suffix}`,
   network = `houseplug-qa-${suffix}`;
 const jwtSecret = "local-development-jwt-secret-at-least-32-characters",
-  port = 3100,
-  gatewayPort = 54421,
-  apiPort = 54423;
+  port = captureLabel
+    ? Number(process.env.HOUSEPLUG_CAPTURE_APP_PORT || 3100)
+    : 3100,
+  gatewayPort = captureLabel
+    ? Number(process.env.HOUSEPLUG_CAPTURE_GATEWAY_PORT || 54421)
+    : 54421,
+  apiPort = captureLabel
+    ? Number(process.env.HOUSEPLUG_CAPTURE_API_PORT || 54423)
+    : 54423;
 const docker = (args, input) =>
   execFileSync("docker", ["--host=unix:///var/run/docker.sock", ...args], {
     input,
@@ -87,8 +99,10 @@ try {
     "tests/fixtures/base-schema.sql",
     "supabase/migrations/020_real_time_tracking.sql",
     "supabase/migrations/038_activity_events.sql",
-    ...migrations.map((m) => "supabase/migrations/" + m),
-    "tests/fixtures/e2e-seed.sql",
+    ...(legacyCapture ? [] : migrations.map((m) => "supabase/migrations/" + m)),
+    legacyCapture
+      ? "tests/fixtures/visual-original-seed.sql"
+      : "tests/fixtures/e2e-seed.sql",
   ])
     docker(
       [
@@ -201,21 +215,26 @@ try {
   };
   if (!env.CHROMIUM_PATH && existsSync("/usr/bin/chromium"))
     env.CHROMIUM_PATH = "/usr/bin/chromium";
-  execFileSync(process.execPath, ["node_modules/next/dist/bin/next", "build"], {
-    env,
-    stdio: "inherit",
+  const buildCode = await new Promise((resolve) => {
+    const p = spawn("npm", ["run", "build"], {
+      cwd: appDir,
+      env,
+      stdio: "inherit",
+    });
+    p.on("exit", resolve);
   });
+  if (buildCode !== 0) throw Error("Production build failed");
   server = spawn(
     process.execPath,
     [
-      "node_modules/next/dist/bin/next",
+      resolve(appDir, "node_modules/next/dist/bin/next"),
       "start",
       "--hostname",
       "127.0.0.1",
       "--port",
       String(port),
     ],
-    { env, stdio: "inherit" },
+    { cwd: appDir, env, stdio: "inherit" },
   );
   let ready = false;
   for (let n = 0; n < 60; n++) {
@@ -229,15 +248,21 @@ try {
     await wait(500);
   }
   if (!ready) throw Error("Local app did not become ready");
-  const code = await new Promise((resolve) => {
-    const p = spawn(
-      process.execPath,
-      ["node_modules/@playwright/test/cli.js", "test"],
-      { env, stdio: "inherit" },
-    );
-    p.on("exit", resolve);
-  });
-  if (code) throw Error("Browser suite failed");
+  const commands = captureLabel
+    ? [
+        ["scripts/capture-home.mjs"],
+        ...(captureLabel === "restored"
+          ? [["node_modules/@playwright/test/cli.js", "test"]]
+          : []),
+      ]
+    : [["node_modules/@playwright/test/cli.js", "test"]];
+  for (const args of commands) {
+    const code = await new Promise((resolve) => {
+      const p = spawn(process.execPath, args, { env, stdio: "inherit" });
+      p.on("exit", resolve);
+    });
+    if (code !== 0) throw Error("Browser verification failed");
+  }
   console.log("Local browser/API/Postgres verification passed");
 } catch (error) {
   console.error(error.message);

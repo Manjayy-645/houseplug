@@ -11,7 +11,8 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "feat/master-brief-implementation": false
+      "feat/master-brief-implementation": false,
+      "fix/restore-houseplug-visuals": false
     }
   }
 }
