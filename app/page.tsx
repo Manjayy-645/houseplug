@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   description:
     "Find student lodges, self-cons and flatshares near UniPort, RSU, IAUE and KenPoly. Compare listings and contact agents directly on WhatsApp.",
   alternates: {
-    canonical: "https://houseplug.ng",
+    canonical: "https://www.houseplug.ng",
   },
   openGraph: {
     title: "Student Housing near UniPort and RSU | HousePlug",
     description:
       "Find off-campus student accommodation near UniPort, RSU, IAUE and KenPoly. Connect directly with listing agents on WhatsApp.",
-    url: "https://houseplug.ng",
+    url: "https://www.houseplug.ng",
     siteName: "HousePlug",
     locale: "en_NG",
     type: "website",
@@ -143,20 +143,6 @@ export default async function LandingPage() {
               </Link>
             </div>
 
-            {/* Global Campus Services Feature Pill */}
-            <div className="mt-5 sm:mt-6 flex justify-center">
-              <Link
-                href="/services"
-                className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md hover:bg-white/25 border border-white/25 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-full transition-all active:scale-95 shadow-lg group"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#F59E0B] animate-ping" />
-                <span>Need campus movers, gas refill, or lodge repairs?</span>
-                <span className="bg-[#F59E0B] text-[#1B4332] text-[10px] font-black uppercase px-2 py-0.5 rounded-full ml-1">
-                  Services
-                </span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-300 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
           </div>
         </section>
 

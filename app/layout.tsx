@@ -6,7 +6,6 @@ import { ScrollToTop } from "@/components/ui/scroll-to-top"
 import { MobileNav } from "@/components/mobile-nav"
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister"
 import { InstallPrompt } from "@/components/pwa/InstallPrompt"
-import { GlobalServiceBadge } from "@/components/services/global-service-badge"
 
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld"
 
@@ -62,13 +61,13 @@ export const metadata: Metadata = {
         url: "/icons/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "HousePlug - Verified Student Housing in Nigeria",
+        alt: "HousePlug student housing in Nigeria",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HousePlug | Verified Student Housing Near Campus",
+    title: "HousePlug | Student Housing Near Campus",
     description:
       "Student lodges and off-campus housing near Port Harcourt universities. Contact agents directly on WhatsApp.",
     images: ["/icons/og-default.jpg"],
@@ -106,7 +105,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegister />
         {children}
         <InstallPrompt />
-        <GlobalServiceBadge />
         <MobileNav />
         <ScrollToTop />
         <Analytics />
