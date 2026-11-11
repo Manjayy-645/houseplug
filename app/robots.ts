@@ -1,7 +1,10 @@
-import { MetadataRoute } from "next"
+import { SITE_URL } from "@/lib/site";
+import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
+  if (process.env.VERCEL_ENV === "preview")
+    return { rules: { userAgent: "*", disallow: "/" } };
+  const baseUrl = SITE_URL;
 
   return {
     rules: [
@@ -44,5 +47,5 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,
-  }
+  };
 }

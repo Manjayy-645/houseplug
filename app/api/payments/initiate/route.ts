@@ -1,56 +1,113 @@
-import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
-import { initializePaystackTransaction, getPlanPrices } from "@/lib/paystack"
+import { paymentInput } from "@/lib/payment-schema";
+import { safeReturnTo } from "@/lib/site";
+import { sameOrigin } from "@/lib/request-auth";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { initializePaystackTransaction, getPlanPrices } from "@/lib/paystack";
 
 export async function POST(request: Request) {
-  const supabase = createClient()
+  if (!sameOrigin(request))
+    return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+  const supabase = createClient();
   const {
-    data: { user }
-  } = await supabase.auth.getUser()
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { type, plan, billing_cycle, listing_id, boost_type, verification, service_id, return_url } = await request.json()
+  const parsed = paymentInput.safeParse(await request.json().catch(() => null));
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.issues[0].message },
+      { status: 400 },
+    );
+  const {
+    type,
+    plan,
+    billing_cycle,
+    listing_id,
+    boost_type,
+    verification,
+    service_id,
+    return_url,
+  } = parsed.data;
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("email, role")
+    .select("email, role,banned,is_banned")
     .eq("id", user.id)
-    .single()
+    .single();
 
-  if (!profile) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (!profile || profile.banned || profile.is_banned) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // Service payments are open to all users; housing payments require landlord/agent/admin
-  const isServicePayment = type === 'service_listing' || type === 'service_boost'
-  if (!isServicePayment && !['landlord', 'agent', 'admin', 'super_admin'].includes(profile.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const isServicePayment =
+    type === "service_listing" || type === "service_boost";
+  if (
+    !isServicePayment &&
+    !["landlord", "agent", "admin", "super_admin"].includes(profile.role)
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const prices = await getPlanPrices()
+  if (listing_id) {
+    const { data } = await supabase
+      .from("listings")
+      .select("id")
+      .eq("id", listing_id)
+      .eq("landlord_id", user.id)
+      .single();
+    if (!data)
+      return NextResponse.json(
+        { error: "Listing not owned by you" },
+        { status: 403 },
+      );
+  }
+  if (service_id) {
+    const { data } = await supabase
+      .from("service_providers")
+      .select("id")
+      .eq("id", service_id)
+      .eq("user_id", user.id)
+      .single();
+    if (!data)
+      return NextResponse.json(
+        { error: "Service not owned by you" },
+        { status: 403 },
+      );
+  }
+  const prices = await getPlanPrices();
 
-  let amount = 0
-  if (type === 'subscription') {
-    if (plan === 'pro') {
-      amount = billing_cycle === 'annual' ? prices.pro_annual : prices.pro_monthly
-    } else if (plan === 'business') {
-      amount = billing_cycle === 'annual' ? prices.business_annual : prices.business_monthly
+  let amount = 0;
+  if (type === "subscription") {
+    if (plan === "pro") {
+      amount =
+        billing_cycle === "annual" ? prices.pro_annual : prices.pro_monthly;
+    } else if (plan === "business") {
+      amount =
+        billing_cycle === "annual"
+          ? prices.business_annual
+          : prices.business_monthly;
     }
-  } else if (type === 'boost') {
-    amount = prices[boost_type as keyof typeof prices] || 0
-  } else if (type === 'verification') {
-    amount = prices.verification
-  } else if (type === 'service_listing') {
-    amount = prices.service_listing
-  } else if (type === 'service_boost') {
-    amount = prices[boost_type as keyof typeof prices] || 0
+  } else if (type === "boost") {
+    amount = prices[boost_type as keyof typeof prices] || 0;
+  } else if (type === "verification") {
+    amount = prices.verification;
+  } else if (type === "service_listing") {
+    amount = prices.service_listing;
+  } else if (type === "service_boost") {
+    amount = prices[boost_type as keyof typeof prices] || 0;
   }
 
-  if (!amount) {
-    return NextResponse.json({ error: "Invalid payment type or plan" }, { status: 400 })
+  if (!Number.isSafeInteger(amount) || amount <= 0) {
+    return NextResponse.json(
+      { error: "Invalid payment type or plan" },
+      { status: 400 },
+    );
   }
 
   const metadata: Record<string, any> = {
@@ -61,8 +118,11 @@ export async function POST(request: Request) {
     listing_id,
     boost_type,
     service_id,
-    return_url: return_url || (isServicePayment ? "/services/manage" : null)
-  }
+    return_url: safeReturnTo(
+      return_url,
+      isServicePayment ? "/services/manage" : "/landlord/subscription",
+    ),
+  };
 
   // Carry the (already-uploaded) document URLs through Paystack so the payment
   // processor can submit the verification server-side after a successful charge.
@@ -74,27 +134,31 @@ export async function POST(request: Request) {
       property_document_url: verification.property_document_url ?? null,
       id_document_type: verification.id_document_type ?? null,
       nin_number: verification.nin_number ?? null,
-      verification_type: verification.verification_type ?? "identity"
-    })
+      verification_type: verification.verification_type ?? "identity",
+    });
   }
 
-  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL
+  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!rawAppUrl) {
-    return NextResponse.json({ error: "NEXT_PUBLIC_APP_URL is not set" }, { status: 500 })
+    return NextResponse.json(
+      { error: "NEXT_PUBLIC_APP_URL is not set" },
+      { status: 500 },
+    );
   }
-  const appUrl = rawAppUrl.replace(/\/+$/, "")
-  const callback_url = `${appUrl}/api/payments/callback`
+  const appUrl = rawAppUrl.replace(/\/+$/, "");
+  const callback_url = `${appUrl}/api/payments/callback`;
 
   try {
-    const { authorization_url, reference } = await initializePaystackTransaction({
-      email: profile.email,
-      amount,
-      metadata,
-      callback_url
-    })
+    const { authorization_url, reference } =
+      await initializePaystackTransaction({
+        email: profile.email,
+        amount,
+        metadata,
+        callback_url,
+      });
 
     // Insert pending payment record
-    await supabase.from('payments').insert({
+    await supabase.from("payments").insert({
       landlord_id: user.id,
       type,
       plan,
@@ -104,11 +168,14 @@ export async function POST(request: Request) {
       service_id,
       amount,
       paystack_reference: reference,
-      status: 'pending'
-    })
+      status: "pending",
+    });
 
-    return NextResponse.json({ authorization_url, reference })
+    return NextResponse.json({ authorization_url, reference });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Paystack init failed" }, { status: 400 })
+    return NextResponse.json(
+      { error: error.message || "Paystack init failed" },
+      { status: 400 },
+    );
   }
 }

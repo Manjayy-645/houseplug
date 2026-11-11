@@ -36,3 +36,6 @@ next-env.d.ts
 
 # marketing assets
 public/flyers/
+
+/test-results/
+/playwright-report/

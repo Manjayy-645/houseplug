@@ -1,12 +1,23 @@
-import { createServerClient } from "@supabase/ssr"
-import { NextResponse, type NextRequest } from "next/server"
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  if (
+    /^\/listing\/[^/]+$/.test(request.nextUrl.pathname) &&
+    !/^\/listing\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      request.nextUrl.pathname,
+    )
+  ) {
+    return new NextResponse(
+      '<html lang="en"><title>Room not found | HousePlug</title><meta name="robots" content="noindex"><body><h1>Room not found</h1><a href="/browse">Browse available rooms</a></body></html>',
+      { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } },
+    );
+  }
   const response = NextResponse.next({
     request: {
-      headers: request.headers
-    }
-  })
+      headers: request.headers,
+    },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,18 +25,18 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
-          })
-        }
-      }
-    }
-  )
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    },
+  );
 
-  const path = request.nextUrl.pathname
+  const path = request.nextUrl.pathname;
 
   // --- Site-wide maintenance gate ------------------------------------------
   // Applies to everyone, including logged-out visitors. Admins bypass it, and a
@@ -33,7 +44,7 @@ export async function middleware(request: NextRequest) {
   const maintenanceExempt =
     path === "/maintenance" ||
     path.startsWith("/login") ||
-    path.startsWith("/auth")
+    path.startsWith("/auth");
 
   if (!maintenanceExempt) {
     try {
@@ -41,22 +52,24 @@ export async function middleware(request: NextRequest) {
         .from("platform_settings")
         .select("value")
         .eq("key", "maintenance_mode")
-        .maybeSingle()
+        .maybeSingle();
 
       if (maintenance?.value === "true" || maintenance?.value === true) {
         // Only fetch the user/role when we actually need to decide who bypasses.
-        const { data: { user } } = await supabase.auth.getUser()
-        let isAdmin = false
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        let isAdmin = false;
         if (user) {
           const { data: profile } = await supabase
             .from("profiles")
             .select("role")
             .eq("id", user.id)
-            .single()
-          isAdmin = ["admin", "super_admin"].includes(profile?.role ?? "")
+            .single();
+          isAdmin = ["admin", "super_admin"].includes(profile?.role ?? "");
         }
         if (!isAdmin) {
-          return NextResponse.redirect(new URL("/maintenance", request.url))
+          return NextResponse.redirect(new URL("/maintenance", request.url));
         }
       }
     } catch {
@@ -69,13 +82,14 @@ export async function middleware(request: NextRequest) {
   // This ensures tokens stay fresh even on public pages. Without this, users
   // browsing public pages accumulate stale sessions and get unexpected
   // redirects to /login when they navigate to a protected route.
-  await supabase.auth.getUser()
+  await supabase.auth.getUser();
 
   // --- Auth + role gating (protected areas only) ---------------------------
   // Determine which landlord sub-paths are actually the private dashboard.
   // /landlord/[username] is a PUBLIC profile page and must NOT be gated.
   const landlordProtectedPrefixes = [
     "/landlord/dashboard",
+    "/landlord/requests",
     "/landlord/listings",
     "/landlord/analytics",
     "/landlord/billing",
@@ -84,52 +98,52 @@ export async function middleware(request: NextRequest) {
     "/landlord/subscription",
     "/landlord/verification",
     "/landlord/loading",
-  ]
+  ];
   const isLandlordProtected =
     path === "/landlord" ||
-    landlordProtectedPrefixes.some(prefix => path.startsWith(prefix))
+    landlordProtectedPrefixes.some((prefix) => path.startsWith(prefix));
 
-  const isProtected = isLandlordProtected || path.startsWith("/admin")
-  if (!isProtected) return response
+  const isProtected = isLandlordProtected || path.startsWith("/admin");
+  if (!isProtected) return response;
 
   const {
-    data: { user }
-  } = await supabase.auth.getUser()
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", request.url))
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, banned")
+    .select("role, banned,is_banned")
     .eq("id", user.id)
-    .single()
+    .single();
 
-  if (profile?.banned) {
+  if (profile?.banned || profile?.is_banned) {
     if (path !== "/banned" && path !== "/appeal" && !path.startsWith("/api/")) {
-      return NextResponse.redirect(new URL("/banned", request.url))
+      return NextResponse.redirect(new URL("/banned", request.url));
     }
   }
 
   // Super admin only routes
   const superAdminRoutes = [
-    '/admin/revenue',
-    '/admin/admins',
-    '/admin/settings',
-    '/admin/analytics',
-    '/admin/export',
-    '/admin/audit',
-  ]
+    "/admin/revenue",
+    "/admin/admins",
+    "/admin/settings",
+    "/admin/analytics",
+    "/admin/export",
+    "/admin/audit",
+  ];
 
   if (path.startsWith("/admin")) {
     if (!["admin", "super_admin"].includes(profile?.role ?? "")) {
-      return NextResponse.redirect(new URL("/", request.url))
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
-    if (superAdminRoutes.some(route => path.startsWith(route))) {
-      if (profile?.role !== 'super_admin') {
-        return NextResponse.redirect(new URL('/admin', request.url))
+    if (superAdminRoutes.some((route) => path.startsWith(route))) {
+      if (profile?.role !== "super_admin") {
+        return NextResponse.redirect(new URL("/admin", request.url));
       }
     }
   }
@@ -138,14 +152,14 @@ export async function middleware(request: NextRequest) {
     isLandlordProtected &&
     !["landlord", "agent", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
-    return NextResponse.redirect(new URL("/", request.url))
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return response
+  return response;
 }
 
 export const config = {
   // Run on every page except Next internals, API routes, and static files, so
   // the maintenance gate can cover the whole public site.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"]
-}
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+};

@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import Image from "next/image"
-import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
 import {
   Heart,
   Users,
@@ -13,16 +13,18 @@ import {
   CheckCircle2,
   Clock,
   User,
-} from "lucide-react"
-import type { Listing } from "@/types"
+} from "lucide-react";
+import type { Listing } from "@/types";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function StudentDashboardPage() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login")
+  if (!user) redirect("/login");
 
   const [
     { data: profile },
@@ -33,7 +35,9 @@ export default async function StudentDashboardPage() {
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("saved_listings")
-      .select("listing_id, listing:listings(*, landlord:profiles(full_name, verification_status, role))")
+      .select(
+        "listing_id, listing:listings(*, landlord:profiles!landlord_id(full_name, verification_status, role))",
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(3),
@@ -48,22 +52,24 @@ export default async function StudentDashboardPage() {
       .eq("student_id", user.id)
       .order("created_at", { ascending: false })
       .limit(3),
-  ])
+  ]);
 
-  if (!profile) redirect("/login")
+  if (!profile) redirect("/login");
 
-  const firstName = profile.full_name?.split(" ")[0] ?? "Student"
-  const savedListings = (savedData?.map(item => ({
+  const firstName = profile.full_name?.split(" ")[0] ?? "Student";
+  const savedListings = (savedData?.map((item) => ({
     ...(item.listing as any),
     is_saved: true,
-  })) ?? []) as unknown as Listing[]
+  })) ?? []) as unknown as Listing[];
 
-  const isVerified = profile.verification_status === "verified"
+  const isVerified = profile.verification_status === "verified";
 
   // 30-day staleness check
-  const roommateIsStale = roommateProfile?.status === "active" && roommateProfile?.updated_at
-    ? (Date.now() - new Date(roommateProfile.updated_at).getTime()) > 30 * 24 * 60 * 60 * 1000
-    : false
+  const roommateIsStale =
+    roommateProfile?.status === "active" && roommateProfile?.updated_at
+      ? Date.now() - new Date(roommateProfile.updated_at).getTime() >
+        30 * 24 * 60 * 60 * 1000
+      : false;
 
   return (
     <div className="space-y-6 p-4 lg:p-8">
@@ -89,8 +95,12 @@ export default async function StudentDashboardPage() {
             )}
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">Student Dashboard</p>
-            <h1 className="text-xl font-bold text-gray-900">Hi, {firstName} 👋</h1>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#1B4332]">
+              Student Dashboard
+            </p>
+            <h1 className="text-xl font-bold text-gray-900">
+              Hi, {firstName} 👋
+            </h1>
           </div>
         </div>
         <Link
@@ -108,8 +118,12 @@ export default async function StudentDashboardPage() {
           <div className="flex items-center gap-3">
             <Clock className="h-5 w-5 text-amber-600 shrink-0" />
             <div>
-              <p className="text-sm font-bold text-amber-800">Your roommate post is 30+ days old</p>
-              <p className="text-xs text-amber-600">Still looking? Update your profile to stay visible.</p>
+              <p className="text-sm font-bold text-amber-800">
+                Your roommate post is 30+ days old
+              </p>
+              <p className="text-xs text-amber-600">
+                Still looking? Update your profile to stay visible.
+              </p>
             </div>
           </div>
           <Link
@@ -153,7 +167,7 @@ export default async function StudentDashboardPage() {
             accent: "#1B4332",
           },
         ].map((card) => {
-          const Icon = card.icon
+          const Icon = card.icon;
           return (
             <Link
               key={card.href}
@@ -162,14 +176,21 @@ export default async function StudentDashboardPage() {
             >
               <div
                 className="p-3 rounded-full"
-                style={{ backgroundColor: `${card.accent}15`, color: card.accent }}
+                style={{
+                  backgroundColor: `${card.accent}15`,
+                  color: card.accent,
+                }}
               >
                 <Icon className="h-6 w-6" />
               </div>
-              <span className="text-sm font-bold text-gray-900">{card.label}</span>
-              <span className="text-[11px] text-gray-500 capitalize">{card.sub}</span>
+              <span className="text-sm font-bold text-gray-900">
+                {card.label}
+              </span>
+              <span className="text-[11px] text-gray-500 capitalize">
+                {card.sub}
+              </span>
             </Link>
-          )
+          );
         })}
       </section>
 
@@ -180,7 +201,10 @@ export default async function StudentDashboardPage() {
             <Users className="h-4 w-4 text-[#1B4332]" /> Roommate Profile
           </h2>
           {roommateProfile && (
-            <Link href="/student/roommate" className="text-sm font-semibold text-[#1B4332]">
+            <Link
+              href="/student/roommate"
+              className="text-sm font-semibold text-[#1B4332]"
+            >
               Manage →
             </Link>
           )}
@@ -191,8 +215,12 @@ export default async function StudentDashboardPage() {
             <div className="h-12 w-12 bg-[#1B4332]/5 rounded-full flex items-center justify-center mx-auto mb-3">
               <Users className="h-6 w-6 text-[#1B4332]/40" />
             </div>
-            <p className="text-sm font-semibold text-gray-700 mb-1">No roommate profile yet</p>
-            <p className="text-xs text-gray-500 mb-4">Post your profile to find a perfect match.</p>
+            <p className="text-sm font-semibold text-gray-700 mb-1">
+              No roommate profile yet
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              Post your profile to find a perfect match.
+            </p>
             <Link
               href="/roommates/create"
               className="inline-flex items-center gap-2 bg-[#1B4332] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:brightness-110 transition"
@@ -208,17 +236,23 @@ export default async function StudentDashboardPage() {
                   roommateProfile.status === "active"
                     ? "bg-emerald-100 text-emerald-700"
                     : roommateProfile.status === "found"
-                    ? "bg-gray-100 text-gray-500"
-                    : "bg-amber-100 text-amber-700"
+                      ? "bg-gray-100 text-gray-500"
+                      : "bg-amber-100 text-amber-700"
                 }`}
               >
-                {roommateProfile.status === "active" && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                {roommateProfile.status === "found" && <CheckCircle2 className="h-3 w-3" />}
+                {roommateProfile.status === "active" && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                )}
+                {roommateProfile.status === "found" && (
+                  <CheckCircle2 className="h-3 w-3" />
+                )}
                 {roommateProfile.status}
               </span>
               <p className="text-xs text-gray-500 mt-1">
-                {roommateProfile.intent === "have_room" ? "Has a room" : "Looking to team up"} ·{" "}
-                {roommateProfile.university}
+                {roommateProfile.intent === "have_room"
+                  ? "Has a room"
+                  : "Looking to team up"}{" "}
+                · {roommateProfile.university}
               </p>
             </div>
             {roommateProfile.status === "active" && (
@@ -239,7 +273,10 @@ export default async function StudentDashboardPage() {
           <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
             <Heart className="h-4 w-4 text-[#F59E0B]" /> Saved Lodges
           </h2>
-          <Link href="/student/saved" className="text-sm font-semibold text-[#1B4332]">
+          <Link
+            href="/student/saved"
+            className="text-sm font-semibold text-[#1B4332]"
+          >
             View all →
           </Link>
         </div>
@@ -247,7 +284,9 @@ export default async function StudentDashboardPage() {
         {savedListings.length === 0 ? (
           <div className="text-center py-6">
             <Heart className="h-8 w-8 text-gray-200 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No saved lodges yet. Browse and heart the ones you like.</p>
+            <p className="text-sm text-gray-500">
+              No saved lodges yet. Browse and heart the ones you like.
+            </p>
             <Link
               href="/browse"
               className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-[#1B4332] hover:underline"
@@ -265,11 +304,17 @@ export default async function StudentDashboardPage() {
               >
                 <div className="h-14 w-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                   {listing.photos?.[0] && (
-                    <img src={listing.photos[0]} alt={listing.title} className="h-full w-full object-cover" />
+                    <img
+                      src={listing.photos[0]}
+                      alt={listing.title}
+                      className="h-full w-full object-cover"
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">{listing.title}</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {listing.title}
+                  </p>
                   <p className="text-xs text-gray-500">{listing.area}</p>
                   <p className="text-xs font-bold text-[#1B4332]">
                     ₦{listing.price_yearly?.toLocaleString("en-NG")}/yr
@@ -296,16 +341,22 @@ export default async function StudentDashboardPage() {
         ) : (
           <div className="space-y-3">
             {reviewsGiven.map((review: any) => (
-              <div key={review.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+              <div
+                key={review.id}
+                className="p-3 rounded-xl bg-gray-50 border border-gray-100"
+              >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-bold text-gray-900 truncate">
                     {(review.listing as any)?.title || "Listing"}
                   </p>
                   <span className="flex items-center gap-1 text-xs font-bold text-[#F59E0B]">
-                    <Star className="h-3.5 w-3.5 fill-[#F59E0B]" /> {review.rating}
+                    <Star className="h-3.5 w-3.5 fill-[#F59E0B]" />{" "}
+                    {review.rating}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 line-clamp-2">{review.review_text}</p>
+                <p className="text-xs text-gray-600 line-clamp-2">
+                  {review.review_text}
+                </p>
               </div>
             ))}
           </div>
@@ -318,9 +369,10 @@ export default async function StudentDashboardPage() {
           <BookOpen className="h-4 w-4 text-[#1B4332]" /> Activity
         </h2>
         <p className="text-sm text-gray-500 text-center py-4">
-          Your profile activity will appear here once your roommate post gets views.
+          Your profile activity will appear here once your roommate post gets
+          views.
         </p>
       </section>
     </div>
-  )
+  );
 }

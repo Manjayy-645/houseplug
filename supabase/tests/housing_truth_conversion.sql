@@ -1,0 +1,42 @@
+BEGIN;
+DO $$
+DECLARE owner_id uuid:=gen_random_uuid();student_id uuid:=gen_random_uuid();other_id uuid:=gen_random_uuid();staff_id uuid:=gen_random_uuid();listing_id uuid:=gen_random_uuid();h record;h2 record;payload jsonb;cnt integer;
+BEGIN
+ INSERT INTO auth.users(id,email) VALUES(owner_id,'owner@example.invalid'),(student_id,'student@example.invalid'),(other_id,'other@example.invalid'),(staff_id,'staff@example.invalid');
+ INSERT INTO public.profiles(id,email,full_name,role) VALUES(owner_id,'owner@example.invalid','Owner','landlord'),(student_id,'student@example.invalid','Student','student'),(other_id,'other@example.invalid','Other','student'),(staff_id,'staff@example.invalid','Staff','admin') ON CONFLICT(id) DO UPDATE SET role=excluded.role;
+ INSERT INTO public.listings(id,landlord_id,price_yearly,university,area,status,availability_state,last_confirmed_at,availability_expires_at,fee_items,fees_complete)
+ VALUES(listing_id,owner_id,250000,'uniport','Aluu','active','active',now(),now()+interval '14 days','[{"type":"agency","amount":150000,"mandatory":true}]',true);
+ IF public.houseplug_fee_total(250000,'[{"type":"agency","amount":null,"mandatory":true}]',true) IS NOT NULL THEN RAISE EXCEPTION 'Unknown fee became zero';END IF;
+ IF public.houseplug_fee_total(250000,'[{"type":"agency","amount":150000,"mandatory":true},{"type":"inspection","amount":7000,"mandatory":false}]',true)<>400000 THEN RAISE EXCEPTION 'Cost mismatch';END IF;
+ payload:=jsonb_build_object('submission_key',gen_random_uuid(),'user_id',student_id,'listing_id',listing_id,'university','uniport','area','Aluu','total_budget',400000,'move_in_date','2099-01-01','contact_name','Test Student','contact_phone','08012345678','contact_consent',true);
+ PERFORM set_config('role','service_role',true);
+ PERFORM public.review_listing_truth(listing_id,staff_id,jsonb_build_object('fee_items','[{"type":"agency","amount":150000,"mandatory":true}]'::jsonb,'fees_complete',true,'fee_source','Advertiser signed fee schedule','evidence_pointer','private://review-fixture','renewal_amount',250000,'sharing_allowed',false,'occupancy',1,'confirm_availability',true,'confirm_media',true,'availability_days',14,'evidence_days',90,'authority_checked',true,'physically_inspected',false));
+ PERFORM public.confirm_listing_availability(listing_id,owner_id,true);
+ SELECT * INTO h FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
+ SELECT * INTO h2 FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
+ IF h.id<>h2.id OR h.reference IS NULL THEN RAISE EXCEPTION 'Idempotency failed';END IF;
+ IF (SELECT count(*) FROM public.notification_outbox WHERE lead_id=h.id)<>1 THEN RAISE EXCEPTION 'Duplicate outbox notification';END IF;
+ BEGIN PERFORM public.transition_housing_request(h.id,student_id,'connected',NULL);RAISE EXCEPTION 'Student self-qualified';EXCEPTION WHEN insufficient_privilege OR invalid_parameter_value THEN NULL;END;
+ PERFORM public.transition_housing_request(h.id,staff_id,'qualified',NULL);
+ PERFORM public.suggest_housing_options(h.id,staff_id,ARRAY[listing_id]);
+ IF (SELECT count(*) FROM public.housing_request_matches WHERE lead_id=h.id AND archived_at IS NULL)<>1 THEN RAISE EXCEPTION 'Match not saved';END IF;
+ PERFORM public.transition_housing_request(h.id,owner_id,'connected',NULL);
+ IF (SELECT status FROM public.housing_requests WHERE id=h.id)<>'connected' THEN RAISE EXCEPTION 'Valid transition failed';END IF;
+ PERFORM set_config('role','authenticated',true);PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',other_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.housing_requests WHERE id=h.id;IF cnt<>0 THEN RAISE EXCEPTION 'Other student can read request';END IF;
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',student_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.housing_requests WHERE id=h.id;IF cnt<>1 THEN RAISE EXCEPTION 'Owner cannot read request';END IF;
+ PERFORM set_config('role','postgres',true);
+ INSERT INTO public.roommate_profiles(user_id,phone_number,status,visibility_consent,expires_at) VALUES(student_id,'08012345678','active',true,now()+interval '30 days'),(other_id,'08087654321','active',true,now()+interval '30 days');
+ PERFORM set_config('role','service_role',true);
+ PERFORM public.manage_roommate_connection(student_id,other_id,'request');
+ BEGIN PERFORM public.manage_roommate_connection(student_id,other_id,'contact');RAISE EXCEPTION 'Unaccepted contact disclosed';EXCEPTION WHEN raise_exception THEN IF SQLERRM='Unaccepted contact disclosed' THEN RAISE;END IF;END;
+ PERFORM public.manage_roommate_connection(other_id,student_id,'accept');
+ IF public.manage_roommate_connection(student_id,other_id,'contact')<>'08087654321' THEN RAISE EXCEPTION 'Accepted contact missing';END IF;
+ PERFORM public.manage_roommate_connection(student_id,other_id,'block');
+ BEGIN PERFORM public.manage_roommate_connection(student_id,other_id,'contact');RAISE EXCEPTION 'Blocked contact disclosed';EXCEPTION WHEN raise_exception THEN IF SQLERRM='Blocked contact disclosed' THEN RAISE;END IF;END;
+ PERFORM set_config('role','authenticated',true);PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',student_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.roommate_profiles WHERE user_id=other_id;IF cnt<>0 THEN RAISE EXCEPTION 'Private roommate row exposed';END IF;
+ PERFORM set_config('role','postgres',true);
+END $$;
+ROLLBACK;

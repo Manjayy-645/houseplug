@@ -1,40 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Heart, Users, User, Menu, X, Search, LogOut } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  Heart,
+  Users,
+  User,
+  Menu,
+  X,
+  Search,
+  LogOut,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 const bottomNavItems = [
+  { href: "/student/requests", icon: LayoutDashboard, label: "Requests" },
+  { href: "/student/connections", icon: Users, label: "Connections" },
   { href: "/student/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/student/saved", icon: Heart, label: "Saved" },
   { href: "/student/roommate", icon: Users, label: "Roommate" },
   { href: "/student/profile", icon: User, label: "Profile" },
-]
+];
 
 export function StudentNav() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const onLogout = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <>
       {/* ── Mobile Top Bar ────────────────────────────────────── */}
       <header className="sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-sm">
         <Link href="/student/dashboard" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="HousePlug Logo" width={28} height={28} className="rounded-lg" />
+          <Image
+            src="/logo.png"
+            alt="HousePlug Logo"
+            width={28}
+            height={28}
+            className="rounded-lg"
+          />
           <div>
             <span className="font-bold text-[#1B4332]">HousePlug</span>
-            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none">Student</p>
+            <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none">
+              Student
+            </p>
           </div>
         </Link>
         <button
@@ -42,14 +61,21 @@ export function StudentNav() {
           className="p-1 text-gray-600 active:bg-gray-50 rounded-lg"
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isMenuOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </header>
 
       {/* ── Mobile Dropdown ───────────────────────────────────── */}
       {isMenuOpen && (
         <>
-          <div className="fixed inset-0 z-30" onClick={() => setIsMenuOpen(false)} />
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setIsMenuOpen(false)}
+          />
           <div className="absolute right-4 top-[65px] z-40 w-64 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl">
             <nav className="flex flex-col space-y-2">
               <Link
@@ -91,8 +117,8 @@ export function StudentNav() {
       {/* ── Mobile Bottom Nav ─────────────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-white/95 border-t border-gray-100 px-2 py-2 pb-safe shadow-[0_-1px_15px_rgba(0,0,0,0.08)] backdrop-blur-md">
         {bottomNavItems.map((item) => {
-          const Icon = item.icon
-          const active = pathname === item.href
+          const Icon = item.icon;
+          const active = pathname === item.href;
           return (
             <Link
               key={item.href}
@@ -102,11 +128,13 @@ export function StudentNav() {
               }`}
             >
               <Icon className={`h-5 w-5 ${active ? "stroke-[2.5]" : ""}`} />
-              <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
+              <span className="text-[10px] font-black uppercase tracking-tighter">
+                {item.label}
+              </span>
             </Link>
-          )
+          );
         })}
       </nav>
     </>
-  )
+  );
 }

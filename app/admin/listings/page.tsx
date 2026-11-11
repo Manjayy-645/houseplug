@@ -1,19 +1,19 @@
-import { createClient, getAdminClient } from "@/lib/supabase/server"
-import { Listing, ListingStatus } from "@/types"
-import ListingTable from "@/components/admin/listing-table"
-import ListingAppealsTable from "@/components/admin/listing-appeals-table"
-import Link from "next/link"
+import { createClient, getAdminClient } from "@/lib/supabase/server";
+import { Listing, ListingStatus } from "@/types";
+import ListingTable from "@/components/admin/listing-table";
+import ListingAppealsTable from "@/components/admin/listing-appeals-table";
+import Link from "next/link";
 
 export default async function AdminListingsPage({
   searchParams,
 }: {
-  searchParams: { status?: ListingStatus | "appeals"; page?: string }
+  searchParams: { status?: ListingStatus | "appeals"; page?: string };
 }) {
-  const db = getAdminClient()
+  const db = getAdminClient();
 
-  const currentStatus = searchParams.status || "all"
-  const currentPage = parseInt(searchParams.page || "1")
-  const pageSize = 20
+  const currentStatus = searchParams.status || "all";
+  const currentPage = parseInt(searchParams.page || "1");
+  const pageSize = 20;
 
   const tabs = [
     { label: "Pending", value: "pending" },
@@ -22,51 +22,59 @@ export default async function AdminListingsPage({
     { label: "Unavailable", value: "unavailable" },
     { label: "Appeals", value: "appeals" },
     { label: "All", value: "all" },
-  ]
+  ];
 
-  let listings: any[] = []
-  let appeals: any[] = []
-  let count = 0
+  let listings: any[] = [];
+  let appeals: any[] = [];
+  let count = 0;
 
   if (currentStatus === "appeals") {
     const { data: appealsData, count: appealsCount } = await db
       .from("listing_appeals")
-      .select(`
+      .select(
+        `
         *,
         listing:listings(title, address),
-        landlord:profiles(full_name, email)
-      `, { count: "exact" })
-      .eq('status', 'pending')
+        landlord:profiles!landlord_id(full_name, email)
+      `,
+        { count: "exact" },
+      )
+      .eq("status", "pending")
       .order("created_at", { ascending: false })
-      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
-      
-    appeals = appealsData || []
-    count = appealsCount || 0
+      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
+
+    appeals = appealsData || [];
+    count = appealsCount || 0;
   } else {
     let query = db
       .from("listings")
-      .select(`
+      .select(
+        `
         *,
-        landlord:profiles(*)
-      `, { count: "exact" })
+        landlord:profiles!landlord_id(*)
+      `,
+        { count: "exact" },
+      )
       .order("created_at", { ascending: false })
-      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
+      .range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
 
     if (currentStatus !== "all") {
-      query = query.eq("status", currentStatus)
+      query = query.eq("status", currentStatus);
     }
 
-    const { data, count: listingsCount } = await query
-    listings = data || []
-    count = listingsCount || 0
+    const { data, count: listingsCount } = await query;
+    listings = data || [];
+    count = listingsCount || 0;
   }
 
-  const totalPages = Math.ceil((count || 0) / pageSize)
+  const totalPages = Math.ceil((count || 0) / pageSize);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[#1B4332]">Listing Management</h1>
+        <h1 className="text-2xl font-bold text-[#1B4332]">
+          Listing Management
+        </h1>
       </div>
 
       <div className="flex border-b border-gray-200 overflow-x-auto scrollbar-hide">
@@ -109,5 +117,5 @@ export default async function AdminListingsPage({
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,29 +1,32 @@
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
-import { ScrollToTop } from "@/components/ui/scroll-to-top"
-import { MobileNav } from "@/components/mobile-nav"
-import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister"
-import { InstallPrompt } from "@/components/pwa/InstallPrompt"
-import { GlobalServiceBadge } from "@/components/services/global-service-badge"
+import { featureFlags } from "@/lib/feature-flags";
+import { FunnelTracker } from "@/components/funnel-beacon";
+import { SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
+import { MobileNav } from "@/components/mobile-nav";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { GlobalServiceBadge } from "@/components/services/global-service-badge";
 
-import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld"
+import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   display: "swap",
   preload: true,
-})
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "HousePlug | Verified Student Housing & Lodges in Nigeria",
+    default: "HousePlug | Student Housing in Port Harcourt",
     template: "%s | HousePlug",
   },
   description:
-    "Find verified off-campus student accommodation, self-cons, and lodges near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with verified landlords & agents.",
+    "Find off-campus student accommodation, self-cons, and lodges near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with landlords & agents.",
   keywords: [
     "student housing Nigeria",
     "UniPort lodges",
@@ -52,25 +55,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: "https://houseplug.ng",
+    url: "https://www.houseplug.ng",
     siteName: "HousePlug",
-    title: "HousePlug | Verified Student Housing Near Your Campus",
+    title: "HousePlug | Student Housing Near Your Campus",
     description:
-      "Find verified off-campus lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Connect directly with verified landlords on WhatsApp.",
+      "Find off-campus lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Connect directly with landlords on WhatsApp.",
     images: [
       {
         url: "/icons/og-default.jpg",
         width: 1200,
         height: 630,
-        alt: "HousePlug - Verified Student Housing in Nigeria",
+        alt: "HousePlug - Student Housing in Port Harcourt",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "HousePlug | Verified Student Housing Near Campus",
+    title: "HousePlug | Student Housing Near Campus",
     description:
-      "Verified student lodges and off-campus housing near Nigerian universities. Connect directly with landlords on WhatsApp.",
+      "Student lodges and off-campus housing near Nigerian universities. Connect directly with landlords on WhatsApp.",
     images: ["/icons/og-default.jpg"],
     creator: "@houseplugng",
   },
@@ -89,29 +92,37 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png",
   },
-}
+};
 
 export const viewport = {
   themeColor: "#1B4332",
-}
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="scroll-smooth">
       <head>
         <OrganizationJsonLd />
         <WebSiteJsonLd />
       </head>
-      <body className={`${inter.className} bg-background text-on-background pb-16 md:pb-0`}>
+      <body
+        className={`${inter.className} bg-background text-on-background pb-16 md:pb-0`}
+      >
+        <FunnelTracker
+          enabled={process.env.HOUSING_ANALYTICS_ENABLED === "true"}
+        />
         <ServiceWorkerRegister />
         {children}
         <InstallPrompt />
-        <GlobalServiceBadge />
-        <MobileNav />
+        {featureFlags.services && <GlobalServiceBadge />}
+        <MobileNav servicesEnabled={featureFlags.services} />
         <ScrollToTop />
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
-

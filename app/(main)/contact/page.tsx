@@ -1,19 +1,19 @@
-import type { Metadata } from "next"
-import { Mail, Phone, MapPin } from "lucide-react"
-import { BreadcrumbJsonLd } from "@/components/seo/json-ld"
+import type { Metadata } from "next";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Contact Support | HousePlug",
   description:
     "Get in touch with the HousePlug support team. Inquire about student listings, verification, landlord partnerships, or report a safety issue.",
   alternates: {
-    canonical: "https://houseplug.ng/contact",
+    canonical: "https://www.houseplug.ng/contact",
   },
   openGraph: {
     title: "Contact Support | HousePlug",
     description:
       "Need help with student housing or landlord verification? Reach out to the HousePlug support team.",
-    url: "https://houseplug.ng/contact",
+    url: "https://www.houseplug.ng/contact",
     siteName: "HousePlug",
     locale: "en_NG",
     type: "website",
@@ -21,9 +21,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Contact Support | HousePlug",
-    description: "Get in touch with HousePlug support in Port Harcourt, Nigeria.",
+    description:
+      "Get in touch with HousePlug support in Port Harcourt, Nigeria.",
   },
-}
+};
 
 export default function ContactPage() {
   return (
@@ -36,7 +37,9 @@ export default function ContactPage() {
       />
       <div className="text-center">
         <h1 className="text-4xl font-extrabold text-[#1B4332]">Contact Us</h1>
-        <p className="mt-4 text-lg text-gray-600">Have questions or need help? We're here for you.</p>
+        <p className="mt-4 text-lg text-gray-600">
+          Have questions or need help? We're here for you.
+        </p>
       </div>
 
       <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -65,5 +68,5 @@ export default function ContactPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
