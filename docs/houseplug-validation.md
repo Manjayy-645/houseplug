@@ -31,3 +31,7 @@ The current acceptance contract is [HousePlug direct WhatsApp model](houseplug-d
 [Direct contact on mobile](evidence/direct-contact-375.png) · [Direct contact on desktop](evidence/direct-contact-1280.png). These screenshots include the reconciled fee presentation; the legacy “no agent fee” claim no longer appears when structured agency fees exist.
 
 This correction adds no production migration and does not modify the two pending application migrations. Only disposable QA fixtures replay the original click-counter/activity migrations to verify existing tracking.
+
+## CI follow-up
+
+GitHub CI caught the mobile navigation during its opacity fade, when visible labels temporarily failed AA contrast. The navigation now switches visibility without fading text, and mobile accessibility checks explicitly wait for the navigation to appear before scanning it. This fixes the component rather than suppressing or relaxing the contrast check.

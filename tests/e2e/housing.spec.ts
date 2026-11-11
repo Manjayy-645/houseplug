@@ -31,6 +31,10 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
     ).toBeLessThanOrEqual(width);
     await expect(page.getByText("Move-in total: ₦400,000")).toBeVisible();
     await expect(page.getByText("500+ Verified Listings")).toHaveCount(0);
+    if (width < 768)
+      await expect(
+        page.getByRole("navigation", { name: "Mobile navigation" }),
+      ).toBeVisible();
     const accessibility = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
       .analyze();

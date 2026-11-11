@@ -113,9 +113,10 @@ export function MobileNav({
   ];
 
   return (
-    <div
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe z-50 px-2 py-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] transition-opacity duration-300"
-      style={{ opacity: loading ? 0 : 1 }}
+    <nav
+      aria-label="Mobile navigation"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe z-50 px-2 py-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]"
+      style={{ visibility: loading ? "hidden" : "visible" }}
     >
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
@@ -146,6 +147,6 @@ export function MobileNav({
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
