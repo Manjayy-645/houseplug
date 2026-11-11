@@ -17,13 +17,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"),
+  metadataBase: new URL("https://www.houseplug.ng"),
   title: {
-    default: "HousePlug | Verified Student Housing & Lodges in Nigeria",
+    default: "Student Accommodation near UniPort & RSU | HousePlug",
     template: "%s | HousePlug",
   },
   description:
-    "Find verified off-campus student accommodation, self-cons, and lodges near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with verified landlords & agents.",
+    "Find student accommodation, self-cons and lodges near UniPort, RSU, IAUE and KenPoly. Compare details and contact the listing agent directly on WhatsApp.",
   keywords: [
     "student housing Nigeria",
     "UniPort lodges",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     "Port Harcourt student lodges",
     "self con in Choba",
     "student apartments Nigeria",
-    "verified landlords Port Harcourt",
+    "student accommodation Port Harcourt",
     "student roommates UniPort",
     "HousePlug Nigeria",
   ],
@@ -52,11 +52,11 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: "https://houseplug.ng",
+    url: "https://www.houseplug.ng",
     siteName: "HousePlug",
-    title: "HousePlug | Verified Student Housing Near Your Campus",
+    title: "Student Accommodation near UniPort & RSU | HousePlug",
     description:
-      "Find verified off-campus lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Connect directly with verified landlords on WhatsApp.",
+      "Find off-campus lodges, self-cons and flatshares near UniPort, RSU, IAUE and KenPoly. Contact listing agents directly on WhatsApp.",
     images: [
       {
         url: "/icons/og-default.jpg",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "HousePlug | Verified Student Housing Near Campus",
     description:
-      "Verified student lodges and off-campus housing near Nigerian universities. Connect directly with landlords on WhatsApp.",
+      "Student lodges and off-campus housing near Port Harcourt universities. Contact agents directly on WhatsApp.",
     images: ["/icons/og-default.jpg"],
     creator: "@houseplugng",
   },

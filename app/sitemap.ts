@@ -5,7 +5,7 @@ import { UNIVERSITIES } from "@/lib/constants"
 export const revalidate = 3600 // regenerate sitemap at most once per hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://houseplug.ng"
+  const baseUrl = "https://www.houseplug.ng"
   const now = new Date()
 
   // 1. Core static marketing and discovery pages
@@ -67,38 +67,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   // 2. University-specific browse landing URLs (high search intent for students)
-  const universityRoutes: MetadataRoute.Sitemap = UNIVERSITIES.map((uni) => ({
-    url: `${baseUrl}/browse?university=${uni.id}`,
-    lastModified: now,
-    changeFrequency: "daily",
-    priority: 0.9,
-  }))
+  let universityRoutes: MetadataRoute.Sitemap = []
 
   // 3. Dynamic routes from Supabase
   let listingRoutes: MetadataRoute.Sitemap = []
-  let roommateRoutes: MetadataRoute.Sitemap = []
   let serviceRoutes: MetadataRoute.Sitemap = []
-  let landlordRoutes: MetadataRoute.Sitemap = []
 
   try {
     const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
       ? createServiceClient()
       : createClient()
 
-    const [listingsRes, roommatesRes, servicesRes, landlordsRes] = await Promise.all([
+    const [listingsRes, servicesRes] = await Promise.all([
       supabase
         .from("listings")
-        .select("id, created_at")
+        .select("id, created_at, university")
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(2000),
-
-      supabase
-        .from("roommate_profiles")
-        .select("id, created_at")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1000),
 
       supabase
         .from("service_providers")
@@ -107,30 +93,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .order("created_at", { ascending: false })
         .limit(1000),
 
-      supabase
-        .from("profiles")
-        .select("username, created_at")
-        .in("role", ["landlord", "agent"])
-        .not("username", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(1000),
     ])
 
     if (listingsRes.data) {
+      const activeCampuses = new Set(listingsRes.data.map((item) => item.university))
+      universityRoutes = UNIVERSITIES.filter((uni) => activeCampuses.has(uni.id)).map((uni) => ({
+        url: `${baseUrl}/browse?university=${encodeURIComponent(uni.id)}`,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.9,
+      }))
       listingRoutes = listingsRes.data.map((item) => ({
         url: `${baseUrl}/listing/${item.id}`,
         lastModified: item.created_at ? new Date(item.created_at) : now,
         changeFrequency: "weekly",
         priority: 0.8,
-      }))
-    }
-
-    if (roommatesRes.data) {
-      roommateRoutes = roommatesRes.data.map((item) => ({
-        url: `${baseUrl}/roommates/${item.id}`,
-        lastModified: item.created_at ? new Date(item.created_at) : now,
-        changeFrequency: "weekly",
-        priority: 0.7,
       }))
     }
 
@@ -143,16 +120,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
     }
 
-    if (landlordsRes.data) {
-      landlordRoutes = landlordsRes.data
-        .filter((item) => Boolean(item.username))
-        .map((item) => ({
-          url: `${baseUrl}/landlord/${item.username}`,
-          lastModified: item.created_at ? new Date(item.created_at) : now,
-          changeFrequency: "weekly",
-          priority: 0.6,
-        }))
-    }
   } catch (error) {
     console.error("[SITEMAP] Error generating dynamic routes:", error)
   }
@@ -161,8 +128,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes,
     ...universityRoutes,
     ...listingRoutes,
-    ...roommateRoutes,
     ...serviceRoutes,
-    ...landlordRoutes,
   ]
 }

@@ -17,7 +17,6 @@ import SimilarListings from "@/components/listing/similar-listings"
 import ViewTracker from "@/components/listing/view-tracker"
 import SaveButton from "@/components/listing/save-button"
 import ShareButton from "@/components/listing/share-button"
-import { RoommateSplitSection, type CampusRoommate } from "@/components/listing/roommate-split-section"
 import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld"
 import type { Metadata } from "next"
 
@@ -47,8 +46,8 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
   const formattedPriceRaw = new Intl.NumberFormat("en-NG").format(listing.price_yearly)
   const campus = UNIVERSITIES.find(u => u.id === listing.university)?.shortName || listing.university
 
-  const title = `${roomTypeStr} in ${listing.area} — ₦${formattedPriceRaw}/year | HousePlug`
-  const description = `Verified student housing near ${campus}. Contact the landlord directly on WhatsApp.`
+  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw} | HousePlug`
+  const description = `Student housing near ${campus}. Confirm rent terms and availability with the listing agent on WhatsApp.`
 
   const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary")
   
@@ -63,9 +62,9 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
   }
   
   const ogImageUrl = getWhatsAppListingOgImage(mediaUrl, isVideo)
-  const ogTitle = `${listing.title} — ₦${formattedPriceRaw}/yr`
-  const ogDescription = `Verified lodge in ${listing.area}, ${campus} on HousePlug.`
-  const listingUrl = `https://houseplug.ng/listing/${listing.id}`
+  const ogTitle = `${listing.title} — Listed ₦${formattedPriceRaw}`
+  const ogDescription = `Student housing in ${listing.area}, ${campus} on HousePlug.`
+  const listingUrl = `https://www.houseplug.ng/listing/${listing.id}`
 
   const metadata: Metadata = {
     title,
@@ -94,7 +93,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
     twitter: {
       card: "summary_large_image",
       title: ogTitle,
-      description: `Verified lodge in ${listing.area}, ${campus}.`,
+      description: `Student housing in ${listing.area}, ${campus}.`,
       images: [ogImageUrl],
     }
   }
@@ -263,59 +262,6 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
     }
   }
 
-  // Fetch current user's roommate profile if logged in
-  let currentUserRoommateProfile = null
-  if (user) {
-    try {
-      const { data: myProfile } = await supabase
-        .from("roommate_profiles")
-        .select("id, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, target_listing_id, target_listing_title, room_address")
-        .eq("user_id", user.id)
-        .maybeSingle()
-      currentUserRoommateProfile = myProfile
-    } catch {
-      // Best effort
-    }
-  }
-
-  // Fetch active roommate profiles near this listing's university campus
-  let campusRoommates: CampusRoommate[] = []
-  if (listingRowData?.university) {
-    try {
-      const campusObj = UNIVERSITIES.find(
-        (u) =>
-          u.id.toLowerCase() === listingRowData.university.toLowerCase() ||
-          u.shortName.toLowerCase() === listingRowData.university.toLowerCase() ||
-          u.name.toLowerCase() === listingRowData.university.toLowerCase()
-      )
-      const campusFilter = campusObj?.shortName || listingRowData.university
-      const serviceClient = createServiceClient()
-
-      const { data: roommateRows } = await serviceClient
-        .from("roommate_profiles")
-        .select("id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, phone_number, room_address, target_listing_id, target_listing_title")
-        .eq("status", "active")
-        .or(`university.ilike.%${campusFilter}%,university.ilike.%${campusObj?.id || campusFilter}%`)
-        .order("created_at", { ascending: false })
-        .limit(6)
-
-      if (roommateRows && roommateRows.length > 0) {
-        const userIds = roommateRows.map((r: any) => r.user_id)
-        const { data: usersProfiles } = await serviceClient
-          .from("profiles")
-          .select("id, full_name, avatar_url, verification_status")
-          .in("id", userIds)
-
-        campusRoommates = roommateRows.map((r: any) => ({
-          ...r,
-          profile: usersProfiles?.find((up: any) => up.id === r.user_id) || null,
-        }))
-      }
-    } catch (err) {
-      console.error("Error fetching campus roommates for listing:", err)
-    }
-  }
-
   const listing: Listing = {
     ...(listingRowData as Listing),
     landlord: landlordRowData as unknown as any,
@@ -424,20 +370,13 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                   {formatNaira(listing.price_yearly)}
                 </p>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 sm:text-xs">
-                  Per Academic Year
+                  Listed rent · confirm term and fees
                 </p>
-                <a
-                  href="#split-rent-section"
-                  className="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 px-2.5 py-1 rounded-lg transition-colors"
-                >
-                  <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  <span>Split: ~{formatNaira(Math.round(listing.price_yearly / 2))}/yr</span>
-                </a>
               </div>
               <div className="sm:mt-2">
                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Available Now
+                  Ask agent to confirm availability
                 </span>
               </div>
             </div>
@@ -491,15 +430,6 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
                 </p>
               </div>
             )}
-
-            {/* Roommate Rent-Split Section */}
-            <RoommateSplitSection
-              listing={listing}
-              campusRoommates={campusRoommates}
-              currentUserId={user?.id}
-              currentUserRole={userProfile?.role}
-              currentUserRoommateProfile={currentUserRoommateProfile}
-            />
 
             <AmenitiesGrid amenities={listing.amenities} />
             <ReviewsSection reviews={reviews} averageRating={averageRating} />

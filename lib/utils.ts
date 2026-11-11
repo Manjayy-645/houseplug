@@ -40,8 +40,9 @@ export function buildWhatsAppLink(phone: string, listingTitle: string, listingId
     ? digits
     : digits
     ? "234" + digits
-    : "2348000000000"
-  const urlSuffix = listingId ? `\nhttps://houseplug.ng/listing/${listingId}` : ""
+    : ""
+  if (!/^234[789][01]\d{8}$/.test(normalized)) return ""
+  const urlSuffix = listingId ? `\nListing reference: ${listingId}\nhttps://www.houseplug.ng/listing/${encodeURIComponent(listingId)}` : ""
   const message = encodeURIComponent(
     `Hi, I found your listing on HousePlug - ${listingTitle}. Is it still available?${urlSuffix}`
   )

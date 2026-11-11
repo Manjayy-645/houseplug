@@ -39,24 +39,24 @@ export async function generateMetadata({ searchParams }: BrowsePageProps): Promi
       u.shortName.toLowerCase() === university?.toLowerCase()
   )
 
-  let title = "Browse Student Housing & Lodges in Nigeria"
+  let title = "Student Accommodation in Port Harcourt"
   let description =
-    "Search verified student lodges, self-cons, and apartments near UniPort, RSU, IAUE, and KenPoly. Direct WhatsApp contact with verified landlords & agents."
+    "Search student lodges, self-cons and apartments near UniPort, RSU, IAUE and KenPoly. Compare details and contact listing agents directly on WhatsApp."
 
   if (matchedUni && roomType) {
     const formattedType = formatRoomType(roomType as any)
     title = `${formattedType} near ${matchedUni.shortName} (${matchedUni.area})`
-    description = `Find verified ${formattedType.toLowerCase()} accommodation near ${matchedUni.name} in ${matchedUni.area}. Connect directly with verified landlords on WhatsApp.`
+    description = `Find ${formattedType.toLowerCase()} accommodation near ${matchedUni.name} in ${matchedUni.area}. Contact listing agents directly on WhatsApp.`
   } else if (matchedUni) {
     title = `Student Housing near ${matchedUni.shortName} (${matchedUni.area})`
-    description = `Browse verified off-campus student accommodation, self-cons, and lodges near ${matchedUni.name} in ${matchedUni.area}. Direct WhatsApp contact with landlords.`
+    description = `Browse off-campus student accommodation, self-cons and lodges near ${matchedUni.name} in ${matchedUni.area}. Direct WhatsApp contact with agents.`
   } else if (q) {
     title = `"${q}" — Student Lodges & Accommodation`
-    description = `Search results for "${q}" on HousePlug. Verified student accommodation across Nigerian universities.`
+    description = `Search results for "${q}" on HousePlug. Student accommodation near Port Harcourt universities.`
   } else if (roomType) {
     const formattedType = formatRoomType(roomType as any)
     title = `${formattedType} Student Housing in Port Harcourt`
-    description = `Browse verified ${formattedType.toLowerCase()} student accommodations across universities in Port Harcourt on HousePlug.`
+    description = `Browse ${formattedType.toLowerCase()} student accommodation near universities in Port Harcourt on HousePlug.`
   }
 
   const queryParams = new URLSearchParams()
@@ -64,8 +64,8 @@ export async function generateMetadata({ searchParams }: BrowsePageProps): Promi
   if (roomType) queryParams.set("room_type", roomType)
   const queryString = queryParams.toString()
   const canonicalUrl = queryString
-    ? `https://houseplug.ng/browse?${queryString}`
-    : "https://houseplug.ng/browse"
+    ? `https://www.houseplug.ng/browse?${queryString}`
+    : "https://www.houseplug.ng/browse"
 
   return {
     title,

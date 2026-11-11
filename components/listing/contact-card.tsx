@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { ShieldCheck, Phone, ShieldAlert, Users } from "lucide-react"
+import { ShieldCheck, Phone, ShieldAlert } from "lucide-react"
 import type { Listing } from "@/types"
 import { buildWhatsAppLink, formatNaira } from "@/lib/utils"
 import { recordWhatsAppClick, recordPhoneReveal } from "@/app/actions"
@@ -66,52 +66,33 @@ export default function ContactCard({ listing }: ContactCardProps) {
         <div className="sticky top-24 space-y-4 rounded-2xl border border-gray-200/90 bg-white p-6 shadow-sm">
           <div className="flex items-baseline justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Price</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Listed rent</p>
               <p className="text-3xl font-black text-[#1B4332]">
                 {formatNaira(listing.price_yearly)}
-                <span className="ml-1.5 text-sm font-semibold text-gray-500">/ year</span>
+                <span className="ml-1.5 text-sm font-semibold text-gray-500"> · confirm term</span>
               </p>
             </div>
             {isVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                Verified
+                ID checked
               </span>
             )}
           </div>
 
-          {/* Roommate Split Callout */}
-          <a
-            href="#split-rent-section"
-            className="group block rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 p-3 hover:border-emerald-300 transition-all text-left"
-          >
-            <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#1B4332]">
-                <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
-                Rent too high? Split it!
-              </span>
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
-                Save 50%
-              </span>
-            </div>
-            <p className="text-[11px] text-gray-600 mt-1">
-              Pay just <strong className="text-emerald-800 font-bold">{formatNaira(Math.round(listing.price_yearly / 2))}</strong>/yr with a roommate.
-              <span className="text-emerald-700 font-bold ml-1 group-hover:underline inline-flex items-center">
-                Calculate split &rarr;
-              </span>
-            </p>
-          </a>
+          <p className="text-xs text-gray-500">Confirm the rent term, fees and availability directly with the agent.</p>
 
           <div className="space-y-2.5 pt-2">
             <a
-              href={whatsappUrl}
+              href={whatsappUrl || undefined}
+              aria-disabled={!whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={handleWhatsAppClick}
+              onClick={whatsappUrl ? handleWhatsAppClick : undefined}
               className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] px-4 py-3.5 text-sm font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
             >
               <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-              Contact on WhatsApp
+              {whatsappUrl ? "Chat With Agent on WhatsApp" : "Agent contact unavailable"}
             </a>
 
             <button
@@ -141,12 +122,12 @@ export default function ContactCard({ listing }: ContactCardProps) {
             {isVerified ? (
               <div className="flex items-center gap-2.5 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-xs font-medium text-emerald-800">
                 <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span>Landlord ID &amp; property verified by HousePlug</span>
+                <span>Advertiser ID checked. Inspect the property yourself before paying.</span>
               </div>
             ) : (
               <div className="flex items-center gap-2.5 rounded-xl border border-amber-100 bg-amber-50/70 p-3 text-xs font-medium text-amber-800">
                 <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-                <span>Unverified landlord &mdash; inspect in person before payment</span>
+                <span>Advertiser ID not checked. Inspect in person before payment.</span>
               </div>
             )}
           </div>
@@ -157,52 +138,33 @@ export default function ContactCard({ listing }: ContactCardProps) {
       <div className="lg:hidden rounded-2xl border border-gray-200/90 bg-white p-5 shadow-sm space-y-4">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Price</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Listed rent</p>
             <p className="text-2xl font-black text-[#1B4332]">
               {formatNaira(listing.price_yearly)}
-              <span className="text-xs font-normal text-gray-500 ml-1">/ year</span>
+              <span className="text-xs font-normal text-gray-500 ml-1"> · confirm term</span>
             </p>
           </div>
           {isVerified && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-              Verified
+              ID checked
             </span>
           )}
         </div>
 
-        {/* Roommate Split Callout */}
-        <a
-          href="#split-rent-section"
-          className="group block rounded-xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 p-3 hover:border-emerald-300 transition-all text-left"
-        >
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#1B4332]">
-              <Users className="w-3.5 h-3.5 text-[#F59E0B]" />
-              Rent too high? Split it!
-            </span>
-            <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded">
-              Save 50%
-            </span>
-          </div>
-          <p className="text-[11px] text-gray-600 mt-1">
-            Pay just <strong className="text-emerald-800 font-bold">{formatNaira(Math.round(listing.price_yearly / 2))}</strong>/yr with a roommate.
-            <span className="text-emerald-700 font-bold ml-1 group-hover:underline inline-flex items-center">
-              Calculate split &rarr;
-            </span>
-          </p>
-        </a>
+        <p className="text-xs text-gray-500">Confirm the rent term, fees and availability directly with the agent.</p>
 
         <div className="space-y-2.5">
           <a
-            href={whatsappUrl}
+            href={whatsappUrl || undefined}
+            aria-disabled={!whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleWhatsAppClick}
+            onClick={whatsappUrl ? handleWhatsAppClick : undefined}
             className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] px-4 py-3.5 text-base font-extrabold text-white shadow-md shadow-[#25D366]/25 transition-all"
           >
             <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-            Chat on WhatsApp
+            {whatsappUrl ? "Chat With Agent on WhatsApp" : "Agent contact unavailable"}
           </a>
 
           {revealedPhone && (
@@ -243,12 +205,12 @@ export default function ContactCard({ listing }: ContactCardProps) {
           {isVerified ? (
             <div className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/70 p-2.5 text-xs font-medium text-emerald-800">
               <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>Landlord ID &amp; property verified by HousePlug</span>
+              <span>Advertiser ID checked. Inspect the property yourself before paying.</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50/70 p-2.5 text-xs font-medium text-amber-800">
               <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-              <span>Unverified landlord &mdash; pay only after personal inspection</span>
+              <span>Advertiser ID not checked. Inspect in person before payment.</span>
             </div>
           )}
         </div>
@@ -257,25 +219,18 @@ export default function ContactCard({ listing }: ContactCardProps) {
       {/* ── Mobile Sticky Floating Bottom Bar ── */}
       <div className="lg:hidden">
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200/80 bg-white/95 px-4 sm:px-6 py-3.5 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto max-w-lg flex items-center justify-between gap-3.5 sm:gap-4">
-            <div className="min-w-0 flex-1">
+          <div className="mx-auto max-w-lg flex flex-col gap-2">
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Price</span>
-                <a
-                  href="#split-rent-section"
-                  className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md hover:bg-amber-100 transition-colors"
-                >
-                  <Users className="w-3 h-3 text-[#F59E0B] shrink-0" />
-                  <span>Split: {formatNaira(Math.round(listing.price_yearly / 2))}</span>
-                </a>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Listed rent</span>
               </div>
               <p className="text-xl font-black text-[#1B4332] tracking-tight truncate">
                 {formatNaira(listing.price_yearly)}
-                <span className="text-xs font-medium text-gray-500 ml-1">/yr</span>
+                <span className="text-xs font-medium text-gray-500 ml-1">confirm term</span>
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               {revealedPhone && (
                 <a
                   href={`tel:${revealedPhone}`}
@@ -289,20 +244,21 @@ export default function ContactCard({ listing }: ContactCardProps) {
               )}
 
               <a
-                href={whatsappUrl}
+                href={whatsappUrl || undefined}
+                aria-disabled={!whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={handleWhatsAppClick}
-                className="h-12 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] active:scale-95 px-4 sm:px-5 text-sm sm:text-base font-extrabold text-white shadow-lg shadow-[#25D366]/25 transition-all"
+                onClick={whatsappUrl ? handleWhatsAppClick : undefined}
+                className="min-h-12 min-w-0 flex-1 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] active:scale-95 px-4 sm:px-5 py-2 text-sm sm:text-base text-center leading-tight font-extrabold text-white shadow-lg shadow-[#25D366]/25 transition-all"
               >
                 <WhatsAppIcon className="h-5 w-5 fill-white shrink-0" />
-                <span>Chat on WhatsApp</span>
+                <span>{whatsappUrl ? "Chat With Agent on WhatsApp" : "Agent contact unavailable"}</span>
               </a>
             </div>
           </div>
         </div>
         {/* Spacer so bottom of page content isn't covered by sticky bar */}
-        <div className="h-28" />
+        <div className="h-36" />
       </div>
     </>
   )

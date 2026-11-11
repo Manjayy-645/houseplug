@@ -28,7 +28,7 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
     reviewCount > 0
       ? reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviewCount
       : 0
-  const landlordName = (listing.landlord as any)?.full_name ?? "Verified Landlord"
+  const landlordName = (listing.landlord as any)?.full_name ?? "Listing agent"
   const university = UNIVERSITIES.find(u => u.id === listing.university)
 
   return (
@@ -115,19 +115,17 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
         <Link href={`/listing/${listing.id}`} className="block">
           <div className="flex justify-between items-start mb-1 gap-2">
             <h3 className="font-title-md text-primary flex-1">
-              {formatNaira(listing.price_yearly)} <span className="text-gray-400 text-xs font-normal">/yr</span>
+              {formatNaira(listing.price_yearly)} <span className="text-gray-400 text-xs font-normal">listed rent</span>
             </h3>
             {isVerified && (
               <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase flex items-center gap-1 shrink-0">
                 <BadgeCheck className="h-3 w-3" />
-                Verified
+                ID checked
               </span>
             )}
           </div>
-          <p className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1 mb-2">
-            <Users className="w-3 h-3 text-[#F59E0B] shrink-0" />
-            <span>Split: ~{formatNaira(Math.round(listing.price_yearly / 2))}/yr each</span>
-          </p>
+          <p className="text-sm font-semibold text-gray-900 line-clamp-2 mt-2">{listing.title}</p>
+          <p className="text-[11px] text-gray-500 mt-1 mb-2">Confirm the rent term and all fees with the agent.</p>
         </Link>
         
         <div className="flex flex-col gap-1 mb-4">
