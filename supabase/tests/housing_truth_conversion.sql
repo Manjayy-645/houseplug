@@ -25,9 +25,14 @@ BEGIN
  PERFORM public.transition_housing_request(h.id,owner_id,'connected',NULL);
  IF (SELECT status FROM public.housing_requests WHERE id=h.id)<>'connected' THEN RAISE EXCEPTION 'Valid transition failed';END IF;
  PERFORM set_config('role','authenticated',true);PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',other_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.profiles WHERE id=owner_id;IF cnt<>0 THEN RAISE EXCEPTION 'Other advertiser private profile exposed to signed-in user';END IF;
  SELECT count(*) INTO cnt FROM public.housing_requests WHERE id=h.id;IF cnt<>0 THEN RAISE EXCEPTION 'Other student can read request';END IF;
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',student_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.profiles WHERE id=student_id;IF cnt<>1 THEN RAISE EXCEPTION 'Own private profile unavailable';END IF;
  SELECT count(*) INTO cnt FROM public.housing_requests WHERE id=h.id;IF cnt<>1 THEN RAISE EXCEPTION 'Owner cannot read request';END IF;
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',staff_id)::text,true);
+ SELECT count(*) INTO cnt FROM public.profiles WHERE id=owner_id;IF cnt<>1 THEN RAISE EXCEPTION 'Staff cannot review advertiser profile';END IF;
+ IF has_column_privilege('anon','public.profiles','email','SELECT') THEN RAISE EXCEPTION 'Anonymous profile email grant remains';END IF;
  PERFORM set_config('role','postgres',true);
  INSERT INTO public.roommate_profiles(user_id,phone_number,status,visibility_consent,expires_at) VALUES(student_id,'08012345678','active',true,now()+interval '30 days'),(other_id,'08087654321','active',true,now()+interval '30 days');
  PERFORM set_config('role','service_role',true);
