@@ -4,8 +4,17 @@ import { sameOrigin } from "@/lib/request-auth";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { initializePaystackTransaction, getPlanPrices } from "@/lib/paystack";
+import { NEW_PAYMENTS_AVAILABLE } from "@/lib/payment-availability";
 
 export async function POST(request: Request) {
+  // The current merchant account cannot accept new charges. Keep callbacks,
+  // webhooks and verification available for payments initiated previously.
+  if (!NEW_PAYMENTS_AVAILABLE) {
+    return NextResponse.json(
+      { error: "Paid listings and promotion are temporarily unavailable. Existing listings and direct WhatsApp contact still work." },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    )
+  }
   if (!sameOrigin(request))
     return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
   const supabase = createClient();

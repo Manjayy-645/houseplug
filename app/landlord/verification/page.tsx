@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { notifyAdminsVerificationSubmitted } from "@/app/actions"
+import { NEW_PAYMENTS_AVAILABLE } from "@/lib/payment-availability"
 import { compressImage } from "@/lib/image-compress"
 import { formatNaira } from "@/lib/utils"
 
@@ -207,6 +208,10 @@ export default function VerificationPage() {
 
   const onSubmit = async (values: VerificationValues) => {
     setError(null)
+    if (!alreadyPaid && !NEW_PAYMENTS_AVAILABLE) {
+      setError("New verification payments are temporarily unavailable. Please wait before uploading documents.")
+      return
+    }
     if (!idFront || !idBack || !selfie) {
       setError("Please upload your ID (front & back) and a selfie before submitting.")
       setStep(1)
@@ -336,9 +341,15 @@ export default function VerificationPage() {
       <header className="mb-10">
         <h1 className="text-3xl font-black text-gray-900">Get Verified</h1>
         <p className="mt-2 text-gray-600">
-          Verified landlords get 3x more inquiries and a trust badge on their listings.
+          Submit identity documents for review. A verified badge means identity review, not a property inspection.
         </p>
       </header>
+
+      {!alreadyPaid && !NEW_PAYMENTS_AVAILABLE && (
+        <div role="status" className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          New verification payments are temporarily unavailable. Please wait before uploading documents. Existing paid resubmissions remain available.
+        </div>
+      )}
 
       {status === 'rejected' && (
         <div className="mb-8 rounded-xl border border-red-200 bg-red-50 p-4 flex gap-3">

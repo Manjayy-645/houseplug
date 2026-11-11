@@ -5,6 +5,7 @@ import Link from "next/link"
 import { User, Home, Wrench, ChevronLeft, Mail, Eye, EyeOff, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { GoogleIcon } from "@/components/auth/google-icon"
+import { safeReturnPath } from "@/lib/safe-return"
 
 type SignupStep = "role" | "method" | "details" | "confirm"
 type Role = "student" | "landlord" | "agent" | "service_provider"
@@ -59,7 +60,7 @@ export default function SignupPage() {
       setRedirect("/profile?setup=service")
       setStep("method")
     } else if (redirectParam) {
-      setRedirect(redirectParam)
+      setRedirect(safeReturnPath(redirectParam, "/browse"))
     } else {
       setRedirect("/browse")
     }
@@ -86,9 +87,9 @@ export default function SignupPage() {
   // round trips (cookie is read server-side by the callback; localStorage is
   // read client-side by the login redirect).
   function persistRedirect(customRedirect?: string) {
-    const target = customRedirect || redirect
+    const target = safeReturnPath(customRedirect || redirect, "/browse")
     if (typeof document !== "undefined") {
-      document.cookie = `signup_redirect=${target}; path=/; max-age=3600`
+      document.cookie = `signup_redirect=${encodeURIComponent(target)}; path=/; max-age=3600; SameSite=Lax`
       window.localStorage.setItem("signup_redirect", target)
     }
   }

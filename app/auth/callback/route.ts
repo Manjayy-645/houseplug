@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { grantTrialToNewUser } from "@/lib/billing";
 import { sendWelcomeEmail, notifyAdminNewUser } from "@/lib/email";
+import { safeReturnPath } from "@/lib/safe-return";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -15,12 +16,16 @@ export async function GET(request: Request) {
   const userIntent = searchParams.get("user_intent");
   // Set during signup/login when the user came from a listing's "Sign Up to
   // Contact" button or service provider signup.
-  const cookieRedirect = cookies().get("signup_redirect")?.value;
-  const redirectTo =
-    cookieRedirect ||
+  const cookieValue = cookies().get("signup_redirect")?.value;
+  let cookieRedirect: string | undefined;
+  try {
+    cookieRedirect = cookieValue ? decodeURIComponent(cookieValue) : undefined;
+  } catch {
+    cookieRedirect = undefined;
+  }
+  const redirectTo = cookieRedirect ||
     (userIntent === "service_provider" || roleParam === "service_provider"
-      ? "/profile?setup=service"
-      : undefined);
+      ? "/profile?setup=service" : undefined);
 
   const supabase = createClient();
 
@@ -183,10 +188,7 @@ function redirectByRole(role: string, origin: string, redirectTo?: string) {
     case "student":
     default:
       // Students go back to the listing they came from, if any.
-      target =
-        redirectTo && redirectTo.startsWith("/")
-          ? redirectTo
-          : "/student/dashboard";
+      target = safeReturnPath(redirectTo, "/student/dashboard");
   }
 
   const res = NextResponse.redirect(`${origin}${target}`);
