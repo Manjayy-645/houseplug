@@ -29,8 +29,8 @@ export function ListingDetailsGrid({ listing }: ListingDetailsGridProps) {
     },
     {
       label: "Available From",
-      value: listing.available_from
-        ? formatDate(listing.available_from)
+      value: listing.available_from && Date.parse(listing.available_from) > Date.now()
+        ? `${formatDate(listing.available_from)} · confirm`
         : "Confirm with agent",
       icon: Calendar,
     },

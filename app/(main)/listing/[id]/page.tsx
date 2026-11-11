@@ -64,8 +64,8 @@ export async function generateMetadata({
     UNIVERSITIES.find((u) => u.id === listing.university)?.shortName ||
     listing.university;
 
-  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw} | HousePlug`;
-  const description = `Student housing near ${campus}. Contact the landlord directly on WhatsApp.`;
+  const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw}`;
+  const description = `Student housing near ${campus}. Confirm rent terms and availability with the listing agent on WhatsApp.`;
 
   const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary");
 
@@ -498,11 +498,10 @@ export default async function ListingDetailPage({
                     </p>
                   ) : (
                     <p className="text-sm text-amber-700">
-                      Agent fee is negotiable from{" "}
                       {listing.agent_fee_amount == null
-                        ? "amount not confirmed"
-                        : formatNaira(listing.agent_fee_amount)}
-                      . Discuss directly with the agent.
+                        ? "The negotiable agent fee amount has not been confirmed."
+                        : `Agent fee is negotiable from ${formatNaira(listing.agent_fee_amount)}.`}{" "}
+                      Discuss directly with the agent.
                     </p>
                   )}
                 </div>
@@ -559,6 +558,7 @@ export default async function ListingDetailPage({
             roomType={listing.room_type}
           />
         </div>
+        <div className="h-28 lg:hidden" aria-hidden="true" />
       </div>
     </main>
   );

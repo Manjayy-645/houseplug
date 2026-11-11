@@ -66,18 +66,11 @@ export default function LandlordCard({
 
       {/* Info & CTA */}
       <div className="p-5 pt-4 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-            <Check className="h-3.5 w-3.5" />
-            {landlord.verification_status === "verified"
-              ? "Advertiser identity checked"
-              : "Identity not confirmed"}
+        {landlord.verification_status === "verified" && (
+          <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 w-fit">
+            <Check className="h-3.5 w-3.5" /> Advertiser ID checked
           </div>
-          <span className="text-xs text-gray-400">·</span>
-          <p className="text-xs text-gray-500">
-            Ask the advertiser to confirm a response time
-          </p>
-        </div>
+        )}
 
         <Link
           href={profileLink}

@@ -385,8 +385,6 @@ export default function ContactCard({ listing }: ContactCardProps) {
             </div>
           </div>
         </div>
-        {/* Spacer so bottom of page content isn't covered by sticky bar */}
-        <div className="h-28" />
       </div>
     </>
   );

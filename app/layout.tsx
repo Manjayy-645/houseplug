@@ -9,7 +9,6 @@ import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { MobileNav } from "@/components/mobile-nav";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
-import { GlobalServiceBadge } from "@/components/services/global-service-badge";
 
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/json-ld";
 
@@ -118,7 +117,6 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         {children}
         <InstallPrompt />
-        {featureFlags.services && <GlobalServiceBadge />}
         <MobileNav servicesEnabled={featureFlags.services} />
         <ScrollToTop />
         <Analytics />

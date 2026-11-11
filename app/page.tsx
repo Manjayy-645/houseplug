@@ -13,7 +13,6 @@ import { siteUrl } from "@/lib/site";
 import { FaqJsonLd } from "@/components/seo/json-ld";
 import { UniversityLogo } from "@/components/university-logo";
 import { SiteFooter } from "@/components/home/site-footer";
-import { featureFlags } from "@/lib/feature-flags";
 import {
   ArrowRight,
   BadgeCheck,
@@ -25,13 +24,12 @@ import {
   ShieldCheck,
   BookOpen,
   MapPin,
-  Wrench,
 } from "lucide-react";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Student Hostels & Rooms in Port Harcourt | HousePlug",
   description:
-    "Explore student accommodation near UNIPORT and RSU. Compare rooms, rental details and fees, then contact property agents to arrange an inspection.",
+    "Find student accommodation near UniPort and RSU. Compare room details and costs, then contact the listing agent directly on WhatsApp.",
   alternates: { canonical: siteUrl() },
   openGraph: {
     title: "Student Hostels & Rooms in Port Harcourt | HousePlug",
@@ -109,7 +107,7 @@ export default async function Home() {
             <p className="mx-auto mb-7 max-w-2xl text-sm leading-relaxed text-white sm:mb-10 sm:text-base lg:text-lg">
               Explore student accommodation near UNIPORT and other Rivers State
               campuses. Compare room details, understand the costs and contact
-              agents to arrange inspections.
+              listing agents directly on WhatsApp.
             </p>
             <HeroSearch />
             <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row">
@@ -127,16 +125,6 @@ export default async function Home() {
                 View all listings
               </Link>
             </div>
-            {featureFlags.services && (
-              <Link
-                href="/services"
-                className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-2 text-xs font-semibold text-white"
-              >
-                <Wrench aria-hidden="true" className="h-4 w-4 text-amber-200" />
-                Explore campus services
-                <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </Link>
-            )}
           </div>
         </section>
 
