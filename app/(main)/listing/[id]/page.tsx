@@ -9,6 +9,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Listing, Review } from "@/types";
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils";
 import { UNIVERSITIES } from "@/lib/constants";
+import { UniversityLogo } from "@/components/university";
 import PhotoGallery from "@/components/listing/photo-gallery";
 import ContactCard from "@/components/listing/contact-card";
 import AmenitiesGrid from "@/components/listing/amenities-grid";
@@ -421,8 +422,14 @@ export default async function ListingDetailPage({
                   </span>
                 </div>
               )}
-              <p className="flex items-center gap-1.5 text-sm font-medium text-gray-500 mt-2">
-                <span className="text-[#1B4332]">{listing.area}</span>
+              <div className="flex items-center gap-1.5 text-sm font-medium text-gray-500 mt-2 flex-wrap">
+                {UNIVERSITIES.find((u) => u.id === listing.university) && (
+                  <UniversityLogo
+                    university={UNIVERSITIES.find((u) => u.id === listing.university)}
+                    size={18}
+                  />
+                )}
+                <span className="text-[#1B4332] font-semibold">{listing.area}</span>
                 <span className="text-gray-300">·</span>
                 <span>
                   {formatDistance(
@@ -431,7 +438,7 @@ export default async function ListingDetailPage({
                       ?.shortName,
                   )}
                 </span>
-              </p>
+              </div>
             </div>
 
             <div className="flex items-end justify-between border-t border-gray-50 pt-4 sm:border-0 sm:pt-0 sm:block sm:text-right">

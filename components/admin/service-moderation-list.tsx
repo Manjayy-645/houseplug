@@ -68,7 +68,10 @@ export function ServiceModerationList({
 }) {
   const [services, setServices] = useState<AdminServiceItem[]>(initialServices)
   const [activeTab, setActiveTab] = useState<string>(
-    defaultStatus === "pending" || initialServices.some(s => s.status === "pending")
+    defaultStatus === "pending" || initialServices.some(s => {
+      const st = (s.status || "").trim().toLowerCase()
+      return st === "pending" || st === "in_review" || st === "new" || !st
+    })
       ? "pending"
       : "all"
   )
@@ -79,18 +82,32 @@ export function ServiceModerationList({
   const [expandedVetting, setExpandedVetting] = useState<Record<string, boolean>>({})
   const [feedback, setFeedback] = useState<{ id: string; msg: string; error?: boolean } | null>(null)
 
+  // Status matching helpers
+  const isPendingStatus = (st?: string | null) => {
+    const s = (st || "").trim().toLowerCase()
+    return s === "pending" || s === "in_review" || s === "new" || s === "submitted" || !s
+  }
+  const isActiveStatus = (st?: string | null) => {
+    const s = (st || "").trim().toLowerCase()
+    return s === "active" || s === "approved" || s === "published"
+  }
+  const isPausedStatus = (st?: string | null) => {
+    const s = (st || "").trim().toLowerCase()
+    return s === "paused" || s === "rejected" || s === "declined" || s === "inactive"
+  }
+
   // Status counts
-  const pendingCount = useMemo(() => services.filter(s => s.status === "pending").length, [services])
-  const activeCount = useMemo(() => services.filter(s => s.status === "active").length, [services])
-  const pausedCount = useMemo(() => services.filter(s => s.status === "paused" || s.status === "rejected").length, [services])
+  const pendingCount = useMemo(() => services.filter(s => isPendingStatus(s.status)).length, [services])
+  const activeCount = useMemo(() => services.filter(s => isActiveStatus(s.status)).length, [services])
+  const pausedCount = useMemo(() => services.filter(s => isPausedStatus(s.status)).length, [services])
 
   // Filtered services
   const filteredServices = useMemo(() => {
     return services.filter((s) => {
       // Tab filter
-      if (activeTab === "pending" && s.status !== "pending") return false
-      if (activeTab === "active" && s.status !== "active") return false
-      if (activeTab === "paused" && s.status !== "paused" && s.status !== "rejected") return false
+      if (activeTab === "pending" && !isPendingStatus(s.status)) return false
+      if (activeTab === "active" && !isActiveStatus(s.status)) return false
+      if (activeTab === "paused" && !isPausedStatus(s.status)) return false
 
       // Category filter
       if (selectedCategory !== "all" && s.category !== selectedCategory) return false
@@ -342,18 +359,107 @@ export function ServiceModerationList({
         </div>
       )}
 
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-1 border-b border-gray-200 overflow-x-auto pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveTab("pending")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "pending"
+              ? "border-amber-500 text-amber-900 bg-amber-50/60"
+              : "border-transparent text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          <span>Pending Review</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+            activeTab === "pending" ? "bg-amber-200 text-amber-900" : "bg-gray-100 text-gray-600"
+          }`}>
+            {pendingCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("all")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "all"
+              ? "border-[#1B4332] text-[#1B4332] bg-emerald-50/60"
+              : "border-transparent text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          <span>All Services</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+            activeTab === "all" ? "bg-emerald-200 text-emerald-900" : "bg-gray-100 text-gray-600"
+          }`}>
+            {services.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("active")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "active"
+              ? "border-emerald-600 text-emerald-900 bg-emerald-50/60"
+              : "border-transparent text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          <span>Live &amp; Vetted</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+            activeTab === "active" ? "bg-emerald-200 text-emerald-900" : "bg-gray-100 text-gray-600"
+          }`}>
+            {activeCount}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("paused")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+            activeTab === "paused"
+              ? "border-gray-500 text-gray-900 bg-gray-100"
+              : "border-transparent text-gray-500 hover:text-gray-900"
+          }`}
+        >
+          <span>Paused / Rejected</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+            activeTab === "paused" ? "bg-gray-300 text-gray-800" : "bg-gray-100 text-gray-600"
+          }`}>
+            {pausedCount}
+          </span>
+        </button>
+      </div>
+
       {/* Services List */}
       {filteredServices.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-200/80 p-12 text-center">
           <div className="h-12 w-12 rounded-full bg-emerald-50 text-[#1B4332] flex items-center justify-center mx-auto mb-3">
             <Wrench className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-gray-900">No campus services found</h3>
+          <h3 className="text-base font-bold text-gray-900">
+            {services.length === 0
+              ? "No campus services recorded"
+              : `No services found in "${activeTab}" tab`}
+          </h3>
           <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-            {activeTab === "pending"
-              ? "There are currently no new campus services awaiting review. All submissions are up to date."
-              : "Try adjusting your search query, status tab, or campus filter."}
+            {services.length === 0
+              ? "There are currently no campus services in the database. When providers submit services, they will appear here."
+              : `You have ${services.length} total service${services.length !== 1 ? "s" : ""} registered. Switch tabs or clear your category and campus filters to view them.`}
           </p>
+          {services.length > 0 && activeTab !== "all" && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("all")
+                setSelectedCategory("all")
+                setSelectedCampus("all")
+                setSearchQuery("")
+              }}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-[#1B4332] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#143427] transition"
+            >
+              View All Services ({services.length})
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

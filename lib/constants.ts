@@ -40,14 +40,86 @@ export const UNIVERSITIES: Campus[] = [
     bgColor: 'bg-orange-700',
     logoUrl: '/universities/kenpoly.jpg'
   },
-  { id: 'unilag', name: 'University of Lagos', shortName: 'UNILAG', area: 'Akoka', state: 'Lagos State', initials: 'UL', bgColor: 'bg-blue-700' },
-  { id: 'lasu', name: 'Lagos State University', shortName: 'LASU', area: 'Ojo', state: 'Lagos State', initials: 'LS', bgColor: 'bg-blue-800' },
-  { id: 'yabatech', name: 'Yaba College of Technology', shortName: 'YABATECH', area: 'Yaba', state: 'Lagos State', initials: 'YT', bgColor: 'bg-indigo-700' },
-  { id: 'ui', name: 'University of Ibadan', shortName: 'UI', area: 'Ibadan', state: 'Oyo State', initials: 'UI', bgColor: 'bg-purple-700' },
-  { id: 'oau', name: 'Obafemi Awolowo University', shortName: 'OAU', area: 'Ile-Ife', state: 'Osun State', initials: 'OA', bgColor: 'bg-amber-700' },
-  { id: 'unn', name: 'University of Nigeria, Nsukka', shortName: 'UNN', area: 'Nsukka', state: 'Enugu State', initials: 'UN', bgColor: 'bg-emerald-700' },
-  { id: 'uniben', name: 'University of Benin', shortName: 'UNIBEN', area: 'Ugbowo', state: 'Edo State', initials: 'UB', bgColor: 'bg-red-700' },
-  { id: 'abu', name: 'Ahmadu Bello University', shortName: 'ABU', area: 'Zaria', state: 'Kaduna State', initials: 'AB', bgColor: 'bg-cyan-700' },
+  { 
+    id: 'unilag', 
+    name: 'University of Lagos', 
+    shortName: 'UNILAG', 
+    area: 'Akoka', 
+    state: 'Lagos State', 
+    initials: 'UL', 
+    bgColor: 'bg-blue-700',
+    logoUrl: '/universities/unilag.png'
+  },
+  { 
+    id: 'lasu', 
+    name: 'Lagos State University', 
+    shortName: 'LASU', 
+    area: 'Ojo', 
+    state: 'Lagos State', 
+    initials: 'LS', 
+    bgColor: 'bg-blue-800',
+    logoUrl: '/universities/lasu.jpg'
+  },
+  { 
+    id: 'yabatech', 
+    name: 'Yaba College of Technology', 
+    shortName: 'YABATECH', 
+    area: 'Yaba', 
+    state: 'Lagos State', 
+    initials: 'YT', 
+    bgColor: 'bg-indigo-700',
+    logoUrl: '/universities/yabatech.png'
+  },
+  { 
+    id: 'ui', 
+    name: 'University of Ibadan', 
+    shortName: 'UI', 
+    area: 'Ibadan', 
+    state: 'Oyo State', 
+    initials: 'UI', 
+    bgColor: 'bg-purple-700',
+    logoUrl: '/universities/ui.png'
+  },
+  { 
+    id: 'oau', 
+    name: 'Obafemi Awolowo University', 
+    shortName: 'OAU', 
+    area: 'Ile-Ife', 
+    state: 'Osun State', 
+    initials: 'OA', 
+    bgColor: 'bg-amber-700',
+    logoUrl: '/universities/OAU.jpg'
+  },
+  { 
+    id: 'unn', 
+    name: 'University of Nigeria, Nsukka', 
+    shortName: 'UNN', 
+    area: 'Nsukka', 
+    state: 'Enugu State', 
+    initials: 'UN', 
+    bgColor: 'bg-emerald-700',
+    logoUrl: '/universities/unn.png'
+  },
+  { 
+    id: 'uniben', 
+    name: 'University of Benin', 
+    shortName: 'UNIBEN', 
+    area: 'Ugbowo', 
+    state: 'Edo State', 
+    initials: 'UB', 
+    bgColor: 'bg-red-700',
+    logoUrl: '/universities/uniben.png'
+  },
+  { 
+    id: 'abu', 
+    name: 'Ahmadu Bello University', 
+    shortName: 'ABU', 
+    area: 'Zaria', 
+    state: 'Kaduna State', 
+    initials: 'AB', 
+    bgColor: 'bg-cyan-700',
+    logoUrl: '/universities/abu.png'
+  },
 ]
 
 export const DISTANCE_OPTIONS = [

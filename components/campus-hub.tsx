@@ -2,6 +2,7 @@ import { publicListing } from "@/lib/public-listing";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { UNIVERSITIES } from "@/lib/constants";
+import { UniversityLogo } from "@/components/university";
 import { inventoryQuery } from "@/lib/public-inventory";
 import { ListingCard } from "@/components/listing-card";
 import type { Listing } from "@/types";
@@ -39,10 +40,18 @@ export async function CampusHub({
         </Link>
         {area ? ` / ${neighbourhoods[area]}` : ""}
       </nav>
-      <h1 className="text-3xl sm:text-4xl font-bold">
-        Student accommodation{" "}
-        {area ? `in ${neighbourhoods[area]}` : `near ${u.shortName}`}
-      </h1>
+      <div className="flex items-start sm:items-center gap-4">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white p-2 shadow-sm border border-gray-100">
+          <UniversityLogo university={u} size={44} />
+        </div>
+        <div>
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900">
+            Student accommodation{" "}
+            {area ? `in ${neighbourhoods[area]}` : `near ${u.shortName}`}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">{u.name} · {u.state}</p>
+        </div>
+      </div>
       <p>
         Compare room details and listed costs. Confirm availability and the full
         move-in total with the agent.

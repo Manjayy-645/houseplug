@@ -5,6 +5,8 @@ import { createPortal } from "react-dom"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check, Building, Zap } from "lucide-react"
+import { UNIVERSITIES } from "@/lib/constants"
+import { UniversityLogo } from "@/components/university"
 
 type RoommateProfile = {
   id: string
@@ -55,6 +57,12 @@ export function RoommateCard({
   const displayName = fullName || "Student"
   const initial = ((firstName || displayName)[0] || "S").toUpperCase()
   const showAvatar = Boolean(data.profile?.avatar_url && !imageError)
+  const campus = UNIVERSITIES.find(
+    (u) =>
+      u.id.toLowerCase() === data.university?.toLowerCase() ||
+      u.shortName.toLowerCase() === data.university?.toLowerCase() ||
+      u.name.toLowerCase() === data.university?.toLowerCase()
+  )
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -177,7 +185,18 @@ export function RoommateCard({
                 <span className="truncate min-w-0">{displayName}</span>
                 {isVerified && <BadgeCheck className="h-5 w-5 text-emerald-500 shrink-0" />}
               </h3>
-              <p className="text-xs sm:text-sm text-gray-500 truncate">{data.gender} • {data.university}</p>
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 truncate mt-0.5">
+                <span>{data.gender}</span>
+                <span>•</span>
+                {campus ? (
+                  <span className="inline-flex items-center gap-1 truncate">
+                    <UniversityLogo university={campus} size={15} />
+                    <span className="truncate">{campus.shortName}</span>
+                  </span>
+                ) : (
+                  <span className="truncate">{data.university}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Search, Check, PlusCircle } from "lucide-react"
 import { UNIVERSITIES } from "@/lib/constants"
-import { SuggestUniversityModal } from "@/components/university/SuggestUniversityModal"
+import { SuggestUniversityModal, UniversityLogo } from "@/components/university"
 
 interface UniversityComboboxProps {
   value: string
@@ -45,8 +45,11 @@ export function UniversityCombobox({ value, onChange, placeholder = "Select your
         onClick={() => setOpen(!open)}
         className="w-full text-left bg-transparent flex items-center justify-between outline-none"
       >
-        <span className={value ? "text-primary font-bold truncate" : "text-gray-400 font-normal truncate"}>
-          {selectedUni ? selectedUni.shortName : placeholder}
+        <span className="flex items-center gap-2 min-w-0">
+          {selectedUni && <UniversityLogo university={selectedUni} size={18} />}
+          <span className={value ? "text-primary font-bold truncate" : "text-gray-400 font-normal truncate"}>
+            {selectedUni ? selectedUni.shortName : placeholder}
+          </span>
         </span>
       </button>
 
@@ -92,12 +95,18 @@ export function UniversityCombobox({ value, onChange, placeholder = "Select your
                   setOpen(false)
                   setQuery("")
                 }}
-                className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between ${
+                className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between gap-2 ${
                   value === u.id ? "bg-[#1B4332]/10 text-[#1B4332] font-semibold" : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                <span>{u.shortName} <span className="text-gray-400 font-normal ml-1">— {u.name}</span></span>
-                {value === u.id && <Check className="w-4 h-4 text-[#1B4332]" />}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <UniversityLogo university={u} size={20} />
+                  <span className="truncate">
+                    <span className="font-semibold text-gray-900">{u.shortName}</span>
+                    <span className="text-gray-400 font-normal ml-1.5 text-xs truncate">— {u.name}</span>
+                  </span>
+                </div>
+                {value === u.id && <Check className="w-4 h-4 text-[#1B4332] shrink-0" />}
               </button>
             ))}
           </div>
