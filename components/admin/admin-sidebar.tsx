@@ -29,12 +29,14 @@ import {
   AlertTriangle,
   Share2,
   Search,
-  Package
+  Package,
+  Wrench
 } from "lucide-react"
 
 type AdminSidebarProps = {
   role?: string
   pendingCount?: number
+  pendingServicesCount?: number
 }
 
 type NavItem = {
@@ -42,6 +44,7 @@ type NavItem = {
   href: string
   icon: any
   badge?: boolean
+  badgeKey?: "verifications" | "services"
   superAdminOnly?: boolean
 }
 
@@ -64,6 +67,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: "All Listings", href: "/admin/listings", icon: Home },
       { name: "Pending Approval", href: "/admin/listings?status=pending", icon: Clock },
+      { name: "Campus Services", href: "/admin/services", icon: Wrench, badgeKey: "services" },
       { name: "Inventory", href: "/admin/inventory", icon: Package },
       { name: "Housing Requests", href: "/admin/requests", icon: Search },
       { name: "Roommates", href: "/admin/roommates", icon: Users },
@@ -73,8 +77,8 @@ const navGroups: NavGroup[] = [
   {
     title: "Trust & Safety",
     items: [
-      { name: "Verifications", href: "/admin/verification", icon: ShieldCheck, badge: true },
-      { name: "Suppliers", href: "/admin/suppliers", icon: ShieldCheck },
+      { name: "Verifications", href: "/admin/verification", icon: ShieldCheck, badgeKey: "verifications" },
+      { name: "Service Vetting", href: "/admin/services?status=pending", icon: Wrench, badgeKey: "services" },
       { name: "User Reports", href: "/admin/reports", icon: AlertTriangle },
       { name: "Reviews", href: "/admin/reviews", icon: Star },
       { name: "Appeals", href: "/admin#appeals", icon: ShieldAlert },
@@ -102,7 +106,7 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
+export function AdminSidebar({ role, pendingCount = 0, pendingServicesCount = 0 }: AdminSidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
   const isSuperAdmin = role === "super_admin"
@@ -121,6 +125,9 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
     }
     if (href === "/admin/listings") {
       return pathname === "/admin/listings" && (typeof window === "undefined" || !window.location.search.includes("status=pending"))
+    }
+    if (href === "/admin/services?status=pending") {
+      return pathname === "/admin/services" && typeof window !== "undefined" && window.location.search.includes("status=pending")
     }
     if (href === "/admin#appeals") {
       return pathname === "/admin" && typeof window !== "undefined" && window.location.hash === "#appeals"
@@ -162,21 +169,41 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
             </Link>
           </div>
 
-          {/* Pending Verifications Alert */}
-          {pendingCount > 0 && (
-            <div className="mx-4 mt-4 p-3 rounded-xl bg-amber-500/15 border border-amber-400/30">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-[#F59E0B] shrink-0" />
-                <p className="text-xs font-bold text-amber-200">
-                  {pendingCount} pending verification{pendingCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-              <Link
-                href="/admin/verification"
-                className="mt-2 block text-[11px] font-extrabold text-[#F59E0B] hover:underline"
-              >
-                Review now &rarr;
-              </Link>
+          {/* Pending Alerts */}
+          {(pendingCount > 0 || pendingServicesCount > 0) && (
+            <div className="mx-4 mt-4 space-y-2">
+              {pendingCount > 0 && (
+                <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-400/30">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[#F59E0B] shrink-0" />
+                    <p className="text-xs font-bold text-amber-200">
+                      {pendingCount} pending verification{pendingCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Link
+                    href="/admin/verification"
+                    className="mt-2 block text-[11px] font-extrabold text-[#F59E0B] hover:underline"
+                  >
+                    Review verifications &rarr;
+                  </Link>
+                </div>
+              )}
+              {pendingServicesCount > 0 && (
+                <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30">
+                  <div className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <p className="text-xs font-bold text-emerald-200">
+                      {pendingServicesCount} pending service{pendingServicesCount !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Link
+                    href="/admin/services?status=pending"
+                    className="mt-2 block text-[11px] font-extrabold text-emerald-400 hover:underline"
+                  >
+                    Review services &rarr;
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -205,11 +232,18 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                         <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[#1B4332]" : "text-white/70"}`} />
                         <span className="truncate">{item.name}</span>
                       </div>
-                      {item.badge && pendingCount > 0 && (
+                      {((item.badgeKey === "verifications" || item.badge) && pendingCount > 0) && (
                         <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
                           active ? "bg-amber-100 text-amber-900" : "bg-[#F59E0B] text-gray-900"
                         }`}>
                           {pendingCount}
+                        </span>
+                      )}
+                      {item.badgeKey === "services" && pendingServicesCount > 0 && (
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                          active ? "bg-emerald-100 text-emerald-900" : "bg-emerald-400 text-gray-900"
+                        }`}>
+                          {pendingServicesCount}
                         </span>
                       )}
                     </Link>
@@ -311,9 +345,14 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                           <Icon className="h-4 w-4 shrink-0" />
                           <span>{item.name}</span>
                         </div>
-                        {item.badge && pendingCount > 0 && (
+                        {((item.badgeKey === "verifications" || item.badge) && pendingCount > 0) && (
                           <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900">
                             {pendingCount}
+                          </span>
+                        )}
+                        {item.badgeKey === "services" && pendingServicesCount > 0 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-900">
+                            {pendingServicesCount}
                           </span>
                         )}
                       </Link>

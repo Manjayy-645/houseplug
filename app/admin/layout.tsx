@@ -25,8 +25,8 @@ export default async function AdminLayout({
     redirect("/login")
   }
 
-  // Fetch admin profile and pending verification count in parallel
-  const [profileRes, pendingRes] = await Promise.all([
+  // Fetch admin profile, pending verification count, and pending services count in parallel
+  const [profileRes, pendingRes, pendingServicesRes] = await Promise.all([
     db
       .from("profiles")
       .select("role")
@@ -37,10 +37,15 @@ export default async function AdminLayout({
       .select("*", { count: "exact", head: true })
       .in("role", ["landlord", "agent"])
       .eq("verification_status", "pending"),
+    db
+      .from("service_providers")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending"),
   ])
 
   const profile = profileRes.data
   const pendingVerifications = pendingRes.count
+  const pendingServices = pendingServicesRes.count
 
   if (!["admin", "super_admin"].includes(profile?.role || "")) {
     redirect("/")
@@ -48,7 +53,11 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
-      <AdminSidebar role={profile?.role} pendingCount={pendingVerifications || 0} />
+      <AdminSidebar
+        role={profile?.role}
+        pendingCount={pendingVerifications || 0}
+        pendingServicesCount={pendingServices || 0}
+      />
 
       {/* Main content */}
       <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8">

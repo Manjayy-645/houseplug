@@ -10,7 +10,8 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Clock
+  Clock,
+  Wrench
 } from "lucide-react"
 import Link from "next/link"
 import AppealsList from "@/components/admin/appeals-list"
@@ -24,6 +25,7 @@ export default async function AdminDashboardPage() {
     authRes,
     { count: pendingListings },
     { count: pendingVerifications },
+    { count: pendingServices },
     { count: totalActiveListings },
     { count: totalUsers },
     { data: pendingAppeals },
@@ -33,6 +35,7 @@ export default async function AdminDashboardPage() {
     supabase.auth.getUser(),
     db.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     db.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['landlord', 'agent']).eq('verification_status', 'pending'),
+    db.from('service_providers').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     db.from('listings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     db.from('profiles').select('*', { count: 'exact', head: true }),
     db.from('appeals').select('*, user:profiles(full_name, email), ban:bans(reason)').eq('status', 'pending').order('created_at', { ascending: false }).limit(10),
@@ -59,7 +62,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Quick Action Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <OverviewCard 
           title="Pending Listings" 
           value={String(pendingListings || 0)} 
@@ -77,6 +80,15 @@ export default async function AdminDashboardPage() {
           color="text-blue-600"
           bg="bg-blue-50"
           urgent={!!pendingVerifications && pendingVerifications > 0}
+        />
+        <OverviewCard 
+          title="Pending Services" 
+          value={String(pendingServices || 0)} 
+          href="/admin/services?status=pending"
+          icon={Wrench}
+          color="text-emerald-700"
+          bg="bg-emerald-50"
+          urgent={!!pendingServices && pendingServices > 0}
         />
         <OverviewCard 
           title="Active Roommates" 
@@ -102,7 +114,7 @@ export default async function AdminDashboardPage() {
           <div className="p-8 border-b border-gray-50 flex items-center justify-between">
             <h3 className="text-lg font-bold text-gray-900">Required Actions</h3>
             <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-black uppercase tracking-wider">
-               {((pendingListings || 0) + (pendingVerifications || 0))} Attention
+               {((pendingListings || 0) + (pendingVerifications || 0) + (pendingServices || 0))} Attention
             </span>
           </div>
           <div className="divide-y divide-gray-50">
@@ -145,6 +157,26 @@ export default async function AdminDashboardPage() {
                    <p className="text-sm font-bold">All landlord & agent verifications are up to date</p>
                 </div>
              )}
+
+             {pendingServices && pendingServices > 0 ? (
+               <Link href="/admin/services?status=pending" className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
+                  <div className="flex items-center gap-4">
+                     <div className="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
+                        <Wrench className="h-5 w-5" />
+                     </div>
+                     <div>
+                        <p className="text-sm font-bold text-gray-900">Review Campus Services</p>
+                        <p className="text-xs text-gray-400 font-medium">{pendingServices} student & vendor service{pendingServices !== 1 ? "s" : ""} waiting for vetting</p>
+                     </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-gray-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+               </Link>
+             ) : (
+                <div className="p-6 flex items-center gap-4 text-emerald-600 opacity-60">
+                   <CheckCircle2 className="h-5 w-5" />
+                   <p className="text-sm font-bold">All campus services have been vetted</p>
+                </div>
+             )}
           </div>
         </div>
 
@@ -152,6 +184,7 @@ export default async function AdminDashboardPage() {
         <div className="space-y-6">
            <h3 className="text-lg font-bold text-gray-900 px-2">Common Tasks</h3>
            <div className="grid grid-cols-2 gap-4">
+              <QuickLinkCard title="Campus Services" icon={Wrench} href="/admin/services" desc="Directory & Vetting" />
               <QuickLinkCard title="User Support" icon={Users} href="/admin/users" desc="Manage accounts" />
               <QuickLinkCard title="Review Feed" icon={Star} href="/admin/reviews" desc="Moderate comments" />
               <QuickLinkCard title="Billing" icon={CreditCard} href="/admin/subscriptions" desc="View payments" />
