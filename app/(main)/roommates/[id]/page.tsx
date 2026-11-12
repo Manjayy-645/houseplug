@@ -1,6 +1,6 @@
 import { RoommateConnectionButton } from "@/components/roommate-connection-button";
 import { notFound } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient, getAdminClient } from "@/lib/supabase/server";
 import {
   BadgeCheck,
   User,
@@ -23,16 +23,14 @@ export async function generateMetadata({
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const supabase = createServiceClient();
+  const supabase = getAdminClient();
 
   const { data: roommate } = await supabase
     .from("roommate_profiles")
     .select("intent, university, budget_min, budget_max, user_id")
     .eq("id", params.id)
     .eq("status", "active")
-    .eq("visibility_consent", true)
-    .gt("expires_at", new Date().toISOString())
-    .single();
+    .maybeSingle();
 
   if (!roommate) {
     return {
@@ -104,7 +102,7 @@ export default async function RoommateProfilePage({
   params: { id: string };
 }) {
   const supabase = createClient();
-  const serviceClient = createServiceClient();
+  const serviceClient = getAdminClient();
 
   const {
     data: { session },
@@ -129,9 +127,7 @@ export default async function RoommateProfilePage({
     .select("*")
     .eq("id", params.id)
     .eq("status", "active")
-    .eq("visibility_consent", true)
-    .gt("expires_at", new Date().toISOString())
-    .single();
+    .maybeSingle();
 
   if (!roommate) {
     notFound();

@@ -214,7 +214,7 @@ export function RoommateCard({
         <div className="mb-4">
           <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Budget / Rent Share</p>
           <p className="font-black text-[#1B4332] text-xl">
-            ₦{data.budget_min.toLocaleString()} - ₦{data.budget_max.toLocaleString()}<span className="text-sm font-medium text-gray-500">/yr</span>
+            ₦{Number(data.budget_min || 0).toLocaleString('en-NG')} - ₦{Number(data.budget_max || 0).toLocaleString('en-NG')}<span className="text-sm font-medium text-gray-500">/yr</span>
           </p>
         </div>
 

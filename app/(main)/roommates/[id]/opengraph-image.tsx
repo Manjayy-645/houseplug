@@ -18,8 +18,6 @@ export default async function Image({ params }: { params: { id: string } }) {
       .select("intent, university, user_id, gender, budget_min, budget_max")
       .eq("id", params.id)
       .eq("status", "active")
-      .eq("visibility_consent", true)
-      .gt("expires_at", new Date().toISOString())
       .single();
 
     if (!roommate) {

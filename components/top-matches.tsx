@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { createPortal } from "react-dom"
 import { fireCelebrationConfetti } from "@/lib/confetti"
+import { getTopMatchesForStudent } from "@/app/roommate-actions"
 import {
   Sparkles,
   User,
@@ -206,12 +206,12 @@ function MatchModal({
           <button onClick={onClose} className="w-1/3 py-3 rounded-xl border border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-100 transition-colors">
             Close
           </button>
-          <button
-            onClick={handleConnect}
+          <a
+            href={`/roommates/${match.id}`}
             className="w-2/3 py-3 rounded-xl bg-[#1B4332] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md"
           >
-            <Phone className="h-4 w-4 text-[#F59E0B]" /> Connect on WhatsApp
-          </button>
+            <User className="h-4 w-4 text-[#F59E0B]" /> View Details
+          </a>
         </div>
       </div>
     </div>,
@@ -224,72 +224,29 @@ export function TopMatches({ myProfile }: { myProfile: any }) {
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState<RoommateMatch | null>(null)
   const [mounted, setMounted] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
   const [celebratedOnce, setCelebratedOnce] = useState(false)
+  const userId = myProfile?.user_id || ""
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const fetchMatches = useCallback(async () => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    setUserId(user.id)
-
-    const { data, error } = await supabase
-      .from("roommate_profiles")
-      .select("*")
-      .eq("status", "active")
-      .eq("university", myProfile.university)
-      .neq("user_id", user.id)
-
-    if (error || !data) { setLoading(false); return }
-
-    let loadedMatches = data
-    if (data.length > 0) {
-      const uids = data.map((d: any) => d.user_id)
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, verification_status")
-        .in("id", uids)
-      if (profs) {
-        loadedMatches = data.map((d: any) => ({
-          ...d,
-          profile: profs.find((p: any) => p.id === d.user_id) || null
-        }))
+    try {
+      const result = await getTopMatchesForStudent()
+      if (result.matches) {
+        setMatches(result.matches as any)
+        if (!celebratedOnce && result.matches.length > 0 && (result.matches[0] as any).matchScore >= 60) {
+          setTimeout(() => fireCelebrationConfetti(), 500)
+          setCelebratedOnce(true)
+        }
       }
+    } catch (e) {
+      console.error("Error fetching top matches:", e)
+    } finally {
+      setLoading(false)
     }
-
-    const filtered = loadedMatches.filter((p: any) => {
-      const theyWantMe =
-        p.preferred_gender === "any" ||
-        p.preferred_gender.toLowerCase() === myProfile.gender.toLowerCase()
-      const iWantThem =
-        myProfile.preferred_gender === "any" ||
-        myProfile.preferred_gender.toLowerCase() === p.gender.toLowerCase()
-      return theyWantMe && iWantThem
-    })
-
-    const scored: RoommateMatch[] = filtered
-      .map((p: any) => ({
-        ...p,
-        matchScore: computeMatchScore(
-          { budget_min: myProfile.budget_min, budget_max: myProfile.budget_max, lifestyle_tags: myProfile.lifestyle_tags || [] },
-          { budget_min: p.budget_min, budget_max: p.budget_max, lifestyle_tags: p.lifestyle_tags || [] }
-        ),
-      }))
-      .sort((a: RoommateMatch, b: RoommateMatch) => b.matchScore - a.matchScore)
-      .slice(0, 3)
-
-    setMatches(scored)
-    setLoading(false)
-
-    if (!celebratedOnce && scored.length > 0 && scored[0].matchScore >= 60) {
-      setTimeout(() => fireCelebrationConfetti(), 500)
-      setCelebratedOnce(true)
-    }
-  }, [myProfile, celebratedOnce])
+  }, [celebratedOnce])
 
   useEffect(() => {
     fetchMatches()

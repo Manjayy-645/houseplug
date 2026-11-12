@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient, getAdminClient } from "@/lib/supabase/server";
 import { RoommateCard } from "@/components/roommate-card";
 import { Users, ArrowRight, Sparkles } from "lucide-react";
 import { RoommateFilters } from "@/components/roommate-filters";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { computeComprehensiveMatchScore } from "@/lib/roommate-matching";
+import { UNIVERSITIES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Find a Student Roommate in Nigeria",
@@ -37,7 +38,7 @@ export default async function RoommatesPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const supabase = createClient();
-  const serviceClient = createServiceClient();
+  const db = getAdminClient();
 
   const {
     data: { session },
@@ -60,7 +61,7 @@ export default async function RoommatesPage({
   let currentUserRoommateProfile = null;
   if (currentUserId) {
     try {
-      const { data: myProfile } = await supabase
+      const { data: myProfile } = await db
         .from("roommate_profiles")
         .select(
           "id, user_id, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, target_listing_id, target_listing_title, room_address,score_opt_in",
@@ -73,22 +74,12 @@ export default async function RoommatesPage({
     }
   }
 
-  // Build query — public active roommate profiles
-  let query = isGuest
-    ? serviceClient
-        .from("roommate_profiles")
-        .select(
-          "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
-        )
-    : serviceClient
-        .from("roommate_profiles")
-        .select(
-          "id,user_id,intent,university,budget_min,budget_max,gender,preferred_gender,lifestyle_tags,bio,room_photos,target_listing_id,target_listing_title,status,created_at,updated_at",
-        );
-
-  query = query
-    .eq("visibility_consent", true)
-    .gt("expires_at", new Date().toISOString())
+  // Build query — public active roommate profiles (excludes phone_number to protect privacy)
+  let query = db
+    .from("roommate_profiles")
+    .select(
+      "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
+    )
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
@@ -98,24 +89,45 @@ export default async function RoommatesPage({
   const gender =
     typeof searchParams.gender === "string" ? searchParams.gender : null;
   const q =
-    typeof searchParams.q === "string" ? searchParams.q.toLowerCase() : null;
+    typeof searchParams.q === "string" ? searchParams.q.toLowerCase().trim() : null;
   const verifiedOnly = searchParams.verified === "true";
-  const campus = typeof searchParams.campus === "string" ? searchParams.campus : null;
+  const campus =
+    typeof searchParams.campus === "string" ? searchParams.campus.trim() : null;
 
   if (intent) query = query.eq("intent", intent);
-  if (campus) query = query.eq("university", campus);
+
+  // Resilient campus filtering matching shortName, name, or id
+  if (campus) {
+    const campusObj = UNIVERSITIES.find(
+      (u) =>
+        u.id.toLowerCase() === campus.toLowerCase() ||
+        u.shortName.toLowerCase() === campus.toLowerCase() ||
+        u.name.toLowerCase() === campus.toLowerCase(),
+    );
+    if (campusObj) {
+      query = query.or(
+        `university.ilike.%${campusObj.shortName}%,university.ilike.%${campusObj.name}%,university.ilike.%${campusObj.id}%`,
+      );
+    } else {
+      query = query.ilike("university", `%${campus}%`);
+    }
+  }
+
   if (gender) query = query.ilike("gender", gender);
   // Text search on university or bio
   if (q) query = query.or(`university.ilike.%${q}%,bio.ilike.%${q}%`);
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error) {
+    console.error("[ROOMMATES_PAGE] Error fetching profiles:", error);
+  }
   let profiles: any[] = data || [];
 
-  // If we have profiles, fetch their corresponding public.profiles data via serviceClient
+  // If we have profiles, fetch their corresponding public.profiles data via db
   // to guarantee public full_name, avatar_url, and verification status are never blocked by RLS
   if (profiles.length > 0) {
     const userIds = profiles.map((p) => p.user_id).filter(Boolean);
-    const { data: usersProfiles } = await serviceClient
+    const { data: usersProfiles } = await db
       .from("profiles")
       .select("id, full_name, avatar_url, verification_status")
       .in("id", userIds);
@@ -299,28 +311,60 @@ export default async function RoommatesPage({
         {/* Filters Bar */}
         <RoommateFilters />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
-          {profiles.map((profile: any) => {
-            const score =
-              currentUserRoommateProfile && profile.user_id !== currentUserId
-                ? computeComprehensiveMatchScore(
-                    currentUserRoommateProfile,
-                    profile,
-                  ).score
-                : null;
+        {profiles.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 w-full">
+            {profiles.map((profile: any) => {
+              const score =
+                currentUserRoommateProfile && profile.user_id !== currentUserId
+                  ? computeComprehensiveMatchScore(
+                      currentUserRoommateProfile,
+                      profile,
+                    ).score
+                  : null;
 
-            return (
-              <div key={profile.id} className="w-full min-w-0 max-w-full flex">
-                <RoommateCard
-                  data={profile}
-                  currentUserId={currentUserId}
-                  currentUserRole={currentUserRole}
-                  matchScore={score && score >= 50 ? score : null}
-                />
-              </div>
-            );
-          })}
-        </div>
+              return (
+                <div key={profile.id} className="w-full min-w-0 max-w-full flex">
+                  <RoommateCard
+                    data={profile}
+                    currentUserId={currentUserId}
+                    currentUserRole={currentUserRole}
+                    matchScore={score && score >= 50 ? score : null}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center shadow-xs">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-[#1B4332]">
+              <Users className="h-7 w-7 text-[#1B4332]" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              No roommate profiles found
+            </h3>
+            <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
+              {q || intent || gender || campus || verifiedOnly
+                ? "Try relaxing your filters to see more student roommate posts, or post your own."
+                : "Be the first student to post a roommate request on campus!"}
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {(q || intent || gender || campus || verifiedOnly) && (
+                <Link
+                  href="/roommates"
+                  className="px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Clear all filters
+                </Link>
+              )}
+              <Link
+                href="/roommates/create"
+                className="px-6 py-2.5 rounded-xl bg-[#1B4332] text-white text-sm font-bold hover:bg-[#143326] transition shadow-xs"
+              >
+                Create a Profile
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

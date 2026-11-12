@@ -1,8 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { computeComprehensiveMatchScore } from "@/lib/roommate-matching";
 
 // ── Shared validation schema ──────────────────────────────────────────────────
 // Nigerian mobile: 070/080/081/090/091 + 8 digits
@@ -169,9 +170,19 @@ export async function updateRoommateStatus(
   }
 
   // 3. Update only the caller's own row (RLS will also enforce this)
+  const updatePayload: Record<string, any> = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (status === "active") {
+    updatePayload.visibility_consent = true;
+    updatePayload.expires_at = new Date(Date.now() + 30 * 86400000).toISOString();
+  }
+
   const { data, error } = await supabase
     .from("roommate_profiles")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updatePayload)
     .eq("user_id", user.id)
     .select()
     .single();
@@ -219,6 +230,8 @@ export async function attachListingToRoommateProfile(params: {
     target_listing_id: params.listingId,
     target_listing_title: params.listingTitle,
     status: "active",
+    visibility_consent: true,
+    expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
     updated_at: new Date().toISOString(),
   };
 
@@ -270,4 +283,66 @@ export async function removeListingFromRoommateProfile(listingId?: string) {
   if (listingId) revalidatePath(`/listing/${listingId}`);
   revalidatePath("/student/roommate");
   return { success: true };
+}
+
+export async function getTopMatchesForStudent() {
+  const supabase = createClient();
+  const { user, error: authError } = await requireStudent(supabase);
+  if (authError || !user) return { matches: [], error: authError };
+
+  const { data: myProfile } = await supabase
+    .from("roommate_profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!myProfile) return { matches: [] };
+
+  const serviceClient = getAdminClient();
+  const { data: candidates, error } = await serviceClient
+    .from("roommate_profiles")
+    .select(
+      "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
+    )
+    .eq("status", "active")
+    .neq("user_id", user.id);
+
+  if (error || !candidates || candidates.length === 0) return { matches: [] };
+
+  const userIds = candidates.map((c) => c.user_id).filter(Boolean);
+  const { data: profilesData } = await serviceClient
+    .from("profiles")
+    .select("id, full_name, avatar_url, verification_status")
+    .in("id", userIds);
+
+  const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+
+  const scored = candidates
+    .map((candidate: any) => {
+      const p = profileMap.get(candidate.user_id);
+      const matchResult = computeComprehensiveMatchScore(myProfile, candidate);
+      return {
+        ...candidate,
+        phone_number: "",
+        room_address: "",
+        profile: p
+          ? {
+              full_name: p.full_name?.split(" ")[0] || "Student",
+              avatar_url: p.avatar_url || "",
+              verification_status: p.verification_status || "unverified",
+            }
+          : {
+              full_name: "Student",
+              avatar_url: "",
+              verification_status: "unverified",
+            },
+        matchScore: matchResult.score,
+        isEligible: matchResult.isEligible,
+      };
+    })
+    .filter((m: any) => m.isEligible && m.matchScore >= 40)
+    .sort((a: any, b: any) => b.matchScore - a.matchScore)
+    .slice(0, 3);
+
+  return { matches: scored };
 }

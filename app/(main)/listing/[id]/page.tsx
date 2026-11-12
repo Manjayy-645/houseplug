@@ -4,7 +4,7 @@ import { sharingEligible, publicContactAvailable } from "@/lib/housing";
 import { ListingTruthPanel } from "@/components/listing/truth-panel";
 import { Star, Flame, Users, Info, Check, EyeOff } from "lucide-react";
 import { notFound } from "next/navigation";
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient, getAdminClient } from "@/lib/supabase/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import type { Listing, Review } from "@/types";
 import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils";
@@ -279,7 +279,7 @@ export default async function ListingDetailPage({
           u.name.toLowerCase() === listingRowData.university.toLowerCase(),
       );
       const campusFilter = campusObj?.shortName || listingRowData.university;
-      const serviceClient = createServiceClient();
+      const serviceClient = getAdminClient();
 
       const { data: roommateRows } = await serviceClient
         .from("roommate_profiles")
@@ -287,8 +287,6 @@ export default async function ListingDetailPage({
           "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, target_listing_id, target_listing_title",
         )
         .eq("status", "active")
-        .eq("visibility_consent", true)
-        .gt("expires_at", new Date().toISOString())
         .or(
           `university.ilike.%${campusFilter}%,university.ilike.%${campusObj?.id || campusFilter}%`,
         )

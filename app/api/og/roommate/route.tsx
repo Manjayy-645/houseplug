@@ -28,8 +28,6 @@ export async function GET(request: NextRequest) {
       .select("intent, university, budget_min, budget_max, gender, user_id")
       .eq("id", id)
       .eq("status", "active")
-      .eq("visibility_consent", true)
-      .gt("expires_at", new Date().toISOString())
       .single();
 
     // Fetch linked user profile
