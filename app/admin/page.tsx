@@ -181,7 +181,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Appeals Section */}
-      <div>
+      <div id="appeals" className="pt-2">
         <h3 className="text-xl font-bold text-gray-900 mb-4">Pending Appeals</h3>
         <AppealsList initialAppeals={pendingAppeals as any[]} />
       </div>
