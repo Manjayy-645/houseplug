@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Users, User, Heart, LayoutDashboard, Wrench } from "lucide-react"
+import { Search, Users, User, Heart, Wrench, LayoutDashboard } from "lucide-react"
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { UserRole } from "@/types"
@@ -10,29 +10,35 @@ import type { UserRole } from "@/types"
 export function MobileNav() {
   const pathname = usePathname()
   const [role, setRole] = useState<UserRole | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     const supabase = createClient()
-    
-    const fetchRole = async () => {
+
+    const fetchUserAndRole = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        setIsAuthenticated(true)
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .single()
-        
+
         if (profile) setRole(profile.role)
+      } else {
+        setIsAuthenticated(false)
+        setRole(null)
       }
       setLoading(false)
     }
-    
-    fetchRole()
-    
+
+    fetchUserAndRole()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
+        setIsAuthenticated(true)
         setTimeout(async () => {
           const { data: profile } = await supabase
             .from("profiles")
@@ -43,76 +49,131 @@ export function MobileNav() {
           setLoading(false)
         }, 0)
       } else {
+        setIsAuthenticated(false)
         setRole(null)
         setLoading(false)
       }
     })
-    
+
     return () => subscription.unsubscribe()
   }, [])
-  
-  // Hide bottom nav on specific auth pages, dashboard routes, student routes,
-  // and listing detail pages (which display their own dedicated sticky contact bar)
+
+  // Hide on auth flows, full dedicated dashboards, and listing details (which has sticky contact bar)
   if (
     !pathname ||
-    pathname === "/login" || 
-    pathname === "/signup" || 
-    pathname.startsWith("/landlord") || 
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/banned" ||
+    pathname === "/appeal" ||
+    pathname === "/maintenance" ||
+    pathname === "/offline" ||
+    pathname.startsWith("/landlord") ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/student") ||
-    pathname.startsWith("/listing/") ||
-    pathname.startsWith("/services/")
+    pathname.startsWith("/listing/")
   ) {
     return null
   }
 
-  const isLandlord = role === "landlord" || role === "agent" || role === "super_admin"
-  const isStudent = role === "student"
+  const getAccountHref = () => {
+    if (!isAuthenticated) return "/login"
+    if (role === "student") return "/student/dashboard"
+    if (role === "landlord" || role === "agent") return "/landlord/dashboard"
+    if (role === "admin" || role === "super_admin") return "/admin"
+    return "/profile"
+  }
+
+  const savedHref = role === "student" ? "/student/saved" : "/saved"
 
   const navItems = [
-    isStudent
-      ? { name: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard }
-      : { name: "Home", href: "/", icon: Home },
-    { name: "Browse", href: "/browse", icon: Search },
-    { 
-      name: "Services", 
-      href: "/services", 
-      icon: Wrench, 
-      badge: "NEW",
-      highlight: true 
+    {
+      name: "Explore",
+      href: "/browse",
+      icon: Search,
+      isActive: pathname === "/" || pathname === "/browse",
+      badge: null,
     },
-    isLandlord 
-      ? { name: "Dashboard", href: "/landlord/dashboard", icon: LayoutDashboard }
-      : { name: "Roommates", href: "/roommates", icon: Users },
-    { name: "Profile", href: isLandlord ? "/landlord/profile" : isStudent ? "/student/profile" : "/profile", icon: User },
+    {
+      name: "Roommates",
+      href: "/roommates",
+      icon: Users,
+      isActive: pathname.startsWith("/roommates"),
+      badge: null,
+    },
+    {
+      name: "Services",
+      href: "/services",
+      icon: Wrench,
+      isActive: pathname.startsWith("/services"),
+      badge: "NEW",
+    },
+    {
+      name: "Saved",
+      href: savedHref,
+      icon: Heart,
+      isActive: pathname === "/saved" || pathname === "/student/saved",
+      badge: null,
+    },
+    {
+      name: isAuthenticated ? "Account" : "Log In",
+      href: getAccountHref(),
+      icon: isAuthenticated ? LayoutDashboard : User,
+      isActive:
+        pathname === "/profile" ||
+        pathname.startsWith("/student/dashboard") ||
+        pathname.startsWith("/landlord/dashboard") ||
+        pathname.startsWith("/admin"),
+      badge: null,
+    },
   ]
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 pb-safe z-50 px-2 py-2 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] transition-opacity duration-300" style={{ opacity: loading ? 0 : 1 }}>
-      <div className="flex justify-around items-center">
+    <nav 
+      aria-label="Mobile Navigation"
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 z-50 px-2 pt-1 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-opacity duration-200"
+      style={{ opacity: loading ? 0 : 1 }}
+    >
+      <div className="flex items-center justify-around max-w-lg mx-auto">
         {navItems.map((item) => {
-          const isActive = pathname === item.href
+          const Icon = item.icon
+          const active = item.isActive
+
           return (
-            <Link 
-              key={item.name} 
+            <Link
+              key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center w-16 h-12 relative ${isActive ? "text-primary" : "text-gray-400 hover:text-gray-600"}`}
+              aria-label={item.name}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex flex-col items-center justify-center min-w-[56px] min-h-[50px] py-1 px-2 rounded-xl transition-all active:scale-95 ${
+                active ? "text-[#1B4332]" : "text-gray-500 hover:text-gray-900"
+              }`}
             >
-              {(item as any).badge && !isActive ? (
-                <span className="absolute -top-1 right-1.5 px-1.5 py-0.2 rounded-full bg-[#1B4332] text-[#F59E0B] text-[8px] font-black tracking-wider leading-tight shadow-sm border border-emerald-500/40 animate-pulse">
-                  {(item as any).badge}
-                </span>
-              ) : (item as any).highlight && !isActive ? (
-                <span className="absolute top-0 right-2 w-2.5 h-2.5 bg-[#F59E0B] rounded-full border-2 border-white animate-pulse"></span>
-              ) : null}
-              <item.icon className={`h-5 w-5 mb-1 transition-transform ${isActive ? "scale-110 text-primary" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
-              <span className={`text-[10px] font-medium transition-colors ${isActive ? "font-bold text-primary" : ""}`}>
+              <div className="relative">
+                <Icon
+                  className={`h-5 w-5 transition-transform ${active ? "scale-110 stroke-[2.4]" : "stroke-[1.8]"}`}
+                />
+                {item.badge && !active && (
+                  <span className="absolute -top-1.5 -right-3 px-1 py-0.2 rounded-full bg-[#1B4332] text-[#F59E0B] text-[7px] font-black tracking-wider leading-none shadow-xs border border-emerald-500/40">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <span
+                className={`text-[10px] tracking-tight mt-1 transition-colors ${
+                  active ? "font-bold text-[#1B4332]" : "font-medium text-gray-500"
+                }`}
+              >
                 {item.name}
               </span>
+              {active && (
+                <span className="absolute bottom-0 w-8 h-0.5 bg-[#1B4332] rounded-full" />
+              )}
             </Link>
           )
         })}
       </div>
-    </div>
+    </nav>
   )
 }
