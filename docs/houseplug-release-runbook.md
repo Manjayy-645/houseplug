@@ -8,6 +8,10 @@ HousePlug takes housing requests and connects students with advertisers. Student
 
 Canonical origin: https://www.houseplug.ng. Retention controls remain configurable and automatic deletion is disabled by default. Housing request monetization is exploratory; intake is free and no new housing request payment product exists.
 
+## Housing-assistance intake operations
+
+Production intake uses `HOUSING_REQUESTS_ENABLED=true` and a separate, strong server-only `HOUSING_REQUEST_HASH_KEY`. Requests are free and optional; direct agent WhatsApp contact remains available without a request. Review new submissions in the protected `/admin/requests` inbox and connect the student with suitable advertisers manually. No response-time promise, agent assignment or inspection booking is required. Notification sending and automatic retention deletion remain disabled; check the inbox regularly. A WhatsApp click is never counted as a submitted request.
+
 ## What is implemented in this branch
 
 - Integer-naira itemized mandatory fees, unknown totals, separate renewal/inspection disclosures, admin review evidence, scoped checks, owner-approved occupancy, freshness filters and owner reconfirmation.

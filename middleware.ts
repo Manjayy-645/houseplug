@@ -2,6 +2,15 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
+  if (
+    /^\/listing\/[^/]+$/.test(request.nextUrl.pathname) &&
+    !/^\/listing\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.nextUrl.pathname)
+  ) {
+    return new NextResponse(
+      '<html lang="en"><title>Room not found | HousePlug</title><meta name="robots" content="noindex"><body><h1>Room not found</h1><a href="/browse">Browse available rooms</a></body></html>',
+      { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } },
+    )
+  }
   const response = NextResponse.next({
     request: {
       headers: request.headers
@@ -36,18 +45,19 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // --- Developer Bypass Check (Cookie or Query Param) -----------------------
-  // Visiting any page with ?dev_bypass=houseplugdev sets a 30-day cookie so devs
-  // can test guest, student, and landlord flows without hitting /maintenance.
+  // Only a configured private secret can grant a temporary maintenance bypass.
   // Visiting with ?dev_bypass=clear removes the bypass.
-  const DEV_SECRET = process.env.DEV_BYPASS_SECRET || "houseplugdev"
+  const DEV_SECRET = process.env.DEV_BYPASS_SECRET
   const devParam =
     request.nextUrl.searchParams.get("dev_bypass") ||
     request.nextUrl.searchParams.get("dev_secret")
-  let hasDevBypass = request.cookies.get("hp_dev_bypass")?.value === "true"
+  let hasDevBypass = Boolean(DEV_SECRET && request.cookies.get("hp_dev_bypass")?.value === DEV_SECRET)
 
-  if (devParam === DEV_SECRET) {
+  if (DEV_SECRET && devParam === DEV_SECRET) {
     hasDevBypass = true
-    response.cookies.set("hp_dev_bypass", "true", {
+    response.cookies.set("hp_dev_bypass", DEV_SECRET, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
       sameSite: "lax",
@@ -65,7 +75,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/login") ||
     path.startsWith("/auth")
 
-  if (!maintenanceExempt && !hasDevBypass) {
+  if (!maintenanceExempt) {
     let isMaintenance = process.env.MAINTENANCE_MODE === "true"
 
     if (!isMaintenance) {
@@ -126,6 +136,7 @@ export async function middleware(request: NextRequest) {
   // /landlord/[username] is a PUBLIC profile page and must NOT be gated.
   const landlordProtectedPrefixes = [
     "/landlord/dashboard",
+    "/landlord/requests",
     "/landlord/listings",
     "/landlord/analytics",
     "/landlord/billing",
@@ -153,11 +164,11 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, banned")
+    .select("role, banned,is_banned")
     .eq("id", user.id)
     .single()
 
-  if (profile?.banned) {
+  if (profile?.banned || profile?.is_banned) {
     if (path !== "/banned" && path !== "/appeal" && !path.startsWith("/api/")) {
       return NextResponse.redirect(new URL("/banned", request.url))
     }

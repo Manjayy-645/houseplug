@@ -16,6 +16,7 @@ apply supabase/migrations/20261111020101_houseplug_profile_and_internal_function
 apply tests/fixtures/legacy-listing.sql
 apply supabase/migrations/20261111215630_housing_truth_and_conversion.sql
 apply supabase/migrations/20261111215644_payment_fulfilment_recovery.sql
+apply supabase/migrations/20261112164925_allow_legacy_assistance_requests.sql
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/housing_truth_conversion.sql
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/payment_fulfilment.sql
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/service_listing.sql

@@ -73,6 +73,7 @@ const migrations = [
   "20261111020101_houseplug_profile_and_internal_function_security.sql",
   "20261111215630_housing_truth_and_conversion.sql",
   "20261111215644_payment_fulfilment_recovery.sql",
+  "20261112164925_allow_legacy_assistance_requests.sql",
 ];
 try {
   docker(["network", "create", network]);
