@@ -193,7 +193,7 @@ export function Header() {
           </Link>
 
           {/* Primary Destinations */}
-          <nav aria-label="Main Navigation" className="hidden md:flex items-center gap-1.5 lg:gap-2">
+          <nav aria-label="Main Navigation" className="hidden lg:flex items-center gap-1.5 lg:gap-2">
             <Link
               href="/browse"
               className={`text-sm font-semibold px-3.5 py-1.5 rounded-full transition-all ${
@@ -254,7 +254,7 @@ export function Header() {
           {/* List Property CTA (Accessible for agents/landlords) */}
           <Link
             href={listPropertyHref}
-            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl text-[#1B4332] bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 transition-colors"
+            className="hidden lg:inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl text-[#1B4332] bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-200/80 transition-colors"
           >
             <Building2 className="w-3.5 h-3.5 text-[#1B4332]" />
             <span>List Property</span>
@@ -267,13 +267,13 @@ export function Header() {
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="text-xs sm:text-sm font-bold text-gray-700 hover:text-[#1B4332] px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                className="hidden md:inline-flex text-xs sm:text-sm font-bold text-gray-700 hover:text-[#1B4332] px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="bg-[#F59E0B] text-white px-3.5 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:brightness-105 active:scale-95 transition-all"
+                className="inline-flex min-h-10 items-center whitespace-nowrap bg-[#F59E0B] text-[#1B4332] px-3.5 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:brightness-105 active:scale-95 transition-all"
               >
                 Sign Up
               </Link>
@@ -383,7 +383,7 @@ export function Header() {
           {/* Mobile Drawer Hamburger */}
           <button 
             onClick={() => setIsOpen(!isOpen)} 
-            className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-2 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
             aria-label={isOpen ? "Close main menu" : "Open main menu"}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -393,7 +393,7 @@ export function Header() {
 
       {/* Mobile Drawer (Clean, Non-overlapping) */}
       {isOpen && (
-        <div className="fixed inset-0 top-16 z-40 bg-black/30 md:hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 top-16 z-40 bg-black/30 lg:hidden animate-in fade-in duration-200">
           <div 
             className="absolute top-0 right-0 bottom-0 w-5/6 max-w-sm bg-white shadow-2xl p-5 overflow-y-auto flex flex-col justify-between"
             onClick={(e) => e.stopPropagation()}
@@ -428,7 +428,7 @@ export function Header() {
                     <Link
                       href="/signup"
                       onClick={() => setIsOpen(false)}
-                      className="py-2 px-3 text-center rounded-xl bg-[#F59E0B] text-white text-xs font-bold shadow-2xs hover:brightness-105"
+                      className="py-2 px-3 text-center rounded-xl bg-[#F59E0B] text-[#1B4332] text-xs font-bold shadow-2xs hover:brightness-105"
                     >
                       Sign Up
                     </Link>
@@ -437,7 +437,7 @@ export function Header() {
               )}
 
               {/* Navigation Items */}
-              <div className="space-y-1">
+              <nav aria-label="Mobile menu" className="space-y-1">
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 px-3 pb-1">
                   Explore Accommodation
                 </p>
@@ -487,7 +487,7 @@ export function Header() {
                   <Building2 className="h-4 w-4 text-[#1B4332]" />
                   <span>List a Property</span>
                 </Link>
-              </div>
+              </nav>
 
               {/* Account Quick Links if Authenticated */}
               {user && (

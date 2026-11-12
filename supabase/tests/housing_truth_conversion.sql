@@ -21,6 +21,8 @@ BEGIN
  SELECT * INTO h FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
  SELECT * INTO h2 FROM public.create_housing_request(payload,'test-contact-fingerprint','test-rate-key');
  IF h.id<>h2.id OR h.reference IS NULL THEN RAISE EXCEPTION 'Idempotency failed';END IF;
+ SELECT * INTO h2 FROM public.create_housing_request(payload || jsonb_build_object('submission_key',gen_random_uuid(),'listing_id','22222222-2222-4222-8222-222222222222','contact_phone','08087654321'),'legacy-contact-fingerprint','legacy-rate-key');
+ IF h2.reference IS NULL OR (SELECT assigned_agent_id FROM public.housing_requests WHERE id=h2.id)<>'11111111-1111-4111-8111-111111111111'::uuid OR (SELECT last_confirmed_at FROM public.listings WHERE id='22222222-2222-4222-8222-222222222222') IS NOT NULL THEN RAISE EXCEPTION 'Legacy assistance failed or fabricated a review';END IF;
  IF (SELECT count(*) FROM public.notification_outbox WHERE lead_id=h.id)<>1 THEN RAISE EXCEPTION 'Duplicate outbox notification';END IF;
  BEGIN PERFORM public.transition_housing_request(h.id,student_id,'connected',NULL);RAISE EXCEPTION 'Student self-qualified';EXCEPTION WHEN insufficient_privilege OR invalid_parameter_value THEN NULL;END;
  PERFORM public.transition_housing_request(h.id,staff_id,'qualified',NULL);

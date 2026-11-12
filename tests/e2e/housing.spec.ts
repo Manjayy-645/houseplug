@@ -76,8 +76,8 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
     await expect(
       page.getByRole("img", { name: "Campus surroundings", exact: true }),
     ).toBeVisible();
-    const menu = page.getByRole("button", { name: "Open navigation menu" });
-    if (width < 1280) await expect(menu).toBeVisible();
+    const menu = page.getByRole("button", { name: "Open main menu" });
+    if (width < 1024) await expect(menu).toBeVisible();
     else await expect(menu).toBeHidden();
     await expect(
       page.locator("header").getByRole("link", { name: "Sign Up", exact: true }),
@@ -97,9 +97,9 @@ test("mobile homepage has exact positioning, honest totals, accessible search an
     if (width === 768) {
       await menu.click();
       await expect(
-        page.locator("header nav").getByRole("link", { name: "Browse Listings" }),
+        page.getByRole("navigation", { name: "Mobile menu" }).getByRole("link", { name: "Browse Listings" }),
       ).toBeVisible();
-      await page.getByRole("button", { name: "Close navigation menu" }).click();
+      await page.getByRole("button", { name: "Close main menu" }).click();
     }
     expect(
       await page
@@ -427,6 +427,17 @@ test("guest request persists, returns reference, and is idempotent", async ({
   });
   expect(retry.status()).toBe(201);
   expect((await retry.json()).reference).toBe(saved.reference);
+  const legacy = await page.request.post("/api/housing-requests", {
+    headers: { Origin: new URL(page.url()).origin },
+    data: {
+      ...requestBody,
+      submission_key: randomUUID(),
+      listing_id: "20000000-0000-4000-8000-000000000005",
+      contact_phone: "08087654321",
+    },
+  });
+  expect(legacy.status()).toBe(201);
+  expect((await legacy.json()).reference).toMatch(/^HP-/);
 });
 test("optional assistance needs no agent assignment; private requests stay authorized", async ({
   browser,
