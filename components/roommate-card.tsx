@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check, Building, Zap } from "lucide-react"
-import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 
 type RoommateProfile = {
   id: string
@@ -39,6 +39,7 @@ export function RoommateCard({
   currentUserRole?: string | null
   matchScore?: number | null
 }) {
+  const router = useRouter()
   const [showGuestModal, setShowGuestModal] = useState(false)
   const [showRoleModal, setShowRoleModal] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -94,15 +95,8 @@ export function RoommateCard({
       return
     }
 
-    // Case 3: verified student — open WhatsApp with smart pre-filled message
-    const waUrl = buildGeneralRoommateWhatsAppLink({
-      phone: data.phone_number,
-      candidateName: firstName || displayName,
-      targetLodgeTitle: data.target_listing_title,
-      targetLodgeId: data.target_listing_id,
-      campusName: data.university,
-    })
-    window.open(waUrl, "_blank")
+    // Roommate contact is shared only after both students accept a connection.
+    router.push(`/roommates/${data.id}`)
   }
 
   return (
@@ -259,7 +253,7 @@ export function RoommateCard({
             className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm min-h-[44px]"
           >
             <MessageCircle className="h-4 w-4 text-[#F59E0B]" />
-            WhatsApp
+            View &amp; connect
           </button>
         </div>
       </div>

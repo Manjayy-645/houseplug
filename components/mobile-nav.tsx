@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { UserRole } from "@/types"
 
-export function MobileNav() {
+export function MobileNav({ servicesEnabled = true }: { servicesEnabled?: boolean } = {}) {
   const pathname = usePathname()
   const [role, setRole] = useState<UserRole | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
@@ -102,13 +102,17 @@ export function MobileNav() {
       isActive: pathname.startsWith("/roommates"),
       badge: null,
     },
-    {
-      name: "Services",
-      href: "/services",
-      icon: Wrench,
-      isActive: pathname.startsWith("/services"),
-      badge: "NEW",
-    },
+    ...(servicesEnabled
+      ? [
+          {
+            name: "Services",
+            href: "/services",
+            icon: Wrench,
+            isActive: pathname.startsWith("/services"),
+            badge: "NEW" as const,
+          },
+        ]
+      : []),
     {
       name: "Saved",
       href: savedHref,

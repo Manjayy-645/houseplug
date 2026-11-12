@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, BadgeCheck } from "lucide-react"
 import { useTransition } from "react"
+import { UNIVERSITIES } from "@/lib/constants"
 
 export function RoommateFilters() {
   const router = useRouter()
@@ -21,6 +22,12 @@ export function RoommateFilters() {
 
   return (
     <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+      <label className="w-full md:max-w-60 text-xs font-bold text-gray-600">Campus
+        <select value={searchParams.get("campus") ?? ""} onChange={(e) => handleFilterChange("campus", e.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#1B4332] focus:outline-none focus:ring-2 focus:ring-emerald-100">
+          <option value="">All campuses</option>
+          {UNIVERSITIES.map((campus) => <option key={campus.id} value={campus.name}>{campus.shortName} · {campus.state}</option>)}
+        </select>
+      </label>
       <div className="flex items-center w-full md:w-auto gap-4 flex-1">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />

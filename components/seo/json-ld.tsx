@@ -1,12 +1,12 @@
-import React from "react"
+import React from "react";
 
 function safeJsonLd(schema: unknown) {
-  return JSON.stringify(schema).replace(/</g, "\\u003c")
+  return JSON.stringify(schema).replace(/</g, "\\u003c");
 }
 
 interface BreadcrumbItem {
-  name: string
-  url: string
+  name: string;
+  url: string;
 }
 
 export function OrganizationJsonLd() {
@@ -15,9 +15,10 @@ export function OrganizationJsonLd() {
     "@type": "Organization",
     name: "HousePlug",
     alternateName: "HousePlug Nigeria",
-    url: "https://houseplug.ng",
-    logo: "https://houseplug.ng/logo.png",
-    description: "Verified student housing, lodges, self-cons, and flatshares for Nigerian university students.",
+    url: "https://www.houseplug.ng",
+    logo: "https://www.houseplug.ng/logo.png",
+    description:
+      "Verified student housing, lodges, self-cons, and flatshares for Nigerian university students.",
     foundingDate: "2026",
     address: {
       "@type": "PostalAddress",
@@ -31,14 +32,14 @@ export function OrganizationJsonLd() {
       email: "support@houseplug.ng",
       availableLanguage: ["en", "English"],
     },
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
 export function WebSiteJsonLd() {
@@ -47,37 +48,37 @@ export function WebSiteJsonLd() {
     "@type": "WebSite",
     name: "HousePlug",
     alternateName: "HousePlug Nigeria",
-    url: "https://houseplug.ng",
+    url: "https://www.houseplug.ng",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: "https://houseplug.ng/browse?q={search_term_string}",
+        urlTemplate: "https://www.houseplug.ng/browse?q={search_term_string}",
       },
       "query-input": "required name=search_term_string",
     },
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
 interface ListingJsonLdProps {
-  id: string
-  title: string
-  description?: string | null
-  priceYearly: number
-  roomType: string
-  address: string
-  area: string
-  university: string
-  photos?: string[] | null
-  amenities?: string[] | null
-  createdAt?: string | null
+  id: string;
+  title: string;
+  description?: string | null;
+  priceYearly: number;
+  roomType: string;
+  address: string;
+  area: string;
+  university: string;
+  photos?: string[] | null;
+  amenities?: string[] | null;
+  createdAt?: string | null;
 }
 
 export function ListingJsonLd({
@@ -95,11 +96,16 @@ export function ListingJsonLd({
 }: ListingJsonLdProps) {
   const schema = {
     "@context": "https://schema.org",
-    "@type": "SingleFamilyResidence",
+    "@type": "Accommodation",
     name: title,
-    description: description || `${roomType} in ${area} near ${university}. Verified student housing on HousePlug.`,
-    url: `https://houseplug.ng/listing/${id}`,
-    image: photos && photos.length > 0 ? photos : ["https://houseplug.ng/icons/og-default.jpg"],
+    description:
+      description ||
+      `${roomType} in ${area} near ${university}. Student accommodation listed on HousePlug.`,
+    url: `https://www.houseplug.ng/listing/${id}`,
+    image:
+      photos && photos.length > 0
+        ? photos
+        : ["https://www.houseplug.ng/icons/og-default.jpg"],
     address: {
       "@type": "PostalAddress",
       streetAddress: address,
@@ -111,8 +117,8 @@ export function ListingJsonLd({
       "@type": "Offer",
       price: priceYearly,
       priceCurrency: "NGN",
-      availability: "https://schema.org/InStock",
-      url: `https://houseplug.ng/listing/${id}`,
+
+      url: `https://www.houseplug.ng/listing/${id}`,
       validFrom: createdAt || undefined,
       priceSpecification: {
         "@type": "UnitPriceSpecification",
@@ -126,14 +132,14 @@ export function ListingJsonLd({
       name: amenity,
       value: true,
     })),
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
 export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
@@ -144,16 +150,18 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
-      item: item.url.startsWith("http") ? item.url : `https://houseplug.ng${item.url}`,
+      item: item.url.startsWith("http")
+        ? item.url
+        : `https://www.houseplug.ng${item.url}`,
     })),
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
 export function ProfileJsonLd({
@@ -163,11 +171,11 @@ export function ProfileJsonLd({
   image,
   description,
 }: {
-  name: string
-  username: string
-  role: string
-  image?: string | null
-  description?: string
+  name: string;
+  username: string;
+  role: string;
+  image?: string | null;
+  description?: string;
 }) {
   const schema = {
     "@context": "https://schema.org",
@@ -177,19 +185,25 @@ export function ProfileJsonLd({
       "@type": "Person",
       name,
       alternateName: username,
-      jobTitle: role === "agent" ? "Real Estate Agent" : role === "landlord" ? "Property Owner" : "Student",
-      image: image || "https://houseplug.ng/icons/og-default.jpg",
-      description: description || `Verified ${role} on HousePlug student housing network.`,
-      url: `https://houseplug.ng/landlord/${username}`,
+      jobTitle:
+        role === "agent"
+          ? "Real Estate Agent"
+          : role === "landlord"
+            ? "Property Owner"
+            : "Student",
+      image: image || "https://www.houseplug.ng/icons/og-default.jpg",
+      description:
+        description || `${role} on HousePlug student housing network.`,
+      url: `https://www.houseplug.ng/landlord/${username}`,
     },
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
 export function ServiceJsonLd({
@@ -201,21 +215,23 @@ export function ServiceJsonLd({
   priceLabel,
   image,
 }: {
-  id: string
-  name: string
-  category: string
-  university: string
-  description?: string | null
-  priceLabel?: string
-  image?: string | null
+  id: string;
+  name: string;
+  category: string;
+  university: string;
+  description?: string | null;
+  priceLabel?: string;
+  image?: string | null;
 }) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name,
-    description: description || `${category} service near ${university}. Verified campus artisan on HousePlug.`,
-    url: `https://houseplug.ng/services/${id}`,
-    image: image || "https://houseplug.ng/icons/og-default.jpg",
+    description:
+      description ||
+      `${category} service near ${university}. Verified campus artisan on HousePlug.`,
+    url: `https://www.houseplug.ng/services/${id}`,
+    image: image || "https://www.houseplug.ng/icons/og-default.jpg",
     priceRange: priceLabel || "₦₦",
     address: {
       "@type": "PostalAddress",
@@ -223,17 +239,21 @@ export function ServiceJsonLd({
       addressRegion: "Rivers State",
       addressCountry: "NG",
     },
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }
 
-export function FaqJsonLd({ faqs }: { faqs: { question: string; answer: string }[] }) {
+export function FaqJsonLd({
+  faqs,
+}: {
+  faqs: { question: string; answer: string }[];
+}) {
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -245,12 +265,12 @@ export function FaqJsonLd({ faqs }: { faqs: { question: string; answer: string }
         text: faq.answer,
       },
     })),
-  }
+  };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }}
     />
-  )
+  );
 }

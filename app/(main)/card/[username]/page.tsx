@@ -1,109 +1,154 @@
-import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { ShieldCheck, Star, MapPin, Home, GraduationCap, MessageCircle } from "lucide-react"
-import { ClientDownloadButton } from "@/components/landlord/client-download-button"
+import { notFound } from "next/navigation";
+import { createServiceClient as createClient } from "@/lib/supabase/server";
+import {
+  ShieldCheck,
+  Star,
+  MapPin,
+  Home,
+  GraduationCap,
+  MessageCircle,
+} from "lucide-react";
+import { ClientDownloadButton } from "@/components/landlord/client-download-button";
 
-export async function generateMetadata({ params }: { params: { username: string } }) {
-  const supabase = createClient()
-  
+export async function generateMetadata({
+  params,
+}: {
+  params: { username: string };
+}) {
+  const supabase = createClient();
+
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, role, verification_status')
-    .eq('username', params.username)
-    .single()
+    .from("profiles")
+    .select("full_name, role, verification_status")
+    .eq("username", params.username)
+    .in("role", ["landlord", "agent"])
+    .eq("banned", false)
+    .eq("is_banned", false)
+    .single();
 
-  if (!profile || !['landlord', 'agent'].includes(profile.role)) return {}
-  
+  if (!profile || !["landlord", "agent"].includes(profile.role)) return {};
+
   const { count: activeCount } = await supabase
-    .from('listings')
-    .select('id', { count: 'exact', head: true })
-    .eq('landlord_id', (await supabase.from('profiles').select('id').eq('username', params.username).single()).data?.id)
-    .eq('status', 'active')
+    .from("listings")
+    .select("id", { count: "exact", head: true })
+    .eq(
+      "landlord_id",
+      (
+        await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", params.username)
+          .in("role", ["landlord", "agent"])
+          .eq("banned", false)
+          .eq("is_banned", false)
+          .single()
+      ).data?.id,
+    )
+    .eq("status", "active")
+    .eq("availability_state", "active")
+    .gt("availability_expires_at", new Date().toISOString());
 
   return {
     title: `${profile.full_name} — Student Rooms on HousePlug`,
-    description: `${activeCount || 0} verified student rooms available in Port Harcourt. View listings on HousePlug.`,
+    description: `${activeCount || 0} student rooms available in Port Harcourt. View listings on HousePlug.`,
     alternates: {
-      canonical: `https://houseplug.ng/card/${params.username}`,
+      canonical: `https://www.houseplug.ng/card/${params.username}`,
     },
     openGraph: {
       title: `${profile.full_name} has rooms on HousePlug`,
-      description: `${activeCount || 0} listings available · ${profile.verification_status === 'verified' ? 'Verified landlord' : 'Landlord'} · houseplug.ng`,
-      url: `https://houseplug.ng/card/${params.username}`,
-      siteName: 'HousePlug',
-      type: 'profile',
+      description: `${activeCount || 0} listings available · ${profile.verification_status === "verified" ? "Advertiser identity checked" : "Landlord"} · houseplug.ng`,
+      url: `https://www.houseplug.ng/card/${params.username}`,
+      siteName: "HousePlug",
+      type: "profile",
       images: [
         {
-          url: 'https://houseplug.ng/logo.png',
+          url: "https://www.houseplug.ng/logo.png",
           width: 800,
           height: 800,
-        }
-      ]
+        },
+      ],
     },
     twitter: {
       card: "summary",
       title: `${profile.full_name} has rooms on HousePlug`,
-      description: `${activeCount || 0} listings available · ${profile.verification_status === 'verified' ? 'Verified landlord' : 'Landlord'} · houseplug.ng`,
-      images: ['https://houseplug.ng/logo.png'],
-    }
-  }
+      description: `${activeCount || 0} listings available · ${profile.verification_status === "verified" ? "Advertiser identity checked" : "Landlord"} · houseplug.ng`,
+      images: ["https://www.houseplug.ng/logo.png"],
+    },
+  };
 }
 
-export default async function MarketingCardPage({ params }: { params: { username: string } }) {
-  const supabase = createClient()
+export default async function MarketingCardPage({
+  params,
+}: {
+  params: { username: string };
+}) {
+  const supabase = createClient();
 
   // 1. Fetch landlord profile
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('username', params.username)
-    .single()
+    .from("profiles")
+    .select(
+      "id,full_name,avatar_url,role,username,created_at,verification_status",
+    )
+    .eq("username", params.username)
+    .in("role", ["landlord", "agent"])
+    .eq("banned", false)
+    .eq("is_banned", false)
+    .single();
 
-  if (!profile || !['landlord', 'agent'].includes(profile.role)) {
-    notFound()
+  if (!profile || !["landlord", "agent"].includes(profile.role)) {
+    notFound();
   }
 
   // 2. Fetch stats and active listings in parallel
-  const [
-    { data: activeListings, count: activeCount },
-    { data: reviews }
-  ] = await Promise.all([
-    supabase
-      .from('listings')
-      .select('university, area', { count: 'exact' })
-      .eq('landlord_id', profile.id)
-      .eq('status', 'active'),
-    supabase
-      .from('reviews')
-      .select('rating, listing:listings!inner(landlord_id)')
-      .eq('listing.landlord_id', profile.id)
-  ])
+  const [{ data: activeListings, count: activeCount }, { data: reviews }] =
+    await Promise.all([
+      supabase
+        .from("listings")
+        .select("university, area,whatsapp_number", { count: "exact" })
+        .eq("landlord_id", profile.id)
+        .eq("status", "active")
+        .eq("availability_state", "active")
+        .gt("availability_expires_at", new Date().toISOString()),
+      supabase
+        .from("reviews")
+        .select("rating, listing:listings!inner(landlord_id)")
+        .eq("listing.landlord_id", profile.id),
+    ]);
 
   // Process data
-  const listings = activeListings || []
-  const primaryArea = listings.length > 0 ? listings[listings.length - 1].area : 'Port Harcourt'
-  const universities = Array.from(new Set(listings.map(l => l.university).filter(Boolean)))
-  
-  let avgRating = 0
-  let reviewCount = 0
+  const listings = activeListings || [];
+  const primaryArea =
+    listings.length > 0 ? listings[listings.length - 1].area : "Port Harcourt";
+  const universities = Array.from(
+    new Set(listings.map((l) => l.university).filter(Boolean)),
+  );
+
+  let avgRating = 0;
+  let reviewCount = 0;
   if (reviews && reviews.length > 0) {
-    reviewCount = reviews.length
-    avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+    reviewCount = reviews.length;
+    avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount;
   }
 
-  const initials = profile.full_name?.substring(0, 2).toUpperCase() || "LL"
-  const cardUrl = `https://houseplug.ng/card/${profile.username}`
+  const initials = profile.full_name?.substring(0, 2).toUpperCase() || "LL";
+  const cardUrl = `https://www.houseplug.ng/card/${profile.username}`;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      
       {/* Downloadable Card Container */}
-      <div className="w-full max-w-[400px] mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden" id="houseplug-card">
-        
+      <div
+        className="w-full max-w-[400px] mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden"
+        id="houseplug-card"
+      >
         {/* Header */}
         <div className="bg-[#1B4332] px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="" className="w-8 h-8 rounded-lg bg-white p-0.5" />
+            <img
+              src="/logo.png"
+              alt=""
+              className="w-8 h-8 rounded-lg bg-white p-0.5"
+            />
             <span className="text-white font-bold text-lg">HousePlug</span>
           </div>
           <span className="text-[#F59E0B] text-xs font-bold">houseplug.ng</span>
@@ -111,19 +156,24 @@ export default async function MarketingCardPage({ params }: { params: { username
 
         {/* Body */}
         <div className="px-6 py-6 bg-white space-y-4">
-          
           {/* Identity Row */}
           <div className="flex items-center gap-4">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover shrink-0" />
+              <img
+                src={profile.avatar_url}
+                alt=""
+                className="w-16 h-16 rounded-full object-cover shrink-0"
+              />
             ) : (
               <div className="w-16 h-16 rounded-full bg-[#1B4332] text-white flex items-center justify-center font-bold text-xl shrink-0">
                 {initials}
               </div>
             )}
             <div className="flex flex-col">
-              <span className="text-lg font-bold text-[#111827]">{profile.full_name}</span>
-              {profile.verification_status === 'verified' && (
+              <span className="text-lg font-bold text-[#111827]">
+                {profile.full_name}
+              </span>
+              {profile.verification_status === "verified" && (
                 <span className="inline-flex items-center gap-1 text-[#10B981] text-sm font-medium">
                   <ShieldCheck className="w-4 h-4" /> Verified Landlord
                 </span>
@@ -141,24 +191,32 @@ export default async function MarketingCardPage({ params }: { params: { username
 
           {/* Info List */}
           <div className="flex flex-col gap-2">
-            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><MapPin className="h-4 w-4 text-[#374151]" /> {primaryArea}{primaryArea !== 'Port Harcourt' ? ', Port Harcourt' : ''}</span>
             <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
-              <Home className="h-4 w-4 text-[#374151]" /> {activeCount || 0} Active Listing{activeCount !== 1 ? 's' : ''}
+              <MapPin className="h-4 w-4 text-[#374151]" /> {primaryArea}
+              {primaryArea !== "Port Harcourt" ? ", Port Harcourt" : ""}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+              <Home className="h-4 w-4 text-[#374151]" /> {activeCount || 0}{" "}
+              Active Listing{activeCount !== 1 ? "s" : ""}
             </span>
             {(activeCount || 0) > 0 && universities.length > 0 && (
               <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
-                <GraduationCap className="h-4 w-4 text-[#374151]" /> Near {universities.join(' & ')}
+                <GraduationCap className="h-4 w-4 text-[#374151]" /> Near{" "}
+                {universities.join(" & ")}
               </span>
             )}
             {(activeCount || 0) > 0 && universities.length === 0 && (
-              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]"><GraduationCap className="h-4 w-4 text-[#374151]" /> Near Port Harcourt Campus</span>
+              <span className="inline-flex items-center gap-1.5 text-sm text-[#374151]">
+                <GraduationCap className="h-4 w-4 text-[#374151]" /> Near Port
+                Harcourt Campus
+              </span>
             )}
           </div>
 
           <div className="h-4" />
 
           {/* Link Box */}
-          <a 
+          <a
             href={`/landlord/${profile.username}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -180,7 +238,9 @@ export default async function MarketingCardPage({ params }: { params: { username
 
         {/* Footer */}
         <div className="bg-[#F9FAFB] px-6 py-3 border-t border-gray-100 text-center">
-          <span className="text-xs text-[#9CA3AF]">Powered by HousePlug &middot; houseplug.ng</span>
+          <span className="text-xs text-[#9CA3AF]">
+            Powered by HousePlug &middot; houseplug.ng
+          </span>
         </div>
       </div>
 
@@ -192,17 +252,18 @@ export default async function MarketingCardPage({ params }: { params: { username
         >
           <Home className="h-4 w-4" /> View All Listings
         </a>
-        <a
-          href={`https://wa.me/${profile.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${profile.full_name}, I saw your card on HousePlug. Are your rooms still available?`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
-        >
-          <MessageCircle className="h-4 w-4" /> Contact on WhatsApp
-        </a>
-        <ClientDownloadButton username={profile.username || 'user'} />
+        {activeListings?.[0]?.whatsapp_number && (
+          <a
+            href={`https://wa.me/${(activeListings?.[0]?.whatsapp_number ?? "").replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi ${profile.full_name}, I saw your card on HousePlug. Are your rooms still available?`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white rounded-xl py-3 text-sm font-bold shadow-sm hover:brightness-110 transition active:scale-95"
+          >
+            <MessageCircle className="h-4 w-4" /> Contact on WhatsApp
+          </a>
+        )}
+        <ClientDownloadButton username={profile.username || "user"} />
       </div>
     </div>
-  )
+  );
 }
-

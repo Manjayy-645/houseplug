@@ -25,6 +25,11 @@ import {
   School,
   ExternalLink,
   ShieldAlert,
+  FileText,
+  AlertTriangle,
+  Share2,
+  Search,
+  Package
 } from "lucide-react"
 
 type AdminSidebarProps = {
@@ -51,6 +56,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Platform Analytics", href: "/admin/analytics", icon: BarChart2, superAdminOnly: true },
+      { name: "Outcomes", href: "/admin/outcomes", icon: BarChart2, superAdminOnly: true },
     ],
   },
   {
@@ -58,6 +64,8 @@ const navGroups: NavGroup[] = [
     items: [
       { name: "All Listings", href: "/admin/listings", icon: Home },
       { name: "Pending Approval", href: "/admin/listings?status=pending", icon: Clock },
+      { name: "Inventory", href: "/admin/inventory", icon: Package },
+      { name: "Housing Requests", href: "/admin/requests", icon: Search },
       { name: "Roommates", href: "/admin/roommates", icon: Users },
       { name: "Campus Requests", href: "/admin/university-requests", icon: School },
     ],
@@ -66,6 +74,8 @@ const navGroups: NavGroup[] = [
     title: "Trust & Safety",
     items: [
       { name: "Verifications", href: "/admin/verification", icon: ShieldCheck, badge: true },
+      { name: "Suppliers", href: "/admin/suppliers", icon: ShieldCheck },
+      { name: "User Reports", href: "/admin/reports", icon: AlertTriangle },
       { name: "Reviews", href: "/admin/reviews", icon: Star },
       { name: "Appeals", href: "/admin#appeals", icon: ShieldAlert },
     ],
@@ -75,6 +85,7 @@ const navGroups: NavGroup[] = [
     items: [
       { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
       { name: "Revenue", href: "/admin/revenue", icon: DollarSign, superAdminOnly: true },
+      { name: "Referrals", href: "/admin/referrals", icon: Share2 },
       { name: "WhatsApp Analytics", href: "/admin/whatsapp-analytics", icon: MessageCircle },
     ],
   },
@@ -82,6 +93,7 @@ const navGroups: NavGroup[] = [
     title: "Administration",
     items: [
       { name: "Users", href: "/admin/users", icon: Users },
+      { name: "Editorial Guides", href: "/admin/content", icon: FileText },
       { name: "Admin Accounts", href: "/admin/admins", icon: UserCog, superAdminOnly: true },
       { name: "Audit Log", href: "/admin/audit", icon: ScrollText, superAdminOnly: true },
       { name: "Data Export", href: "/admin/export", icon: Download, superAdminOnly: true },
@@ -132,27 +144,47 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
           {/* Brand header */}
           <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-2.5">
-              <Image 
-                src="/logo.png" 
-                alt="HousePlug Logo" 
-                width={36} 
-                height={36} 
-                className="rounded-xl bg-white p-0.5 shadow-xs" 
+              <Image
+                src="/logo.png"
+                alt="HousePlug Logo"
+                width={32}
+                height={32}
+                className="rounded-lg bg-white p-0.5 shadow-xs"
               />
-              <div className="flex flex-col">
-                <span className="text-lg font-black tracking-tight leading-none text-white">HousePlug</span>
-                <span className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-extrabold mt-1">
-                  {isSuperAdmin ? "Super Admin" : "Admin Panel"}
+              <div>
+                <span className="text-lg font-black tracking-tight text-white block leading-tight">
+                  HousePlug
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#F59E0B] block">
+                  {isSuperAdmin ? "Super Admin" : "Admin Console"}
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* Grouped Nav Items */}
-          <nav aria-label="Admin Navigation" className="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          {/* Pending Verifications Alert */}
+          {pendingCount > 0 && (
+            <div className="mx-4 mt-4 p-3 rounded-xl bg-amber-500/15 border border-amber-400/30">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#F59E0B] shrink-0" />
+                <p className="text-xs font-bold text-amber-200">
+                  {pendingCount} pending verification{pendingCount !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <Link
+                href="/admin/verification"
+                className="mt-2 block text-[11px] font-extrabold text-[#F59E0B] hover:underline"
+              >
+                Review now &rarr;
+              </Link>
+            </div>
+          )}
+
+          {/* Navigation Groups */}
+          <nav className="flex-1 px-4 py-4 space-y-6">
             {visibleGroups.map((group) => (
               <div key={group.title} className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/40 px-3 pb-1">
+                <p className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-white/40">
                   {group.title}
                 </p>
                 {group.items.map((item) => {
@@ -163,22 +195,20 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-all ${
                         active
-                          ? "bg-[#F59E0B] text-[#1B4332] shadow-sm font-extrabold"
+                          ? "bg-white text-[#1B4332] shadow-sm font-black"
                           : "text-white/80 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 ${active ? "text-[#1B4332]" : "text-white/50"}`} />
-                        <span>{item.name}</span>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Icon className={`h-4 w-4 shrink-0 ${active ? "text-[#1B4332]" : "text-white/70"}`} />
+                        <span className="truncate">{item.name}</span>
                       </div>
                       {item.badge && pendingCount > 0 && (
-                        <span 
-                          className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
-                            active ? "bg-[#1B4332] text-white" : "bg-red-500 text-white animate-pulse"
-                          }`}
-                        >
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                          active ? "bg-amber-100 text-amber-900" : "bg-[#F59E0B] text-gray-900"
+                        }`}>
                           {pendingCount}
                         </span>
                       )}
@@ -187,80 +217,79 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                 })}
               </div>
             ))}
-
-            {/* Public website link */}
-            <div className="pt-2 border-t border-white/10">
-              <Link
-                href="/browse"
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                <span>View Marketplace</span>
-                <ExternalLink className="h-3 w-3 text-white/40" />
-              </Link>
-            </div>
           </nav>
 
-          {/* Sign Out */}
-          <div className="p-4 border-t border-white/10 bg-black/10">
-            <form action="/api/auth/signout" method="post">
-              <button 
+          {/* Bottom links */}
+          <div className="p-4 border-t border-white/10 space-y-1">
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10 hover:text-white transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <ExternalLink className="h-3.5 w-3.5" />
+                View Live Site
+              </span>
+            </Link>
+            <form action="/api/auth/signout" method="POST">
+              <button
                 type="submit"
-                className="flex items-center gap-2.5 px-3 py-2 w-full text-left rounded-xl hover:bg-red-500/15 text-red-300 font-bold text-xs transition-colors"
+                className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-red-300 hover:bg-red-500/20 hover:text-red-100 transition-all text-left"
               >
-                <LogOut className="w-4 h-4 text-red-400" />
-                <span>Sign Out</span>
+                <LogOut className="h-3.5 w-3.5" />
+                Sign Out
               </button>
             </form>
           </div>
         </div>
       </aside>
 
-      {/* ── Mobile Top Bar (md:hidden) ────────────────────────── */}
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3 shadow-2xs">
-        <Link href="/admin" className="flex items-center gap-2.5">
-          <Image 
-            src="/logo.png" 
-            alt="HousePlug Logo" 
-            width={30} 
-            height={30} 
-            className="rounded-lg shadow-2xs" 
+      {/* ── Mobile Admin Header ─────────────────────────────────── */}
+      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between bg-white border-b border-gray-100 px-4 py-3 shadow-2xs">
+        <Link href="/admin" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="HousePlug Logo"
+            width={28}
+            height={28}
+            className="rounded-lg shadow-2xs"
           />
           <div>
-            <span className="font-extrabold text-sm text-[#1B4332] block leading-tight">HousePlug</span>
-            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest leading-none">Admin Panel</span>
+            <span className="text-base font-black text-[#1B4332] block leading-tight">HousePlug</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Admin Panel</span>
           </div>
         </Link>
-        <div className="flex items-center gap-2">
-          {pendingCount > 0 && (
-            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" title={`${pendingCount} pending items`} />
-          )}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-1.5 text-gray-600 active:bg-gray-100 rounded-xl transition-colors"
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-          >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close admin drawer" : "Open admin drawer"}
+          className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </header>
 
-      {/* ── Mobile Drawer ────────────────────────────────────── */}
+      {/* ── Mobile Admin Drawer ─────────────────────────────────── */}
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/30 md:hidden animate-in fade-in duration-150" onClick={() => setIsOpen(false)} />
-          <div className="fixed right-3 top-[58px] z-50 w-72 rounded-2xl border border-gray-100 bg-white p-4 shadow-xl md:hidden overflow-y-auto max-h-[85vh] animate-in zoom-in-95 duration-150">
-            {pendingCount > 0 && (
-              <div className="rounded-xl bg-red-50 border border-red-100 p-3 mb-3">
-                <p className="text-xs font-bold text-red-700">
-                  {pendingCount} pending verification{pendingCount !== 1 ? "s" : ""}
-                </p>
-              </div>
-            )}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 md:hidden animate-in fade-in duration-200"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 z-50 w-72 bg-white p-5 overflow-y-auto shadow-2xl md:hidden animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <span className="text-sm font-extrabold text-[#1B4332]">Admin Navigation</span>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-            <nav className="flex flex-col space-y-4">
+            <nav className="py-4 space-y-6">
               {visibleGroups.map((group) => (
                 <div key={group.title} className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 px-2 pb-0.5">
+                  <p className="px-1 pb-1 text-[10px] font-black uppercase tracking-wider text-gray-400">
                     {group.title}
                   </p>
                   {group.items.map((item) => {
@@ -272,18 +301,18 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                         key={item.name}
                         href={item.href}
                         onClick={() => setIsOpen(false)}
-                        className={`flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                           active
                             ? "bg-[#1B4332] text-white"
                             : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Icon className="h-4 w-4" />
+                          <Icon className="h-4 w-4 shrink-0" />
                           <span>{item.name}</span>
                         </div>
                         {item.badge && pendingCount > 0 && (
-                          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-red-500 text-white">
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900">
                             {pendingCount}
                           </span>
                         )}
@@ -292,32 +321,41 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                   })}
                 </div>
               ))}
-
-              <div className="border-t border-gray-100 pt-2">
-                <form action="/api/auth/signout" method="post">
-                  <button 
-                    type="submit"
-                    className="flex items-center justify-center gap-2 w-full p-2.5 rounded-xl border border-red-100 text-red-600 font-bold text-xs hover:bg-red-50 transition"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Sign Out</span>
-                  </button>
-                </form>
-              </div>
             </nav>
+
+            <div className="pt-4 border-t border-gray-100 space-y-2">
+              <Link
+                href="/"
+                target="_blank"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 p-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Live Website
+              </Link>
+              <form action="/api/auth/signout" method="POST">
+                <button
+                  type="submit"
+                  className="w-full flex items-center gap-2 p-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 text-left"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </form>
+            </div>
           </div>
         </>
       )}
 
-      {/* ── Mobile Bottom Nav (md:hidden) ────────────────────── */}
+      {/* ── Mobile Admin Bottom Navigation (md:hidden) ──────────── */}
       <nav 
         aria-label="Admin Mobile Navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around bg-white/95 backdrop-blur-md border-t border-gray-100 px-2 pt-1 pb-safe shadow-[0_-1px_15px_rgba(0,0,0,0.06)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around border-t border-gray-200/90 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-md pb-safe"
       >
         {[
           { href: "/admin", icon: LayoutDashboard, label: "Overview" },
-          { href: "/admin/verification", icon: ShieldCheck, label: "Verify", badge: true },
           { href: "/admin/listings", icon: Home, label: "Listings" },
+          { href: "/admin/verification", icon: ShieldCheck, label: "Verify" },
           { href: "/admin/users", icon: Users, label: "Users" },
           // Super admin gets settings; regular admin gets reviews (avoiding unauthorized redirect!)
           isSuperAdmin
@@ -337,12 +375,7 @@ export function AdminSidebar({ role, pendingCount = 0 }: AdminSidebarProps) {
                 active ? "text-[#1B4332]" : "text-gray-400 hover:text-gray-600"
               }`}
             >
-              <div className="relative">
-                <Icon className={`h-5 w-5 ${active ? "stroke-[2.4] scale-105" : "stroke-[1.8]"}`} />
-                {item.badge && pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                )}
-              </div>
+              <Icon className={`h-5 w-5 ${active ? "stroke-[2.4] scale-105 text-[#1B4332]" : "stroke-[1.8]"}`} />
               <span className={`text-[10px] mt-1 tracking-tight ${active ? "font-extrabold text-[#1B4332]" : "font-medium text-gray-500"}`}>
                 {item.label}
               </span>

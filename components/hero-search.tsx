@@ -1,95 +1,114 @@
-"use client"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { GraduationCap, Home, CreditCard, ChevronDown } from "lucide-react"
-import { UNIVERSITIES, ROOM_TYPES } from "@/lib/constants"
-import { UniversityCombobox } from "@/components/search/UniversityCombobox"
+import {
+  GraduationCap,
+  MapPin,
+  Wallet,
+  Home,
+  Search,
+  ChevronDown,
+} from "lucide-react";
+import { UNIVERSITIES, ROOM_TYPES } from "@/lib/constants";
 
 export function HeroSearch() {
-  const router = useRouter()
-  const [university, setUniversity] = useState("")
-  const [type, setType] = useState("")
-  const [price, setPrice] = useState("")
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const params = new URLSearchParams()
-    if (university) params.append("university", university)
-    if (type) params.append("type", type)
-    if (price) params.append("price", price)
-    
-    router.push(`/browse?${params.toString()}`)
-  }
-
+  const row =
+    "flex min-w-0 items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors focus-within:bg-gray-50 xl:rounded-none xl:border-r xl:border-gray-100 xl:px-4";
+  const icon =
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/5 text-primary";
+  const label =
+    "block text-[10px] font-extrabold uppercase tracking-wider text-gray-600 sm:text-xs";
+  const field =
+    "mt-1 min-h-8 w-full min-w-0 appearance-none border-0 bg-transparent p-0 pr-4 text-base font-bold text-primary outline-none placeholder:font-medium placeholder:text-gray-500";
   return (
-    <form 
-      onSubmit={handleSearch} 
-      className="bg-white/95 backdrop-blur-md p-3 md:p-2 rounded-[2rem] md:rounded-full shadow-2xl shadow-primary/10 max-w-5xl mx-auto flex flex-col md:flex-row items-stretch md:items-center border border-white/40 mt-8 md:mt-12 w-full"
-    >
-      <div className="w-full md:w-1/3 flex items-center px-4 py-3.5 md:px-5 md:py-2 gap-3 border-b border-gray-100 md:border-b-0 md:border-r transition-colors focus-within:bg-gray-50/50 rounded-t-3xl md:rounded-none md:rounded-l-full relative">
-        <div className="bg-primary/5 p-2.5 rounded-full shrink-0">
-          <GraduationCap className="h-5 w-5 text-primary" />
-        </div>
-        <div className="text-left flex-1 min-w-0 pr-6 relative">
-          <span className="block text-[10px] sm:text-xs tracking-wider uppercase font-extrabold text-gray-500 mb-0.5 pointer-events-none">University</span>
-          <UniversityCombobox 
-            value={university}
-            onChange={setUniversity}
-            placeholder="Select your university"
-            className="w-full text-sm sm:text-base outline-none cursor-pointer"
-          />
-        </div>
-        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-      </div>
-      
-      <div className="w-full md:w-1/3 flex items-center px-4 py-3.5 md:px-5 md:py-2 gap-3 border-b border-gray-100 md:border-b-0 md:border-r transition-colors focus-within:bg-gray-50/50 relative">
-        <div className="bg-primary/5 p-2.5 rounded-full shrink-0">
-          <Home className="h-5 w-5 text-primary" />
-        </div>
-        <div className="text-left flex-1 min-w-0 pr-6">
-          <span className="block text-[10px] sm:text-xs tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">Room Type</span>
-          <select 
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm sm:text-base outline-none cursor-pointer truncate"
-          >
-            <option value="">All Types</option>
-            {ROOM_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        </div>
-        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-      </div>
-      
-      <div className="w-full md:w-1/3 flex items-center px-4 py-3.5 md:px-5 md:py-2 gap-3 transition-colors focus-within:bg-gray-50/50 md:rounded-r-full relative">
-        <div className="bg-primary/5 p-2.5 rounded-full shrink-0">
-          <CreditCard className="h-5 w-5 text-primary" />
-        </div>
-        <div className="text-left flex-1 min-w-0 pr-6">
-          <span className="block text-[10px] sm:text-xs tracking-wider uppercase font-extrabold text-gray-500 mb-0.5">Price Range</span>
-          <select 
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full border-none p-0 text-primary font-bold focus:ring-0 appearance-none bg-transparent text-sm sm:text-base outline-none cursor-pointer truncate"
-          >
-            <option value="">Any Price</option>
-            <option value="0-100000">₦0 – ₦100k</option>
-            <option value="100000-200000">₦100k – ₦200k</option>
-            <option value="200000-500000">₦200k – ₦500k</option>
-            <option value="500000+">₦500k+</option>
-          </select>
-        </div>
-        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-      </div>
-      
-      <button 
-        type="submit"
-        className="w-full md:w-auto mt-3 md:mt-0 bg-[#F59E0B] hover:bg-[#F59E0B]/90 text-white font-bold text-base md:text-lg px-8 py-4 rounded-[1.5rem] md:rounded-full whitespace-nowrap transition-all shadow-lg shadow-amber-500/20 active:scale-[0.98] md:ml-2 shrink-0"
+    <div className="mx-auto w-full max-w-6xl">
+      <form
+        action="/browse"
+        method="GET"
+        aria-label="Find student accommodation"
+        className="grid grid-cols-2 gap-1 rounded-[2rem] border border-white/50 bg-white/95 p-3 text-gray-900 shadow-2xl shadow-black/15 backdrop-blur-md xl:grid-cols-[1.1fr_1fr_1.1fr_1fr_auto] xl:items-center xl:rounded-full xl:p-2"
       >
-        Search Rooms
-      </button>
-    </form>
-  )
+        <label className={`${row} col-span-2 xl:col-span-1`}>
+          <span className={icon}>
+            <GraduationCap className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="relative min-w-0 flex-1">
+            <span className={label}>University</span>
+            <select
+              name="university"
+              required
+              defaultValue=""
+              className={field}
+            >
+              <option value="">Select campus</option>
+              {UNIVERSITIES.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.shortName}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-2 right-0 h-4 w-4 text-gray-500"
+            />
+          </span>
+        </label>
+        <label className={row}>
+          <span className={`${icon} hidden sm:flex`}>
+            <MapPin className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className={label}>Preferred area</span>
+            <input
+              name="q"
+              maxLength={120}
+              placeholder="Choba, Aluu…"
+              className={field}
+            />
+          </span>
+        </label>
+        <label className={row}>
+          <span className={`${icon} hidden sm:flex`}>
+            <Home className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="relative min-w-0 flex-1">
+            <span className={label}>Room type</span>
+            <select name="room_type" className={field}>
+              <option value="">Any type</option>
+              {ROOM_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-2 right-0 h-4 w-4 text-gray-500"
+            />
+          </span>
+        </label>
+        <label className={`${row} col-span-2 xl:col-span-1 xl:border-r-0`}>
+          <span className={icon}>
+            <Wallet className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className={label}>Total move-in budget (₦)</span>
+            <input
+              name="max_total"
+              type="number"
+              min={1}
+              max={100000000}
+              placeholder="Any budget"
+              className={field}
+            />
+          </span>
+        </label>
+        <button className="col-span-2 flex min-h-14 items-center justify-center gap-2 rounded-full bg-hp-amber px-6 py-4 text-sm font-extrabold text-primary shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 active:scale-[0.98] xl:col-span-1">
+          <Search className="h-4 w-4" aria-hidden="true" />
+          Find Available Rooms
+        </button>
+      </form>
+      <p className="mx-auto mt-4 max-w-3xl px-3 text-xs leading-relaxed text-white">
+        Budget results include confirmed initial housing costs. Listings with
+        unknown totals are excluded when a total budget is set.
+      </p>
+    </div>
+  );
 }

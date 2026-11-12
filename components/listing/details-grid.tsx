@@ -1,36 +1,40 @@
-import { Calendar, Users, Home, ArrowUpCircle } from "lucide-react"
-import { Listing } from "@/types"
-import { formatDate } from "@/lib/utils"
+import { Calendar, Users, Home, ArrowUpCircle } from "lucide-react";
+import { Listing } from "@/types";
+import { formatDate } from "@/lib/utils";
 
 type ListingDetailsGridProps = {
-  listing: Listing
-}
+  listing: Listing;
+};
 
 export function ListingDetailsGrid({ listing }: ListingDetailsGridProps) {
   const details = [
     {
       label: "Occupancy",
-      value: listing.occupancy ? `${listing.occupancy} student(s)` : "Not confirmed",
-      icon: Users
+      value: listing.occupancy
+        ? `${listing.occupancy} student(s)`
+        : "Not confirmed",
+      icon: Users,
     },
     {
       label: "Furnishing",
-      value: listing.furnishing ? listing.furnishing.replace("_", " ") : "Not confirmed",
-      icon: Home
+      value: listing.furnishing
+        ? listing.furnishing.replaceAll("_", " ")
+        : "Not confirmed",
+      icon: Home,
     },
     {
       label: "Floor",
       value: listing.floor ? listing.floor + " floor" : "Not confirmed",
-      icon: ArrowUpCircle
+      icon: ArrowUpCircle,
     },
     {
       label: "Available From",
       value: listing.available_from && Date.parse(listing.available_from) > Date.now()
         ? `${formatDate(listing.available_from)} · confirm`
         : "Confirm with agent",
-      icon: Calendar
-    }
-  ]
+      icon: Calendar,
+    },
+  ];
 
   return (
     <div className="grid grid-cols-2 gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -43,10 +47,12 @@ export function ListingDetailsGrid({ listing }: ListingDetailsGridProps) {
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
               {detail.label}
             </p>
-            <p className="text-sm font-semibold text-gray-900 capitalize">{detail.value}</p>
+            <p className="text-sm font-semibold text-gray-900 capitalize">
+              {detail.value}
+            </p>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }

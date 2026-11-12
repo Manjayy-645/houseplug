@@ -1,89 +1,26 @@
-"use client"
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { ServiceSubmissionForm, type EditableService } from "@/components/services/service-submission-form";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { ChevronLeft, Wrench, ShieldCheck, Sparkles, Plus } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { MyCampusService } from "@/components/services/my-campus-service"
-import type { Profile } from "@/types"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
-import { NEW_PAYMENTS_AVAILABLE } from "@/lib/payment-availability"
+export const metadata = { title: "List a Housing Service", robots: { index: false, follow: false } };
+export const dynamic = "force-dynamic";
 
-export default function ManageServicesPage() {
-  const router = useRouter()
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.push("/login?redirect=/services/manage")
-        return
-      }
-      setUser(user)
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle()
-
-      setProfile(data)
-      setLoading(false)
-    })
-  }, [router])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F9FAFB] pt-24 pb-16 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-3 border-[#1B4332] border-t-transparent animate-spin" />
-          <p className="text-xs font-semibold text-gray-500">Opening service manager...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) return null
-
-  return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-16 sm:pt-20 pb-16 sm:pb-20">
-      <div className="max-w-4xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/services"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-[#1B4332] py-1 transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" /> Back to Campus Services
-          </Link>
-        </div>
-
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white rounded-2xl sm:rounded-3xl border border-gray-100 p-4 sm:p-8 shadow-xs">
-          <div className="space-y-1 sm:space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#1B4332] text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-              <Wrench className="w-3.5 h-3.5 text-[#F59E0B]" /> Campus Provider Hub
-            </div>
-            <h1 className="text-xl sm:text-3xl font-black text-gray-900 tracking-tight">
-              Manage Your Service
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-              Manage your service profile, renew your monthly listing, and boost visibility to students across Port Harcourt campuses.
-            </p>
-          </div>
-        </div>
-
-        {/* Service Manager Component */}
-        {!NEW_PAYMENTS_AVAILABLE && (
-          <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-            New paid service listings and boosts are temporarily unavailable. You can still manage an existing service profile.
-          </div>
-        )}
-        <MyCampusService userId={user.id} defaultPhone={profile?.phone || ""} />
-      </div>
+export default async function ManageServicesPage({ searchParams }: { searchParams: { edit?: string } }) {
+  const { data: { user } } = await createClient().auth.getUser();
+  if (!user) redirect("/login?next=/services/manage");
+  const { data: services } = await createServiceClient().from("service_providers")
+    .select("id,business_name,category,university,description,pricing_type,price_amount,price_unit,whatsapp_number,status")
+    .eq("user_id", user.id).order("created_at", { ascending: false }).limit(20);
+  const editable = services?.find((service) => service.id === searchParams.edit) as EditableService | undefined;
+  return <main className="min-h-screen bg-[#F9FAFB] px-4 pb-24 pt-28 sm:px-6">
+    <div className="mx-auto max-w-4xl">
+      <Link href="/services" className="inline-flex min-h-11 items-center text-sm font-bold text-[#1B4332] underline underline-offset-4">← Explore services</Link>
+      <p className="mt-6 text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">Housing services</p>
+      <h1 className="mt-2 text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">{editable ? "Update your service" : "List your service for free"}</h1>
+      <p className="mb-7 mt-3 max-w-2xl text-sm leading-7 text-gray-600">Students and landlords can contact you directly on WhatsApp once your listing is reviewed. State a real starting or fixed price and what it covers. HousePlug does not book jobs or collect your service fees.</p>
+      <ServiceSubmissionForm key={editable?.id || "new"} service={editable} />
+      {(services?.length ?? 0) > 0 && <section className="mt-10"><h2 className="text-xl font-black text-gray-900">Your services</h2><div className="mt-4 grid gap-3 sm:grid-cols-2">{services?.map((service) => <article key={service.id} className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"><h3 className="font-bold text-gray-900">{service.business_name}</h3><p className="mt-1 text-sm text-gray-600">{service.category} · {service.status === "active" ? "Live" : service.status === "pending" ? "In review" : "Paused"}</p><Link href={`/services/manage?edit=${service.id}`} className="mt-3 inline-flex min-h-11 items-center text-sm font-bold text-[#1B4332] underline underline-offset-4">Edit service</Link></article>)}</div></section>}
     </div>
-  )
+  </main>;
 }

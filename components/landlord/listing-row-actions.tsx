@@ -1,66 +1,101 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { MoreHorizontal, Pencil, Loader2, Eye, EyeOff } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { deleteListing } from "@/app/actions"
+import { useState } from "react";
+import Link from "next/link";
+import { MoreHorizontal, Pencil, Loader2, Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { deleteListing } from "@/app/actions";
 
 type ListingRowActionsProps = {
-  listingId: string
-  status: string
-  landlordId: string
-}
+  listingId: string;
+  status: string;
+  landlordId: string;
+};
 
-export function ListingRowActions({ listingId, status, landlordId }: ListingRowActionsProps) {
-  const router = useRouter()
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isToggling, setIsToggling] = useState(false)
+export function ListingRowActions({
+  listingId,
+  status,
+  landlordId,
+}: ListingRowActionsProps) {
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   const toggleAvailability = async () => {
-    if (isToggling) return
-    const newStatus = status === "active" ? "unavailable" : "active"
-    setIsToggling(true)
+    if (isToggling) return;
+    const newStatus = status === "active" ? "unavailable" : "active";
+    setIsToggling(true);
     try {
-      const supabase = createClient()
-      const { error } = await supabase
-        .from("listings")
-        .update({ status: newStatus })
-        .eq("id", listingId)
-        .eq("landlord_id", landlordId) // security: only the owner can toggle
-
-      if (error) throw error
-      router.refresh()
+      const response = await fetch(
+        `/api/landlord/listings/${listingId}/availability`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: newStatus === "active" }),
+        },
+      );
+      if (!response.ok)
+        throw new Error(
+          "Could not update availability; the listing may need review",
+        );
+      router.refresh();
     } catch (error: any) {
-      console.error("Error updating availability:", error)
-      alert(error.message || "Failed to update listing. Please try again.")
+      console.error("Error updating availability:", error);
+      alert(error.message || "Failed to update listing. Please try again.");
     } finally {
-      setIsToggling(false)
+      setIsToggling(false);
     }
-  }
+  };
 
   const onDelete = async () => {
-    if (isDeleting) return
-    const confirmed = window.confirm("Delete this listing permanently?")
-    if (!confirmed) return
+    if (isDeleting) return;
+    const confirmed = window.confirm("Delete this listing permanently?");
+    if (!confirmed) return;
 
-    setIsDeleting(true)
+    setIsDeleting(true);
     try {
       // Server action removes stored photos + video before dropping the row.
-      const result = await deleteListing(listingId)
-      if (result?.error) throw new Error(result.error)
-      router.refresh()
+      const result = await deleteListing(listingId);
+      if (result?.error) throw new Error(result.error);
+      router.refresh();
     } catch (error: any) {
-      console.error("Error deleting listing:", error)
-      alert(error.message || "Failed to delete listing. Please try again.")
+      console.error("Error deleting listing:", error);
+      alert(error.message || "Failed to delete listing. Please try again.");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-end gap-2">
+      {status === "active" && (
+        <button
+          disabled={isToggling}
+          onClick={async () => {
+            setIsToggling(true);
+            try {
+              const r = await fetch(
+                `/api/landlord/listings/${listingId}/availability`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ available: true }),
+                },
+              );
+              if (!r.ok) throw Error("Review required");
+              router.refresh();
+            } catch {
+              alert("Could not reconfirm availability");
+            } finally {
+              setIsToggling(false);
+            }
+          }}
+          className="border rounded-lg p-3 text-xs"
+        >
+          Reconfirm availability
+        </button>
+      )}
       {/* Availability toggle — freely switch between active and unavailable */}
       {status === "active" && (
         <button
@@ -69,7 +104,11 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
           disabled={isToggling}
           className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
         >
-          {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
+          {isToggling ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <EyeOff className="h-3.5 w-3.5" />
+          )}
           Mark Unavailable
         </button>
       )}
@@ -80,7 +119,11 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
           disabled={isToggling}
           className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 transition-all disabled:opacity-50"
         >
-          {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+          {isToggling ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
           Mark Available
         </button>
       )}
@@ -116,5 +159,5 @@ export function ListingRowActions({ listingId, status, landlordId }: ListingRowA
         </div>
       </details>
     </div>
-  )
+  );
 }

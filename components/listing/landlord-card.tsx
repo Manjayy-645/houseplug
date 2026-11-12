@@ -1,19 +1,25 @@
-import Link from "next/link"
-import { Star, Check, ArrowRight } from "lucide-react"
-import type { Profile } from "@/types"
-import { getInitials } from "@/lib/utils"
+import Link from "next/link";
+import { Star, Check, ArrowRight } from "lucide-react";
+import type { Profile } from "@/types";
+import { getInitials } from "@/lib/utils";
 
 type LandlordCardProps = {
-  landlord: Profile
-  rating: number
-  reviewCount: number
-}
+  landlord: Profile;
+  rating: number;
+  reviewCount: number;
+};
 
-export default function LandlordCard({ landlord, rating, reviewCount }: LandlordCardProps) {
-  const memberSinceYear = landlord.created_at ? new Date(landlord.created_at).getFullYear() : new Date().getFullYear()
+export default function LandlordCard({
+  landlord,
+  rating,
+  reviewCount,
+}: LandlordCardProps) {
+  const memberSinceYear = landlord.created_at
+    ? new Date(landlord.created_at).getFullYear()
+    : new Date().getFullYear();
   const profileLink = landlord.username
     ? `/landlord/${landlord.username}`
-    : `/browse?landlord_id=${landlord.id}`
+    : `/browse?landlord_id=${landlord.id}`;
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -33,15 +39,23 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
           )}
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug">{landlord.full_name}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Member since {memberSinceYear}</p>
+            <h3 className="text-[15px] font-bold text-gray-900 truncate leading-snug">
+              {landlord.full_name}
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Member since {memberSinceYear}
+            </p>
 
             <div className="mt-2 flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <Star className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
-                <span className="text-sm font-bold text-gray-800 leading-none">{reviewCount ? rating.toFixed(1) : "New"}</span>
+                <span className="text-sm font-bold text-gray-800 leading-none">
+                  {reviewCount ? rating.toFixed(1) : "New"}
+                </span>
               </div>
-              <span className="text-xs text-gray-400">({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})</span>
+              <span className="text-xs text-gray-400">
+                ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
+              </span>
             </div>
           </div>
         </div>
@@ -54,8 +68,7 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
       <div className="p-5 pt-4 space-y-4">
         {landlord.verification_status === "verified" && (
           <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 w-fit">
-            <Check className="h-3.5 w-3.5" />
-            Advertiser ID checked
+            <Check className="h-3.5 w-3.5" /> Advertiser ID checked
           </div>
         )}
 
@@ -68,5 +81,5 @@ export default function LandlordCard({ landlord, rating, reviewCount }: Landlord
         </Link>
       </div>
     </section>
-  )
+  );
 }
