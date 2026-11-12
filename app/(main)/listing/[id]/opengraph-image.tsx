@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og"
 import { createClient } from "@/lib/supabase/server"
 import { formatRoomType } from "@/lib/utils"
 
-export const runtime = "nodejs"
+export const runtime = "edge"
 
 type OpengraphImageProps = {
   params: { id: string }

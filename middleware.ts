@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/login") ||
     path.startsWith("/auth")
 
-  if (!maintenanceExempt) {
+  if (!maintenanceExempt && !hasDevBypass) {
     let isMaintenance = process.env.MAINTENANCE_MODE === "true"
 
     if (!isMaintenance) {
@@ -92,7 +92,7 @@ export async function middleware(request: NextRequest) {
 
     if (isMaintenance) {
       // Check if caller can bypass (Dev cookie or Admin/SuperAdmin role)
-      let canBypass = hasDevBypass
+      let canBypass: boolean = hasDevBypass
 
       if (!canBypass) {
         const { data: { user } } = await supabase.auth.getUser()
@@ -139,7 +139,8 @@ export async function middleware(request: NextRequest) {
     path === "/landlord" ||
     landlordProtectedPrefixes.some(prefix => path.startsWith(prefix))
 
-  const isProtected = isLandlordProtected || path.startsWith("/admin")
+  const isStudentProtected = path === "/student" || path.startsWith("/student/")
+  const isProtected = isLandlordProtected || path.startsWith("/admin") || isStudentProtected
   if (!isProtected) return response
 
   const {
@@ -189,6 +190,12 @@ export async function middleware(request: NextRequest) {
     !["landlord", "agent", "admin", "super_admin"].includes(profile?.role ?? "")
   ) {
     return NextResponse.redirect(new URL("/", request.url))
+  }
+
+  if (isStudentProtected) {
+    if (profile?.role === "landlord" || profile?.role === "agent") {
+      return NextResponse.redirect(new URL("/landlord/dashboard", request.url))
+    }
   }
 
   return response
