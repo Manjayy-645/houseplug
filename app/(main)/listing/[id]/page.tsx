@@ -26,7 +26,6 @@ import {
   type CampusRoommate,
 } from "@/components/listing/roommate-split-section";
 import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
-import { getCloudinaryPolicy } from "@/lib/cloudinary-protection";
 import type { Metadata } from "next";
 
 type ListingDetailPageProps = {
@@ -240,8 +239,6 @@ export default async function ListingDetailPage({
   if (listingRow && !isOwner && !isAdmin) {
     void supabase.rpc("increment_views", { listing_id: listingId });
   }
-
-  const cloudinaryPolicy = await getCloudinaryPolicy();
 
   let isSaved = false;
   if (user && listingId) {
@@ -481,7 +478,6 @@ export default async function ListingDetailPage({
           <PhotoGallery
             photos={listing.photos}
             videoUrl={listing.video_url}
-            playbackRestricted={!cloudinaryPolicy.playbackAllowed}
           />
         </div>
 

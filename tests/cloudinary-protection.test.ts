@@ -7,7 +7,6 @@ import {
   getSafariCompatibleVideoUrl,
   getWhatsAppListingOgImage,
 } from "../lib/cloudinary"
-import { CLOUDINARY_LIMITS, getCloudinaryPolicy } from "../lib/cloudinary-protection"
 
 const sampleCloudinaryVideoMov = "https://res.cloudinary.com/houseplug/video/upload/v1710000000/listings/tour_sample.mov"
 const sampleCloudinaryVideoMp4 = "https://res.cloudinary.com/houseplug/video/upload/v1710000000/listings/tour_sample.mp4"
@@ -56,6 +55,12 @@ test("getVideoPosterUrl generates lightweight static JPEG poster without video s
   assert.ok(thumbPoster.endsWith(".jpg"))
 })
 
+test("getVideoPosterUrl eliminates #t=0.1 range requests by returning static image format", () => {
+  const poster = getVideoPosterUrl(sampleCloudinaryVideoMov)
+  assert.ok(!poster.includes("#t="))
+  assert.ok(poster.endsWith(".jpg"))
+})
+
 test("getWhatsAppListingOgImage strictly outputs jpeg images under WhatsApp specifications", () => {
   const ogFromVideo = getWhatsAppListingOgImage(sampleCloudinaryVideoMov, true)
   assert.ok(ogFromVideo.startsWith("https://"))
@@ -66,30 +71,4 @@ test("getWhatsAppListingOgImage strictly outputs jpeg images under WhatsApp spec
   const samplePhoto = "https://placeholder-project.supabase.co/storage/v1/object/public/listings/photo.webp"
   const ogFromPhoto = getWhatsAppListingOgImage(samplePhoto, false)
   assert.equal(ogFromPhoto, samplePhoto)
-})
-
-test("Cloudinary limits match user-specified cost protection targets", () => {
-  assert.equal(CLOUDINARY_LIMITS.BANDWIDTH_TARGET_GB, 12.0)
-  assert.equal(CLOUDINARY_LIMITS.STORAGE_TARGET_GB, 2.5)
-  assert.equal(CLOUDINARY_LIMITS.TOTAL_CREDIT_CAP, 25.0)
-  assert.equal(CLOUDINARY_LIMITS.TIER_WARNING_CREDITS, 12.0)
-  assert.equal(CLOUDINARY_LIMITS.TIER_RESTRICT_UPLOADS, 15.0)
-  assert.equal(CLOUDINARY_LIMITS.TIER_RESTRICT_PLAYBACK, 18.0)
-  assert.equal(CLOUDINARY_LIMITS.TIER_CRITICAL_CREDITS, 22.0)
-  assert.equal(CLOUDINARY_LIMITS.MAX_VIDEO_SIZE_MB, 15)
-  assert.equal(CLOUDINARY_LIMITS.MAX_VIDEO_DURATION_SECONDS, 30)
-})
-
-test("getCloudinaryPolicy returns valid operational policies for current baseline", async () => {
-  const policy = await getCloudinaryPolicy()
-  assert.ok(policy.metrics)
-  assert.equal(typeof policy.metrics.creditsUsed, "number")
-  assert.equal(policy.metrics.creditsLimit, 25.0)
-  assert.equal(policy.maxVideoSizeBytes, 15 * 1024 * 1024)
-  assert.equal(policy.maxVideoDurationSeconds, 30)
-
-  // Current reported credits is 8.3 / 25 -> Should be Green tier
-  assert.equal(policy.tier, "green")
-  assert.equal(policy.uploadsAllowed, true)
-  assert.equal(policy.playbackAllowed, true)
 })

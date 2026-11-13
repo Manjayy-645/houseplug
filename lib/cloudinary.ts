@@ -1,79 +1,15 @@
-import { CLOUDINARY_LIMITS } from "./cloudinary-protection"
-
 /**
- * Validates a video file in the browser for size (<= 15MB) and duration (<= 30s).
+ * HousePlug — Cloudinary Video Delivery & Optimization (Phase 1)
+ * 
+ * Provides canonical, single-derivative streaming URLs and lightweight
+ * static poster frame generation to eliminate unnecessary Range requests
+ * and on-the-fly duplicate transformations.
  */
-export async function validateVideoFile(file: File): Promise<{
-  valid: boolean
-  error?: string
-  duration?: number
-  sizeMB: number
-}> {
-  const sizeMB = Number((file.size / (1024 * 1024)).toFixed(2))
 
-  if (file.size > CLOUDINARY_LIMITS.MAX_VIDEO_SIZE_BYTES) {
-    return {
-      valid: false,
-      error: `Video size is ${sizeMB}MB. Maximum allowed is ${CLOUDINARY_LIMITS.MAX_VIDEO_SIZE_MB}MB to keep HousePlug fast on mobile networks.`,
-      sizeMB,
-    }
-  }
-
-  // Check duration via temporary HTML5 video element
-  if (typeof window !== "undefined" && typeof document !== "undefined") {
-    try {
-      const duration = await new Promise<number>((resolve, reject) => {
-        const video = document.createElement("video")
-        video.preload = "metadata"
-        const objectUrl = URL.createObjectURL(file)
-        
-        const cleanup = () => {
-          URL.revokeObjectURL(objectUrl)
-          video.remove()
-        }
-
-        video.onloadedmetadata = () => {
-          const d = video.duration
-          cleanup()
-          resolve(d)
-        }
-
-        video.onerror = () => {
-          cleanup()
-          reject(new Error("Could not read video metadata."))
-        }
-
-        video.src = objectUrl
-      })
-
-      if (duration > CLOUDINARY_LIMITS.MAX_VIDEO_DURATION_SECONDS + 0.5) {
-        return {
-          valid: false,
-          error: `Video length is ${Math.round(duration)} seconds. Tour videos must be ${CLOUDINARY_LIMITS.MAX_VIDEO_DURATION_SECONDS} seconds or less.`,
-          duration,
-          sizeMB,
-        }
-      }
-
-      return { valid: true, duration, sizeMB }
-    } catch {
-      // If browser can't decode container metadata, allow upload if size is strictly under limit
-      return { valid: true, sizeMB }
-    }
-  }
-
-  return { valid: true, sizeMB }
-}
-
-/**
- * Unsigned Cloudinary video upload from the browser with pilot size validation.
- */
+// Unsigned Cloudinary video upload from the browser. Requires:
+//   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+//   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET  (unsigned preset, video-only, <=100MB)
 export async function uploadVideo(file: File): Promise<string> {
-  const validation = await validateVideoFile(file)
-  if (!validation.valid) {
-    throw new Error(validation.error || "Video validation failed.")
-  }
-
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
   const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
 
