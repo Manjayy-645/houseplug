@@ -17,6 +17,7 @@ import { formatDistance, formatNaira, formatRoomType } from "@/lib/utils";
 import {
   streamableVideoUrl,
   getSafariCompatibleVideoUrl,
+  getVideoPosterUrl,
 } from "@/lib/cloudinary";
 import { UNIVERSITIES } from "@/lib/constants";
 import { UniversityLogo } from "@/components/university-logo";
@@ -70,15 +71,14 @@ export function ListingCard({ listing, index = 1 }: ListingCardProps) {
           )
         ) : videoUrl ? (
           <>
-            {/* #t=0.1 nudges the browser to render the first frame as a poster */}
-            <video
-              src={`${getSafariCompatibleVideoUrl(videoUrl)}#t=0.1`}
-              muted
-              playsInline
-              className="w-full h-full object-cover"
+            <img
+              src={getVideoPosterUrl(videoUrl, 640)}
+              alt={listing.title}
+              loading="lazy"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="rounded-full bg-black/50 p-3">
+              <div className="rounded-full bg-black/60 p-3 shadow-lg">
                 <Play className="h-5 w-5 fill-white text-white" />
               </div>
             </div>

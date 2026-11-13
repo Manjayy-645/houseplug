@@ -30,7 +30,8 @@ import {
   Share2,
   Search,
   Package,
-  Wrench
+  Wrench,
+  Video
 } from "lucide-react"
 
 type AdminSidebarProps = {
@@ -97,6 +98,7 @@ const navGroups: NavGroup[] = [
     title: "Administration",
     items: [
       { name: "Users", href: "/admin/users", icon: Users },
+      { name: "Media & Quota", href: "/admin/media-quota", icon: Video },
       { name: "Editorial Guides", href: "/admin/content", icon: FileText },
       { name: "Admin Accounts", href: "/admin/admins", icon: UserCog, superAdminOnly: true },
       { name: "Audit Log", href: "/admin/audit", icon: ScrollText, superAdminOnly: true },

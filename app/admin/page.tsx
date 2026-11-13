@@ -11,10 +11,12 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
-  Wrench
+  Wrench,
+  Video
 } from "lucide-react"
 import Link from "next/link"
 import AppealsList from "@/components/admin/appeals-list"
+import { getCloudinaryPolicy } from "@/lib/cloudinary-protection"
 
 export default async function AdminDashboardPage() {
   const supabase = createClient()
@@ -54,12 +56,40 @@ export default async function AdminDashboardPage() {
     .eq("id", user.id)
     .single()
 
+  const cloudinaryPolicy = await getCloudinaryPolicy()
+
   return (
     <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-black text-[#1B4332]">Welcome back, {user.email?.split('@')[0]}</h1>
         <p className="text-gray-500 font-medium">Here's what's happening on HousePlug today.</p>
       </div>
+
+      {cloudinaryPolicy.tier !== "green" && (
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          cloudinaryPolicy.tier === "critical"
+            ? "bg-red-50 border-red-300 text-red-900"
+            : cloudinaryPolicy.tier === "restrict_playback"
+            ? "bg-amber-50 border-amber-300 text-amber-900"
+            : "bg-blue-50 border-blue-200 text-blue-900"
+        }`}>
+          <div className="flex items-center gap-3">
+            <Video className="h-5 w-5 shrink-0" />
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider">
+                Cloudinary Quota Alert ({cloudinaryPolicy.tier.replace("_", " ")})
+              </p>
+              <p className="text-xs font-medium mt-0.5">{cloudinaryPolicy.statusMessage}</p>
+            </div>
+          </div>
+          <Link
+            href="/admin/media-quota"
+            className="text-xs font-bold underline underline-offset-2 shrink-0"
+          >
+            Manage media quota ({cloudinaryPolicy.metrics.creditsUsed}/25 credits) &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* Quick Action Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -184,12 +214,12 @@ export default async function AdminDashboardPage() {
         <div className="space-y-6">
            <h3 className="text-lg font-bold text-gray-900 px-2">Common Tasks</h3>
            <div className="grid grid-cols-2 gap-4">
+              <QuickLinkCard title="Cloudinary Quota" icon={Video} href="/admin/media-quota" desc={`${cloudinaryPolicy.metrics.creditsUsed}/25 credits`} />
               <QuickLinkCard title="Campus Services" icon={Wrench} href="/admin/services" desc="Directory & Vetting" />
               <QuickLinkCard title="User Support" icon={Users} href="/admin/users" desc="Manage accounts" />
               <QuickLinkCard title="Review Feed" icon={Star} href="/admin/reviews" desc="Moderate comments" />
               <QuickLinkCard title="Billing" icon={CreditCard} href="/admin/subscriptions" desc="View payments" />
               <QuickLinkCard title="Platform" icon={LayoutDashboard} href="/admin/listings" desc="Browse content" />
-              <QuickLinkCard title="Roommates" icon={Users} href="/admin/roommates" desc="Manage roommates" />
            </div>
 
            {profile?.role === 'super_admin' && (

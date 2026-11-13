@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils"
 import { Eye, Check, X, Loader2, Home, ShieldCheck, Pin, PinOff, Trash2, Pencil, Play, Phone } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { getVideoPosterUrl } from "@/lib/cloudinary"
 
 interface ListingWithLandlord extends Listing {
   landlord: Profile
@@ -151,15 +152,17 @@ export default function ListingTable({ listings }: { listings: ListingWithLandlo
                         />
                       ) : listing.video_url ? (
                         <div className="relative w-full h-full bg-gray-900">
-                          <video
-                            src={listing.video_url}
-                            preload="metadata"
-                            muted
-                            playsInline
+                          <img
+                            src={getVideoPosterUrl(listing.video_url, 150)}
+                            alt=""
+                            loading="lazy"
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-room.jpg'
+                            }}
                           />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <Play className="w-5 h-5 text-white fill-white" />
+                            <Play className="w-4 h-4 text-white fill-white" />
                           </div>
                         </div>
                       ) : (

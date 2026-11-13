@@ -26,6 +26,7 @@ import {
   type CampusRoommate,
 } from "@/components/listing/roommate-split-section";
 import { ListingJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { getCloudinaryPolicy } from "@/lib/cloudinary-protection";
 import type { Metadata } from "next";
 
 type ListingDetailPageProps = {
@@ -73,11 +74,13 @@ export async function generateMetadata({
   let isVideo = false;
   let mediaUrl = null;
 
-  if (listing.video_url) {
+  // Prefer still photos (served free from Supabase Storage) to eliminate Cloudinary video-frame transformations
+  if (listing.photos && listing.photos.length > 0) {
+    isVideo = false;
+    mediaUrl = listing.photos[0];
+  } else if (listing.video_url) {
     isVideo = true;
     mediaUrl = listing.video_url;
-  } else if (listing.photos && listing.photos.length > 0) {
-    mediaUrl = listing.photos[0];
   }
 
   const ogImageUrl = getWhatsAppListingOgImage(mediaUrl, isVideo);
@@ -237,6 +240,8 @@ export default async function ListingDetailPage({
   if (listingRow && !isOwner && !isAdmin) {
     void supabase.rpc("increment_views", { listing_id: listingId });
   }
+
+  const cloudinaryPolicy = await getCloudinaryPolicy();
 
   let isSaved = false;
   if (user && listingId) {
@@ -473,7 +478,11 @@ export default async function ListingDetailPage({
         </header>
 
         <div className="px-0 sm:px-4 lg:px-0">
-          <PhotoGallery photos={listing.photos} videoUrl={listing.video_url} />
+          <PhotoGallery
+            photos={listing.photos}
+            videoUrl={listing.video_url}
+            playbackRestricted={!cloudinaryPolicy.playbackAllowed}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-6 px-4 lg:grid-cols-[1fr,360px] lg:px-8">

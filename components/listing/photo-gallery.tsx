@@ -3,29 +3,34 @@
 import { useMemo, useState } from "react"
 import Image from "next/image"
 import * as Dialog from "@radix-ui/react-dialog"
-import { House, X, ChevronLeft, ChevronRight, Maximize2, Play } from "lucide-react"
-import { streamableVideoUrl, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
+import { House, X, ChevronLeft, ChevronRight, Maximize2, Play, Video as VideoIcon } from "lucide-react"
+import { getOptimizedVideoUrl, getVideoPosterUrl } from "@/lib/cloudinary"
 
 type PhotoGalleryProps = {
   photos: string[]
   videoUrl?: string | null
+  playbackRestricted?: boolean
 }
 
 type MediaItem = { type: "video" | "image"; url: string }
 
-export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
+export default function PhotoGallery({ photos, videoUrl, playbackRestricted = false }: PhotoGalleryProps) {
   const safePhotos = photos ?? []
 
-  // Unified media array — video first when present.
-  const mediaItems: MediaItem[] = useMemo(
-    () => [
-      ...(videoUrl ? [{ type: "video" as const, url: videoUrl }] : []),
-      ...safePhotos.map((url) => ({ type: "image" as const, url })),
-    ],
-    [videoUrl, safePhotos]
-  )
+  // Prefer still photos first to eliminate video streaming unless visitor chooses to watch.
+  // If no photos exist, video is placed first.
+  const mediaItems: MediaItem[] = useMemo(() => {
+    const photoItems = safePhotos.map((url) => ({ type: "image" as const, url }))
+    const videoItems = videoUrl ? [{ type: "video" as const, url: videoUrl }] : []
+
+    if (photoItems.length > 0) {
+      return [...photoItems, ...videoItems]
+    }
+    return videoItems
+  }, [videoUrl, safePhotos])
 
   const [heroIndex, setHeroIndex] = useState(0)
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
@@ -34,6 +39,12 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
 
   const nextPhoto = () => setLightboxIndex((prev) => (prev + 1) % safePhotos.length)
   const prevPhoto = () => setLightboxIndex((prev) => (prev - 1 + safePhotos.length) % safePhotos.length)
+
+  // Switch hero item and reset play state
+  const handleSelectMedia = (idx: number) => {
+    setHeroIndex(idx)
+    setIsPlayingVideo(false)
+  }
 
   // Open the lightbox at a given photo url (images only).
   const openLightboxForUrl = (url: string) => {
@@ -56,20 +67,65 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
 
   return (
     <div className="space-y-3">
-      {/* Hero — video plays inline, images open the lightbox */}
+      {/* Hero — static photo or click-to-play video poster */}
       <div className="group relative overflow-hidden sm:rounded-2xl border-y sm:border border-gray-200 bg-black shadow-sm">
         <div className="relative h-[300px] sm:h-[400px] lg:h-[500px] w-full">
           {heroItem.type === "video" ? (
-            <video
-              src={`${getSafariCompatibleVideoUrl(heroItem.url)}#t=0.1`}
-              controls
-              playsInline
-              preload="metadata"
-              controlsList="nodownload noplaybackrate"
-              disablePictureInPicture
-              onContextMenu={(e) => e.preventDefault()}
-              className="h-full w-full bg-black object-contain"
-            />
+            playbackRestricted ? (
+              // Graceful fallback when video bandwidth conservation is active
+              <div className="relative h-full w-full bg-gray-950 flex flex-col items-center justify-center p-6 text-center text-white">
+                <img
+                  src={getVideoPosterUrl(heroItem.url, 1280)}
+                  alt="Video tour archived preview"
+                  className="absolute inset-0 h-full w-full object-cover opacity-20 filter blur-xs"
+                />
+                <div className="relative z-10 max-w-md space-y-3">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-amber-300">
+                    <VideoIcon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-lg font-black">Video Walkthrough Available</h3>
+                  <p className="text-xs text-gray-300 leading-relaxed">
+                    This property has a recorded video walkthrough. Message the listing agent directly on WhatsApp below to receive the video tour.
+                  </p>
+                </div>
+              </div>
+            ) : isPlayingVideo ? (
+              // Mount video tag ONLY upon user explicit click on Play
+              <video
+                src={getOptimizedVideoUrl(heroItem.url)}
+                autoPlay
+                controls
+                playsInline
+                preload="none"
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                onContextMenu={(e) => e.preventDefault()}
+                className="h-full w-full bg-black object-contain"
+              />
+            ) : (
+              // Zero-bandwidth click-to-play static image poster
+              <div className="relative h-full w-full bg-black flex items-center justify-center overflow-hidden">
+                <img
+                  src={getVideoPosterUrl(heroItem.url, 1280)}
+                  alt="Video tour preview"
+                  className="h-full w-full object-contain"
+                />
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsPlayingVideo(true)}
+                    className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#1B4332] text-white font-black text-sm shadow-2xl hover:bg-[#143427] hover:scale-105 active:scale-95 transition-all"
+                    aria-label="Play video tour"
+                  >
+                    <Play className="h-5 w-5 fill-white" />
+                    <span>Watch Video Tour (30s)</span>
+                  </button>
+                  <span className="text-[11px] text-white/90 font-semibold bg-black/50 px-3 py-1 rounded-full backdrop-blur-xs">
+                    Tap to play · Data-optimized
+                  </span>
+                </div>
+              </div>
+            )
           ) : (
             <button
               type="button"
@@ -101,35 +157,41 @@ export default function PhotoGallery({ photos, videoUrl }: PhotoGalleryProps) {
         </div>
       </div>
 
+      {/* Thumbnail Bar — All items use lightweight static images */}
       <div className="flex items-center justify-between gap-3 px-4 sm:px-0">
         <div className="grid flex-1 grid-cols-4 gap-2">
           {thumbnails.map((item, idx) => (
             <button
               key={`${item.url}-${idx}`}
               type="button"
-              onClick={() => setHeroIndex(idx)}
+              onClick={() => handleSelectMedia(idx)}
               className={`relative h-14 sm:h-16 overflow-hidden rounded-lg sm:rounded-xl border transition ${
                 heroIndex === idx ? "border-[#1B4332] ring-2 ring-[#1B4332]/10" : "border-gray-200 hover:border-[#1B4332]/60"
               }`}
             >
               {item.type === "video" ? (
                 <div className="relative h-full w-full bg-gray-900">
-                  <video
-                    src={`${getSafariCompatibleVideoUrl(item.url)}#t=0.1`}
-                    muted
-                    playsInline
+                  <img
+                    src={getVideoPosterUrl(item.url, 240)}
+                    alt="Video tour thumbnail"
+                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                    <Play className="h-5 w-5 fill-white text-white" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <div className="p-1 rounded-full bg-white/90 text-[#1B4332]">
+                      <Play className="h-3 w-3 fill-current" />
+                    </div>
                   </div>
+                  <span className="absolute left-1 top-1 rounded bg-[#1B4332] px-1 text-[9px] font-bold text-white">
+                    TOUR
+                  </span>
                 </div>
               ) : (
                 <img src={item.url} alt={`Media ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
               )}
-              {idx === 0 && (
+              {idx === 0 && item.type !== "video" && (
                 <span className="absolute left-1 top-1 rounded bg-[#1B4332] px-1 text-[9px] font-bold text-white">
-                  {item.type === "video" ? "VIDEO" : "MAIN"}
+                  MAIN
                 </span>
               )}
             </button>

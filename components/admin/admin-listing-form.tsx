@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import { UNIVERSITIES } from "@/lib/constants"
 import { AiDescribeButton } from "@/components/listing/ai-describe-button"
 import { notifyAdminsNewListing, logAdminActionClient } from "@/app/actions"
-import { uploadVideo, getSafariCompatibleVideoUrl } from "@/lib/cloudinary"
+import { uploadVideo, getSafariCompatibleVideoUrl, validateVideoFile } from "@/lib/cloudinary"
 import { compressImage } from "@/lib/image-compress"
 
 type AgentFeeType = "none" | "fixed" | "negotiable"
@@ -750,13 +750,16 @@ export function AdminListingForm({
               </span>
             </div>
             <p className="text-xs text-gray-400">
-              A short video tour gets 3× more inquiries. Max 100MB. MP4, MOV.
+              A short video tour gets 3× more inquiries. Max 30 seconds, up to 15MB. MP4 or MOV.
             </p>
 
             {!videoUrl && !videoUploading && (
               <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:border-[#1B4332] transition-colors">
                 <Video className="w-6 h-6 text-gray-400" />
-                <span className="text-sm font-medium text-gray-500">Click to upload video</span>
+                <span className="text-sm font-medium text-gray-500">Click to upload video tour</span>
+                <span className="text-[11px] text-gray-400 font-medium">
+                  Max 30s · Under 15MB · Cloudinary Free optimization
+                </span>
                 <input
                   type="file"
                   accept="video/mp4,video/quicktime"
@@ -764,13 +767,27 @@ export function AdminListingForm({
                   onChange={async (e) => {
                     const file = e.target.files?.[0]
                     if (!file) return
-                    if (file.size > 100 * 1024 * 1024) {
-                      setMessage("Video must be under 100MB")
+
+                    // 1. Client-side size & duration check
+                    const validation = await validateVideoFile(file)
+                    if (!validation.valid) {
+                      setMessage(validation.error || "Invalid video file.")
                       return
                     }
+
                     setMessage(null)
                     setVideoUploading(true)
+
                     try {
+                      // 2. Server-side quota & authorization verification
+                      const authRes = await fetch("/api/media/cloudinary/validate-upload", { method: "POST" })
+                      const authJson = await authRes.json()
+                      if (!authRes.ok || !authJson.allowed) {
+                        setMessage(authJson.error || "Video uploads are temporarily at capacity. Please upload photos instead.")
+                        return
+                      }
+
+                      // 3. Upload to Cloudinary with optimized pipeline
                       const url = await uploadVideo(file)
                       setVideoUrl(url)
                     } catch (err) {
@@ -790,13 +807,18 @@ export function AdminListingForm({
             {videoUploading && (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Uploading video...
+                Validating &amp; uploading tour video...
               </div>
             )}
 
             {videoUrl && (
               <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                <video src={getSafariCompatibleVideoUrl(videoUrl)} controls className="w-full max-h-64 object-cover" />
+                <video
+                  src={getSafariCompatibleVideoUrl(videoUrl)}
+                  controls
+                  preload="none"
+                  className="w-full max-h-64 object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => setVideoUrl(null)}
