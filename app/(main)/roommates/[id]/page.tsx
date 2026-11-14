@@ -140,6 +140,61 @@ export default async function RoommateProfilePage({
     .eq("id", roommate.user_id)
     .single();
 
+  // Query viewer's own profile and connection status if logged in
+  let viewerRoommateProfile: {
+    id: string;
+    status: string;
+    visibility_consent: boolean;
+    expires_at: string | null;
+  } | null = null;
+
+  let existingConnection: {
+    id: string;
+    requester_id: string;
+    recipient_id: string;
+    status: "pending" | "accepted" | "declined" | "revoked";
+  } | null = null;
+
+  let hasActiveProfile = false;
+  let profileIssue: "missing" | "inactive" | "expired" | "consent_missing" | undefined;
+
+  if (currentUserId && currentUserRole === "student") {
+    const { data: vp } = await serviceClient
+      .from("roommate_profiles")
+      .select("id, status, visibility_consent, expires_at")
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+
+    viewerRoommateProfile = vp;
+
+    if (!vp) {
+      hasActiveProfile = false;
+      profileIssue = "missing";
+    } else if (vp.status !== "active") {
+      hasActiveProfile = false;
+      profileIssue = "inactive";
+    } else if (!vp.visibility_consent) {
+      hasActiveProfile = false;
+      profileIssue = "consent_missing";
+    } else if (vp.expires_at && new Date(vp.expires_at) <= new Date()) {
+      hasActiveProfile = false;
+      profileIssue = "expired";
+    } else {
+      hasActiveProfile = true;
+    }
+
+    if (currentUserId !== roommate.user_id) {
+      const { data: conn } = await serviceClient
+        .from("roommate_connections")
+        .select("id, requester_id, recipient_id, status")
+        .or(
+          `and(requester_id.eq.${currentUserId},recipient_id.eq.${roommate.user_id}),and(requester_id.eq.${roommate.user_id},recipient_id.eq.${currentUserId})`,
+        )
+        .maybeSingle();
+      existingConnection = conn as any;
+    }
+  }
+
   const data = {
     ...roommate,
     // Strictly protect phone_number for guests
@@ -393,8 +448,60 @@ export default async function RoommateProfilePage({
                   </Link>
                 </div>
               </div>
+            ) : currentUserId === roommate.user_id ? (
+              <div className="rounded-2xl bg-emerald-50/80 border border-emerald-200 p-5 text-center space-y-3">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#1B4332] text-[#F59E0B]">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">
+                    This is your roommate profile
+                  </h3>
+                  <p className="text-xs text-gray-600 max-w-md mx-auto mt-1 leading-relaxed">
+                    Other students browsing off-campus housing can see this profile and send you connection requests.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+                  <Link
+                    href="/student/roommate"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#1B4332] text-white text-xs font-bold hover:brightness-110 transition shadow-xs"
+                  >
+                    Edit Roommate Profile
+                  </Link>
+                  <Link
+                    href="/student/connections"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition shadow-xs"
+                  >
+                    Manage Connection Requests
+                  </Link>
+                </div>
+              </div>
+            ) : currentUserRole !== "student" ? (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5 text-center space-y-2">
+                <h3 className="font-bold text-amber-900 text-sm">
+                  Student-Only Feature
+                </h3>
+                <p className="text-xs text-amber-800 max-w-md mx-auto leading-relaxed">
+                  Roommate matching and connections are exclusively for student accounts. Please sign in with a student account to connect with {data.profile.full_name}.
+                </p>
+              </div>
             ) : (
-              <RoommateConnectionButton targetUserId={roommate.user_id} />
+              <RoommateConnectionButton
+                targetUserId={roommate.user_id}
+                targetName={data.profile.full_name}
+                campusName={roommate.university}
+                targetLodgeTitle={roommate.target_listing_title}
+                targetLodgeId={roommate.target_listing_id}
+                hasActiveProfile={hasActiveProfile}
+                profileIssue={profileIssue}
+                existingConnection={existingConnection}
+                acceptedPhoneNumber={
+                  existingConnection?.status === "accepted"
+                    ? roommate.phone_number
+                    : null
+                }
+                currentUserId={currentUserId}
+              />
             )}
           </div>
         </div>

@@ -60,6 +60,10 @@ const nextConfig = {
       },
     ],
   },
+  cleanDistDir: false,
+  experimental: {
+    webpackBuildWorker: false,
+  },
 };
 
 module.exports = nextConfig;
