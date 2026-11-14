@@ -81,3 +81,7 @@ houseplug.ng
 - **Monitoring:** After every `git push`, use the **Vercel MCP** or Vercel CLI to verify the deployment status.
 - **Alerting:** If a deployment fails on Vercel, immediately investigate logs via Vercel MCP and report the root cause.
 - **Environment:** Ensure `CRON_SECRET` and `RESEND_API_KEY` are configured in the Vercel dashboard before deploying email or cron features.
+
+## Cloudflare Integration
+- When interacting with Cloudflare, use the cf CLI unless the project has a Wrangler configuration file.
+
