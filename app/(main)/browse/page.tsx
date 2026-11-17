@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { UNIVERSITIES } from "@/lib/constants";
 import { formatRoomType } from "@/lib/utils";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { HousingRequestsBanner } from "@/components/housing-requests/housing-requests-banner";
 import type { Listing } from "@/types";
 
 type BrowsePageProps = {
@@ -319,6 +320,8 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
               </Link>
             </div>
 
+            <HousingRequestsBanner variant="compact" />
+
             <div className="flex flex-col gap-2 px-1">
               <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                 {selectedUniversity
@@ -339,17 +342,25 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
             </div>
 
             {listings.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
+              <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center space-y-4">
                 <p className="text-base font-medium text-gray-800">
                   No confirmed rooms match these filters. Try nearby areas or a
                   different budget.
                 </p>
-                <Link
-                  href="/housing-assistance"
-                  className="underline block py-4"
-                >
-                  Request Housing Assistance
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <Link
+                    href="/requests"
+                    className="px-5 py-2.5 rounded-xl bg-[#1B4332] text-white text-xs font-bold hover:bg-[#133024] shadow-xs"
+                  >
+                    Post a Free Housing Request
+                  </Link>
+                  <Link
+                    href="/browse"
+                    className="px-5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                  >
+                    Clear All Filters
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

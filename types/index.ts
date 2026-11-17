@@ -202,3 +202,41 @@ export type RoommateProfile = {
     verification_status: string;
   } | null;
 };
+
+export type CampusZone =
+  | 'Choba'
+  | 'Aluu'
+  | 'Alakahia'
+  | 'Rumosi'
+  | 'Delta Park Axis'
+  | 'Abuja Campus Axis';
+
+export type HousingPropertyType =
+  | 'Self-Contain'
+  | 'Single Room'
+  | '1-Bedroom Flat'
+  | '2-Bedroom Flat';
+
+export type MoveInTimeline =
+  | 'Urgent (Within 7 Days)'
+  | 'Within 2 Weeks'
+  | 'This Month'
+  | 'Just Scouting';
+
+export type HousingRequestStatus = 'open' | 'fulfilled';
+
+export type HousingRequest = {
+  id: string;
+  request_code: string;
+  student_name: string;
+  student_whatsapp?: string; // Visible only to admins
+  campus_zone: CampusZone;
+  property_type: HousingPropertyType;
+  min_budget: number;
+  max_budget: number;
+  move_in_timeline: MoveInTimeline;
+  extra_notes?: string | null;
+  status: HousingRequestStatus;
+  created_at: string;
+};
+

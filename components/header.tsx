@@ -168,6 +168,7 @@ export function Header() {
   const isExploreActive = pathname === "/browse" || pathname.startsWith("/listing/")
   const isRoommatesActive = pathname.startsWith("/roommates")
   const isServicesActive = pathname.startsWith("/services")
+  const isRequestsActive = pathname.startsWith("/requests")
 
   const listPropertyHref = isAgentOrLandlord 
     ? "/landlord/listings/new" 
@@ -227,6 +228,20 @@ export function Header() {
               <span>Services</span>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-[#1B4332] border border-emerald-200">
                 New
+              </span>
+            </Link>
+
+            <Link
+              href="/requests"
+              className={`text-sm font-semibold px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
+                isRequestsActive
+                  ? "bg-[#1B4332]/10 text-[#1B4332] font-bold"
+                  : "text-gray-600 hover:text-gray-950 hover:bg-gray-100/70"
+              }`}
+            >
+              <span>Request Board</span>
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-50 text-[#F59E0B] border border-amber-200">
+                Free
               </span>
             </Link>
           </nav>
@@ -476,6 +491,28 @@ export function Header() {
                   </div>
                   <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-[#1B4332]">
                     New
+                  </span>
+                </Link>
+
+                <Link
+                  href="/requests"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
+                    isRequestsActive ? "bg-[#1B4332] text-white" : "text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="h-4 w-4" />
+                    <span>Lodge Request Board</span>
+                  </div>
+                  <span
+                    className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      isRequestsActive
+                        ? "bg-white/20 text-white"
+                        : "bg-amber-100 text-amber-900"
+                    }`}
+                  >
+                    Free
                   </span>
                 </Link>
 

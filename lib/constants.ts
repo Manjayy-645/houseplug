@@ -146,3 +146,27 @@ export const AMENITIES = [
   { value: 'bathroom', label: 'En-suite bathroom', icon: 'bath' },
   { value: 'wifi', label: 'Wi-Fi', icon: 'wifi' },
 ]
+
+export const CAMPUS_ZONES = [
+  'Choba',
+  'Aluu',
+  'Alakahia',
+  'Rumosi',
+  'Delta Park Axis',
+  'Abuja Campus Axis',
+] as const;
+
+export const HOUSING_PROPERTY_TYPES = [
+  'Self-Contain',
+  'Single Room',
+  '1-Bedroom Flat',
+  '2-Bedroom Flat',
+] as const;
+
+export const MOVE_IN_TIMELINES = [
+  'Urgent (Within 7 Days)',
+  'Within 2 Weeks',
+  'This Month',
+  'Just Scouting',
+] as const;
+
