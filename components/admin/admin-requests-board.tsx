@@ -16,13 +16,18 @@ import {
   Calendar,
   AlertTriangle,
   UserCheck,
+  Copy,
+  Check,
 } from "lucide-react";
 import { ShareToAgentsButton } from "@/components/housing-requests/share-to-agents-button";
 import {
   updateHousingRequestStatus,
   deleteHousingRequest,
 } from "@/app/actions/housing-requests";
-import { cleanWhatsAppNumber } from "@/lib/housing-request-schema";
+import {
+  cleanWhatsAppNumber,
+  getPartnerAgentsGroupUrl,
+} from "@/lib/housing-request-schema";
 import { CAMPUS_ZONES } from "@/lib/constants";
 import type { HousingRequest } from "@/types";
 
@@ -36,6 +41,20 @@ export function AdminRequestsBoard({ initialRequests }: AdminRequestsBoardProps)
   const [zoneFilter, setZoneFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [copiedGroupLink, setCopiedGroupLink] = useState(false);
+  const groupUrl = getPartnerAgentsGroupUrl();
+
+  const handleCopyGroupLink = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(groupUrl);
+        setCopiedGroupLink(true);
+        setTimeout(() => setCopiedGroupLink(false), 3000);
+      }
+    } catch (e) {
+      console.warn("Failed to copy group link", e);
+    }
+  };
 
   const stats = useMemo(() => {
     const total = requests.length;
@@ -120,6 +139,57 @@ export function AdminRequestsBoard({ initialRequests }: AdminRequestsBoardProps)
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Refresh Leads</span>
         </button>
+      </div>
+
+      {/* Connected Partner Agents & Landlords WhatsApp Group */}
+      <div className="bg-linear-to-r from-emerald-50 via-white to-amber-50/50 rounded-2xl border border-emerald-200/90 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-[#1B4332] text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs">
+            💬
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800">
+                Connected Partner Agents &amp; Landlords WhatsApp Channel
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-[#1B4332] border border-emerald-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                Live Channel
+              </span>
+            </div>
+            <p className="text-sm font-extrabold text-gray-900">
+              HousePlug Partner Agents &amp; Landlords Group
+            </p>
+            <p className="text-xs text-gray-500 font-mono break-all">
+              {groupUrl}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
+          <button
+            type="button"
+            onClick={handleCopyGroupLink}
+            className="flex-1 md:flex-initial px-3.5 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            {copiedGroupLink ? (
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-gray-500" />
+            )}
+            <span>{copiedGroupLink ? "Copied Link!" : "Copy Invite Link"}</span>
+          </button>
+
+          <a
+            href={groupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 md:flex-initial px-4 py-2 text-xs font-bold text-white bg-[#1B4332] hover:bg-[#133024] rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span>Open Group Chat</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
       {/* Metric Cards */}

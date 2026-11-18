@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { CAMPUS_ZONES, HOUSING_PROPERTY_TYPES, MOVE_IN_TIMELINES } from "@/lib/constants";
+import {
+  CAMPUS_ZONES,
+  HOUSING_PROPERTY_TYPES,
+  MOVE_IN_TIMELINES,
+  PARTNER_AGENTS_WHATSAPP_GROUP_URL,
+} from "@/lib/constants";
 import type { CampusZone, HousingPropertyType, MoveInTimeline } from "@/types";
 
 export const studentHousingRequestSchema = z
@@ -148,3 +153,14 @@ export function getAgentClaimWhatsAppUrl(
 export function getWhatsAppSendUrl(message: string): string {
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * Returns the official WhatsApp invite link for the Partner Agents & Landlords group/channel.
+ */
+export function getPartnerAgentsGroupUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_PARTNER_AGENTS_GROUP_URL ||
+    PARTNER_AGENTS_WHATSAPP_GROUP_URL
+  );
+}
+

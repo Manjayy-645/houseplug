@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { PlusCircle, Search, HelpCircle, ShieldCheck, Zap } from "lucide-react";
+import { PlusCircle, Search, HelpCircle, ShieldCheck, Zap, ExternalLink } from "lucide-react";
 import { StudentRequestCard } from "./student-request-card";
 import { RequestsFilterBar } from "./requests-filter-bar";
 import { PostRequestModal } from "./post-request-modal";
@@ -187,6 +187,33 @@ export function PublicRequestsBoard({
           </div>
         </div>
       </section>
+
+      {/* Landlord & Partner Agent Network CTA */}
+      <div className="bg-linear-to-r from-emerald-50 via-white to-amber-50/60 rounded-3xl border border-emerald-200/90 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xs">
+        <div className="space-y-2 max-w-xl">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-[#1B4332] text-xs font-bold uppercase tracking-wider">
+            <span>🏘️</span>
+            <span>For Landlords &amp; Off-Campus Agents</span>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-black text-[#111827]">
+            Got vacant lodges near UniPort, RSU, or IAUE?
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+            Join our official Partner Agents &amp; Landlords WhatsApp Channel to receive student accommodation requests directly, claim qualified leads, and fill vacant rooms faster.
+          </p>
+        </div>
+
+        <a
+          href="https://chat.whatsapp.com/KmewWrx2i9hCgsTCHoPGgU"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#1B4332] hover:bg-[#133024] active:scale-[0.98] text-white font-extrabold text-sm shadow-md transition-all shrink-0 w-full md:w-auto"
+        >
+          <span className="text-base leading-none">📲</span>
+          <span>Join Partner Agents Group</span>
+          <ExternalLink className="w-4 h-4 text-emerald-300" />
+        </a>
+      </div>
 
       {/* Modal */}
       <PostRequestModal

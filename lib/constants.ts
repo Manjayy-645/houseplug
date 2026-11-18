@@ -170,3 +170,8 @@ export const MOVE_IN_TIMELINES = [
   'Just Scouting',
 ] as const;
 
+export const PARTNER_AGENTS_WHATSAPP_GROUP_URL =
+  process.env.NEXT_PUBLIC_PARTNER_AGENTS_GROUP_URL ||
+  "https://chat.whatsapp.com/KmewWrx2i9hCgsTCHoPGgU";
+
+

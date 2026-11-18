@@ -7,6 +7,7 @@ import {
   getAgentClaimWhatsAppUrl,
   getWhatsAppSendUrl,
   cleanWhatsAppNumber,
+  getPartnerAgentsGroupUrl,
 } from "../lib/housing-request-schema";
 
 test("studentHousingRequestSchema validates valid Nigerian student request", () => {
@@ -128,3 +129,9 @@ test("getWhatsAppSendUrl generates direct WhatsApp send URL", () => {
   const sendUrl = getWhatsAppSendUrl("Hello World");
   assert.equal(sendUrl, "https://api.whatsapp.com/send?text=Hello%20World");
 });
+
+test("getPartnerAgentsGroupUrl returns the configured partner agents WhatsApp invite link", () => {
+  const groupUrl = getPartnerAgentsGroupUrl();
+  assert.equal(groupUrl, "https://chat.whatsapp.com/KmewWrx2i9hCgsTCHoPGgU");
+});
+
