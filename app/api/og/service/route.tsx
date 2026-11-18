@@ -310,7 +310,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("OG generator error:", err)
     // Fallback card
-    return new ImageResponse(
+    const fallbackResponse = new ImageResponse(
       (
         <div
           style={{
@@ -347,5 +347,12 @@ export async function GET(request: NextRequest) {
       ),
       { width: 1200, height: 630 }
     )
+
+    fallbackResponse.headers.set(
+      "Cache-Control",
+      "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400"
+    )
+
+    return fallbackResponse
   }
 }

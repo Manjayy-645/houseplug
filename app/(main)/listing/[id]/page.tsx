@@ -68,21 +68,7 @@ export async function generateMetadata({
   const title = `${roomTypeStr} in ${listing.area} — Listed ₦${formattedPriceRaw}`;
   const description = `Student housing near ${campus}. Confirm rent terms and availability with the listing agent on WhatsApp.`;
 
-  const { getWhatsAppListingOgImage } = await import("@/lib/cloudinary");
-
-  let isVideo = false;
-  let mediaUrl = null;
-
-  // Prefer still photos (served free from Supabase Storage) to eliminate Cloudinary video-frame transformations
-  if (listing.photos && listing.photos.length > 0) {
-    isVideo = false;
-    mediaUrl = listing.photos[0];
-  } else if (listing.video_url) {
-    isVideo = true;
-    mediaUrl = listing.video_url;
-  }
-
-  const ogImageUrl = getWhatsAppListingOgImage(mediaUrl, isVideo);
+  const ogImageUrl = `https://www.houseplug.ng/api/og/listing?id=${listing.id}`;
   const ogTitle = `${listing.title} — Listed ₦${formattedPriceRaw}`;
   const ogDescription = `Student accommodation in ${listing.area}, ${campus} on HousePlug.`;
   const listingUrl = `https://www.houseplug.ng/listing/${listing.id}`;

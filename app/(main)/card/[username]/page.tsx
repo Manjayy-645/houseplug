@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createServiceClient as createClient } from "@/lib/supabase/server";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 import {
   ShieldCheck,
   Star,
@@ -60,19 +61,13 @@ export async function generateMetadata({
       url: `https://www.houseplug.ng/card/${params.username}`,
       siteName: "HousePlug",
       type: "profile",
-      images: [
-        {
-          url: "https://www.houseplug.ng/logo.png",
-          width: 800,
-          height: 800,
-        },
-      ],
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${profile.full_name} has rooms on HousePlug`,
       description: `${activeCount || 0} listings available · ${profile.verification_status === "verified" ? "Advertiser identity checked" : "Landlord"} · houseplug.ng`,
-      images: ["https://www.houseplug.ng/logo.png"],
+      images: [DEFAULT_OG_IMAGE.url],
     },
   };
 }

@@ -1,7 +1,7 @@
 import { publicListing } from "@/lib/public-listing";
 import Link from "next/link";
 import { inventoryQuery } from "@/lib/public-inventory";
-import { siteUrl } from "@/lib/site";
+import { siteUrl, DEFAULT_OG_IMAGE } from "@/lib/site";
 import type { Metadata } from "next";
 import { ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { FilterSidebar } from "@/components/filter-sidebar";
@@ -98,11 +98,13 @@ export async function generateMetadata({
       siteName: "HousePlug",
       locale: "en_NG",
       type: "website",
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} | HousePlug`,
       description,
+      images: [DEFAULT_OG_IMAGE.url],
     },
   };
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Campus Services, Artisans & Movers in Nigeria",
@@ -16,12 +17,14 @@ export const metadata: Metadata = {
     siteName: "HousePlug",
     locale: "en_NG",
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Campus Services & Artisans | HousePlug",
     description:
       "Find movers, cleaners and repair services near campus.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
 };
 

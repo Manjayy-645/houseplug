@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock3, MapPin, ShieldCheck, Wrench } from "lucide-react";
@@ -6,11 +7,67 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { ServiceEnquiryForm } from "@/components/service-enquiry-form";
 import { ServiceWhatsAppLink } from "@/components/services/service-whatsapp-link";
 import { formatServicePrice, getCategoryLabel } from "@/lib/service-utils";
+import { SITE_URL } from "@/lib/site";
+
 export const dynamic = "force-dynamic";
-export const metadata = {
-  title: "Independent campus service provider",
-  robots: { index: false, follow: true },
-};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const supabase = createServiceClient();
+  const { data: s } = await supabase
+    .from("service_providers")
+    .select("business_name, description, category, university")
+    .eq("id", params.id)
+    .single();
+
+  if (!s) {
+    return {
+      title: "Campus Service Provider | HousePlug",
+      robots: { index: false, follow: true },
+    };
+  }
+
+  const title = `${s.business_name} — Campus Service near ${s.university} | HousePlug`;
+  const description =
+    s.description ||
+    `Verified campus service provider near ${s.university}. Contact directly on WhatsApp via HousePlug.`;
+  const ogImageUrl = `${SITE_URL}/api/og/service?id=${params.id}`;
+  const pageUrl = `${SITE_URL}/services/${params.id}`;
+
+  return {
+    title,
+    description,
+    robots: { index: false, follow: true },
+    alternates: { canonical: pageUrl },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "HousePlug",
+      locale: "en_NG",
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          secureUrl: ogImageUrl,
+          width: 1200,
+          height: 630,
+          type: "image/png",
+          alt: `${s.business_name} on HousePlug`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+  };
+}
 export default async function Page({ params }: { params: { id: string } }) {
   if (!featureFlags.services) notFound();
   const { data: s } = await createServiceClient()

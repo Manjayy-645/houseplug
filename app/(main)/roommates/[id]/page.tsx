@@ -17,6 +17,7 @@ import { ShareButton } from "./share-button";
 import { BreadcrumbJsonLd, ProfileJsonLd } from "@/components/seo/json-ld";
 
 import { Metadata } from "next";
+import { SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({
   params,
@@ -55,7 +56,7 @@ export async function generateMetadata({
 
   const description = `Check out ${firstName}'s roommate profile on HousePlug! Budget: ₦${roommate.budget_min.toLocaleString("en-NG")} – ₦${roommate.budget_max.toLocaleString("en-NG")}/yr near ${roommate.university}. Connect and team up for housing!`;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.houseplug.ng";
+  const baseUrl = SITE_URL;
   // Dynamic OG image endpoint — renders a branded PNG card on the fly,
   // converting .webp avatars server-side so WhatsApp always gets a valid preview.
   const ogImageUrl = `${baseUrl}/api/og/roommate?id=${params.id}`;

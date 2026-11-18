@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
   } catch {
     // Fallback: render a minimal branded card on any unhandled error
     try {
-      return new ImageResponse(
+      const fallbackResponse = new ImageResponse(
         <div
           style={{
             width: "1200px",
@@ -327,6 +327,13 @@ export async function GET(request: NextRequest) {
         </div>,
         { width: 1200, height: 630 },
       );
+
+      fallbackResponse.headers.set(
+        "Cache-Control",
+        "public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400",
+      );
+
+      return fallbackResponse;
     } catch {
       return new Response("Failed to generate image", { status: 500 });
     }

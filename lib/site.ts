@@ -4,6 +4,15 @@ export const siteUrl = (path = "") =>
   new URL(path || "/", SITE_URL)
     .toString()
     .replace(/\/$/, path === "/" ? "/" : "");
+
+export const DEFAULT_OG_IMAGE = {
+  url: `${SITE_URL}/icons/og-default.jpg`,
+  secureUrl: `${SITE_URL}/icons/og-default.jpg`,
+  width: 1200,
+  height: 630,
+  type: "image/jpeg",
+  alt: "HousePlug - Student Housing in Port Harcourt, Nigeria",
+};
 export function safeReturnTo(value?: string | null, fallback = "/browse") {
   return value &&
     value.startsWith("/") &&

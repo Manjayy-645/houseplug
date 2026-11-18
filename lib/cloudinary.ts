@@ -1,3 +1,5 @@
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/site"
+
 /**
  * HousePlug — Cloudinary Video Delivery & Optimization (Phase 1)
  * 
@@ -96,7 +98,7 @@ export function getVideoPosterUrl(url?: string | null, width = 800): string {
  * WhatsApp requires absolute URLs, strictly <300KB, image/jpeg format, and no dynamic WebP negotiation.
  */
 export function getWhatsAppListingOgImage(url?: string | null, isVideo?: boolean): string {
-  const fallback = "https://houseplug.ng/icons/og-default.jpg"
+  const fallback = DEFAULT_OG_IMAGE.url
 
   if (!url) return fallback
 
@@ -104,7 +106,7 @@ export function getWhatsAppListingOgImage(url?: string | null, isVideo?: boolean
   if (url.startsWith("http://")) {
     url = url.replace("http://", "https://")
   } else if (!url.startsWith("http")) {
-    url = "https://houseplug.ng" + (url.startsWith("/") ? url : "/" + url)
+    url = `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`
   }
 
   // Only transform known Cloudinary URLs
@@ -115,19 +117,19 @@ export function getWhatsAppListingOgImage(url?: string | null, isVideo?: boolean
   try {
     if (isVideo) {
       let out = url.replace(
-        /\/video\/upload\/(?:v\d+\/)?/,
-        (match) => match.includes("v")
-          ? "/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/" + match.split("/").pop() + "/"
-          : "/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/"
+        /\/video\/upload\/(?:(v\d+)\/)?/,
+        (_, v) => v
+          ? `/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/${v}/`
+          : `/video/upload/so_1.0,w_1200,h_630,c_fill,q_75,f_jpg/`
       )
       out = out.replace(/\.(mp4|mov|webm|mkv|avi|hevc|3gp|m4v)$/i, ".jpg")
       return out
     } else {
       let out = url.replace(
-        /\/image\/upload\/(?:v\d+\/)?/,
-        (match) => match.includes("v")
-          ? "/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/" + match.split("/").pop() + "/"
-          : "/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/"
+        /\/image\/upload\/(?:(v\d+)\/)?/,
+        (_, v) => v
+          ? `/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/${v}/`
+          : `/image/upload/w_1200,h_630,c_fill,q_75,f_jpg/`
       )
       out = out.replace(/\.(png|webp|avif|heic|gif)$/i, ".jpg")
       return out

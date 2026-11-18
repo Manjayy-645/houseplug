@@ -1,6 +1,6 @@
 import { featureFlags } from "@/lib/feature-flags";
 import { FunnelTracker } from "@/components/funnel-beacon";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/site";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
@@ -54,26 +54,19 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: "https://www.houseplug.ng",
+    url: SITE_URL,
     siteName: "HousePlug",
     title: "Student Accommodation near UniPort & RSU | HousePlug",
     description:
       "Find off-campus lodges, self-cons, and flatshares near UniPort, RSU, IAUE, and KenPoly. Connect directly with landlords on WhatsApp.",
-    images: [
-      {
-        url: "/icons/og-default.jpg",
-        width: 1200,
-        height: 630,
-        alt: "HousePlug - Student Housing in Port Harcourt",
-      },
-    ],
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "HousePlug | Student Housing Near Campus",
     description:
       "Student lodges and off-campus housing near Nigerian universities. Connect directly with landlords on WhatsApp.",
-    images: ["/icons/og-default.jpg"],
+    images: [DEFAULT_OG_IMAGE.url],
     creator: "@houseplugng",
   },
   robots: {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 import { createClient, getAdminClient } from "@/lib/supabase/server";
 import { getOpenHousingRequests } from "@/app/actions/housing-requests";
 import { PublicRequestsBoard } from "@/components/housing-requests/public-requests-board";
@@ -13,6 +14,17 @@ export const metadata: Metadata = {
     description:
       "Can't find your ideal lodge? Post a free housing request. Verified partner agents search for you.",
     url: "https://www.houseplug.ng/requests",
+    siteName: "HousePlug",
+    locale: "en_NG",
+    type: "website",
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Student Housing Request Board | HousePlug",
+    description:
+      "Post your lodge requirements for free or browse active student requests near UniPort, RSU, IAUE, and KenPoly.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
 };
 

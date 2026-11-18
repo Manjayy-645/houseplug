@@ -7,6 +7,7 @@ import { RoommateFilters } from "@/components/roommate-filters";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { computeComprehensiveMatchScore } from "@/lib/roommate-matching";
 import { UNIVERSITIES } from "@/lib/constants";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Find a Student Roommate in Nigeria",
@@ -23,12 +24,14 @@ export const metadata: Metadata = {
     siteName: "HousePlug",
     locale: "en_NG",
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Find a Student Roommate | HousePlug",
     description:
       "Find verified student roommates near your campus. Connect with consent and split lodge rent.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
 };
 
