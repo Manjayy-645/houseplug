@@ -24,6 +24,9 @@ BEGIN
  PERFORM set_config('role','anon',true);
  PERFORM set_config('request.jwt.claims','{}',true);
  SELECT count(*) INTO visible FROM public.service_providers WHERE id=service_id;IF visible<>0 THEN RAISE EXCEPTION 'Edited service contact exposed before review';END IF;
+ PERFORM set_config('role','service_role',true);
+ DELETE FROM public.service_providers WHERE id=service_id;
+ IF (SELECT count(*) FROM public.supplier_reviews WHERE service_id=service_id)<>0 THEN RAISE EXCEPTION 'Supplier reviews were not cascade deleted';END IF;
  PERFORM set_config('role','postgres',true);
 END $$;
 ROLLBACK;

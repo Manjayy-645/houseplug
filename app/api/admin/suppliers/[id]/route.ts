@@ -71,6 +71,35 @@ export async function DELETE(
   if (!a?.admin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  // 1. Delete dependent supplier_reviews to satisfy foreign key constraints
+  try {
+    await a.db.from("supplier_reviews").delete().eq("service_id", params.id);
+  } catch (e) {
+    console.warn("[ADMIN_SERVICE_DELETE] error cleaning supplier_reviews:", e);
+  }
+
+  // 2. Delete dependent service_requests
+  try {
+    await a.db.from("service_requests").delete().eq("provider_id", params.id);
+  } catch (e) {
+    console.warn("[ADMIN_SERVICE_DELETE] error cleaning service_requests:", e);
+  }
+
+  // 3. Nullify reports referencing this service provider
+  try {
+    await a.db.from("reports").update({ service_id: null }).eq("service_id", params.id);
+  } catch (e) {
+    console.warn("[ADMIN_SERVICE_DELETE] error disassociating reports:", e);
+  }
+
+  // 4. Nullify payments referencing this service provider
+  try {
+    await a.db.from("payments").update({ service_id: null }).eq("service_id", params.id);
+  } catch (e) {
+    console.warn("[ADMIN_SERVICE_DELETE] error disassociating payments:", e);
+  }
+
+  // 5. Delete service provider
   const { error } = await a.db
     .from("service_providers")
     .delete()
