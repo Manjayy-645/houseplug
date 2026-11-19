@@ -240,7 +240,7 @@ export function Header() {
               }`}
             >
               <span>Housing Assistance</span>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-50 text-[#F59E0B] border border-amber-200">
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200">
                 Free
               </span>
             </Link>
