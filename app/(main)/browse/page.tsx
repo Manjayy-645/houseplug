@@ -351,7 +351,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                   <Link
-                    href="/requests"
+                    href="/housing-assistance"
                     className="px-5 py-2.5 rounded-xl bg-[#1B4332] text-white text-xs font-bold hover:bg-[#133024] shadow-xs"
                   >
                     Post a Free Housing Request

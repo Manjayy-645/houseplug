@@ -5,6 +5,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/requests",
+        destination: "/housing-assistance",
+        permanent: true,
+      },
+      {
         source: "/:path*",
         has: [{ type: "host", value: "houseplug.ng" }],
         destination: "https://www.houseplug.ng/:path*",
