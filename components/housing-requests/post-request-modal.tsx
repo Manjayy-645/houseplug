@@ -9,12 +9,16 @@ type PostRequestModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: (requestCode: string) => void;
+  initialCampusZone?: string;
+  initialNotes?: string;
 };
 
 export function PostRequestModal({
   isOpen,
   onClose,
   onSuccess,
+  initialCampusZone,
+  initialNotes,
 }: PostRequestModalProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,12 +28,15 @@ export function PostRequestModal({
   const [formData, setFormData] = useState({
     student_name: "",
     student_whatsapp: "",
-    campus_zone: "Choba",
+    campus_zone:
+      initialCampusZone && (CAMPUS_ZONES as readonly string[]).includes(initialCampusZone)
+        ? initialCampusZone
+        : "Choba",
     property_type: "Self-Contain",
     min_budget: "200000",
     max_budget: "350000",
     move_in_timeline: "Within 2 Weeks",
-    extra_notes: "",
+    extra_notes: initialNotes || "",
   });
 
   if (!isOpen) return null;
