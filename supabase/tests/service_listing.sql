@@ -1,5 +1,5 @@
 BEGIN;
-DO $$
+DO $$ <<service_test>>
 DECLARE owner_id uuid:=gen_random_uuid();staff_id uuid:=gen_random_uuid();service_id uuid;visible integer;
 BEGIN
  INSERT INTO auth.users(id,email,raw_app_meta_data) VALUES(owner_id,'service-owner@example.invalid','{"provider":"google"}'::jsonb),(staff_id,'service-staff@example.invalid','{"provider":"google"}'::jsonb);
@@ -25,8 +25,9 @@ BEGIN
  PERFORM set_config('request.jwt.claims','{}',true);
  SELECT count(*) INTO visible FROM public.service_providers WHERE id=service_id;IF visible<>0 THEN RAISE EXCEPTION 'Edited service contact exposed before review';END IF;
  PERFORM set_config('role','service_role',true);
+ IF (SELECT count(*) FROM public.supplier_reviews AS review WHERE review.service_id=service_test.service_id)<>1 THEN RAISE EXCEPTION 'Approved service review missing before deletion';END IF;
  DELETE FROM public.service_providers WHERE id=service_id;
- IF (SELECT count(*) FROM public.supplier_reviews WHERE service_id=service_id)<>0 THEN RAISE EXCEPTION 'Supplier reviews were not cascade deleted';END IF;
+ IF (SELECT count(*) FROM public.supplier_reviews AS review WHERE review.service_id=service_test.service_id)<>0 THEN RAISE EXCEPTION 'Supplier reviews were not cascade deleted';END IF;
  PERFORM set_config('role','postgres',true);
 END $$;
 ROLLBACK;

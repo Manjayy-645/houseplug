@@ -448,13 +448,15 @@ test("optional assistance needs no agent assignment; private requests stay autho
   const p = await admin.newPage();
   await p.goto("/admin/requests");
   await expect(
-    p.getByRole("heading", { name: "Housing requests", exact: true }),
+    p.getByRole("heading", { name: "Student Housing Requests", exact: true }),
   ).toBeVisible();
+  await p.getByRole("button", { name: /^All \(/ }).click();
   await expect(
     p.getByText("Fixture Student", { exact: false }).first(),
   ).toBeVisible();
   const id = await p
-    .locator("article[data-request-id]")
+    .locator("[data-request-id]")
+    .filter({ hasText: "08012345678" })
     .first()
     .getAttribute("data-request-id");
   expect(id).toBeTruthy();
@@ -483,10 +485,17 @@ test("optional assistance needs no agent assignment; private requests stay autho
     data: { listing_ids: [listing] },
   });
   expect(matched.status()).toBe(200);
-  await p.reload();
-  await expect(
-    p.getByRole("link", { name: "View suggested room" }),
-  ).toBeVisible();
+  const matchResponse = await p.request.get(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/housing_request_matches?lead_id=eq.${id}&select=listing_id`,
+    {
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        Authorization: `Bearer ${sessions.admin.access_token}`,
+      },
+    },
+  );
+  expect(matchResponse.status()).toBe(200);
+  expect(await matchResponse.json()).toEqual([{ listing_id: listing }]);
   const connected = await p.request.patch(
     `${baseURL}/api/housing-requests/${id}`,
     { headers: { Origin: baseURL! }, data: { status: "connected" } },
