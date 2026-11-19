@@ -168,7 +168,7 @@ export function Header() {
   const isExploreActive = pathname === "/browse" || pathname.startsWith("/listing/")
   const isRoommatesActive = pathname.startsWith("/roommates")
   const isServicesActive = pathname.startsWith("/services")
-  const isRequestsActive = pathname.startsWith("/housing-assistance")
+  const isRequestsActive = pathname.startsWith("/requests")
 
   const listPropertyHref = isAgentOrLandlord 
     ? "/landlord/listings/new" 
@@ -232,7 +232,7 @@ export function Header() {
             </Link>
 
             <Link
-              href="/housing-assistance"
+              href="/requests"
               className={`text-sm font-semibold px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
                 isRequestsActive
                   ? "bg-[#1B4332]/10 text-[#1B4332] font-bold"
@@ -495,7 +495,7 @@ export function Header() {
                 </Link>
 
                 <Link
-                  href="/housing-assistance"
+                  href="/requests"
                   onClick={() => setIsOpen(false)}
                   className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-colors ${
                     isRequestsActive ? "bg-[#1B4332] text-white" : "text-gray-700 hover:bg-gray-50"

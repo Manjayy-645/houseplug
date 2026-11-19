@@ -86,7 +86,7 @@ export async function submitHousingRequest(input: StudentHousingRequestInput | F
       };
     }
 
-    revalidatePath("/housing-assistance");
+    revalidatePath("/requests");
     revalidatePath("/admin/requests");
     revalidatePath("/browse");
 
@@ -264,7 +264,7 @@ export async function updateHousingRequestStatus(
     }
 
     revalidatePath("/admin/requests");
-    revalidatePath("/housing-assistance");
+    revalidatePath("/requests");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || "Update failed" };
@@ -289,7 +289,7 @@ export async function deleteHousingRequest(id: string) {
     }
 
     revalidatePath("/admin/requests");
-    revalidatePath("/housing-assistance");
+    revalidatePath("/requests");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || "Delete failed" };

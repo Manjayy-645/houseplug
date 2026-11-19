@@ -7,15 +7,11 @@ import { PostRequestModal } from "./post-request-modal";
 type HousingRequestsBannerProps = {
   className?: string;
   variant?: "default" | "compact" | "hero";
-  initialCampusZone?: string;
-  initialNotes?: string;
 };
 
 export function HousingRequestsBanner({
   className = "",
   variant = "default",
-  initialCampusZone,
-  initialNotes,
 }: HousingRequestsBannerProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -44,12 +40,7 @@ export function HousingRequestsBanner({
             Post Free Request
           </button>
         </div>
-        <PostRequestModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          initialCampusZone={initialCampusZone}
-          initialNotes={initialNotes}
-        />
+        <PostRequestModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
       </>
     );
   }
@@ -90,12 +81,7 @@ export function HousingRequestsBanner({
         </div>
       </div>
 
-      <PostRequestModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        initialCampusZone={initialCampusZone}
-        initialNotes={initialNotes}
-      />
+      <PostRequestModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
