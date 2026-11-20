@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { fireCelebrationConfetti } from "@/lib/confetti"
 import { getTopMatchesForStudent } from "@/app/roommate-actions"
+import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 import {
   Sparkles,
   User,
@@ -31,6 +32,8 @@ type RoommateMatch = {
   phone_number: string
   room_photos: string[]
   room_address: string
+  target_listing_id?: string | null
+  target_listing_title?: string | null
   matchScore: number
   profile: {
     full_name: string
@@ -70,14 +73,18 @@ function MatchModal({
   const isVerified = match.profile?.verification_status === "verified"
 
   const handleConnect = () => {
-    let phone = match.phone_number
-    if (phone.startsWith("0")) phone = "234" + phone.substring(1)
-    else if (!phone.startsWith("234")) phone = "234" + phone
-    const name = match.profile?.full_name?.split(" ")[0] || "there"
-    const message = encodeURIComponent(
-      `Hi ${name}, I saw your roommate profile on HousePlug and I think we're a great match! 🔌`
-    )
-    window.open(`https://wa.me/${phone}?text=${message}`, "_blank")
+    if (!match.phone_number) {
+      window.location.href = `/roommates/${match.id}`
+      return
+    }
+    const waUrl = buildGeneralRoommateWhatsAppLink({
+      phone: match.phone_number,
+      candidateName: match.profile?.full_name?.split(" ")[0] || "there",
+      targetLodgeTitle: match.target_listing_title,
+      targetLodgeId: match.target_listing_id,
+      campusName: match.university,
+    })
+    window.open(waUrl, "_blank")
   }
 
   return createPortal(
@@ -203,15 +210,18 @@ function MatchModal({
         </div>
 
         <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-3">
-          <button onClick={onClose} className="w-1/3 py-3 rounded-xl border border-gray-200 font-bold text-sm text-gray-600 hover:bg-gray-100 transition-colors">
-            Close
-          </button>
           <a
             href={`/roommates/${match.id}`}
-            className="w-2/3 py-3 rounded-xl bg-[#1B4332] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md"
+            className="w-1/3 py-3 rounded-xl border border-gray-200 font-bold text-sm text-gray-700 hover:bg-gray-100 transition-colors text-center"
           >
-            <User className="h-4 w-4 text-[#F59E0B]" /> View Details
+            Profile
           </a>
+          <button
+            onClick={handleConnect}
+            className="w-2/3 py-3 rounded-xl bg-[#1B4332] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          >
+            <Phone className="h-4 w-4 text-[#F59E0B]" /> Connect on WhatsApp
+          </button>
         </div>
       </div>
     </div>,

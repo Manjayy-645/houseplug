@@ -302,7 +302,7 @@ export async function getTopMatchesForStudent() {
   const { data: candidates, error } = await serviceClient
     .from("roommate_profiles")
     .select(
-      "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
+      "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at, phone_number",
     )
     .eq("status", "active")
     .neq("user_id", user.id);
@@ -323,8 +323,8 @@ export async function getTopMatchesForStudent() {
       const matchResult = computeComprehensiveMatchScore(myProfile, candidate);
       return {
         ...candidate,
-        phone_number: "",
-        room_address: "",
+        phone_number: candidate.phone_number || "",
+        room_address: candidate.room_address || "",
         profile: p
           ? {
               full_name: p.full_name?.split(" ")[0] || "Student",

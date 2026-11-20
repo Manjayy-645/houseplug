@@ -269,11 +269,14 @@ export default async function ListingDetailPage({
       );
       const campusFilter = campusObj?.shortName || listingRowData.university;
       const serviceClient = getAdminClient();
+      const isViewerStudent = userProfile?.role === "student";
 
       const { data: roommateRows } = await serviceClient
         .from("roommate_profiles")
         .select(
-          "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, target_listing_id, target_listing_title",
+          isViewerStudent
+            ? "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, target_listing_id, target_listing_title, phone_number, room_address"
+            : "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, target_listing_id, target_listing_title",
         )
         .eq("status", "active")
         .or(
@@ -291,8 +294,8 @@ export default async function ListingDetailPage({
 
         campusRoommates = roommateRows.map((r: any) => ({
           ...r,
-          phone_number: "",
-          room_address: "",
+          phone_number: isViewerStudent ? (r.phone_number || "") : "",
+          room_address: isViewerStudent ? (r.room_address || "") : "",
           profile: (() => {
             const p = usersProfiles?.find((up: any) => up.id === r.user_id);
             return p

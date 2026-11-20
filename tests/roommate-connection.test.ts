@@ -55,6 +55,67 @@ test("buildGeneralRoommateWhatsAppLink with target lodge includes lodge details"
   assert.match(textParam, /houseplug\.ng\/listing\/e9b2f5d8-4f24-4b53-83a3-f0a514d3c401/);
 });
 
+test("buildLodgeRoommateWhatsAppLink constructs valid wa.me URLs with lodge split details", () => {
+  const url = buildLodgeRoommateWhatsAppLink({
+    phone: "08123456789",
+    candidateName: "Emeka",
+    listingTitle: "Silver Crest Lodge",
+    listingArea: "Choba",
+    campusName: "UniPort",
+    listingId: "123e4567-e89b-12d3-a456-426614174000",
+    splitPrice: 150000,
+    splitCount: 2,
+  });
+
+  const parsed = new URL(url);
+  assert.equal(parsed.protocol, "https:");
+  assert.equal(parsed.hostname, "wa.me");
+  assert.equal(parsed.pathname, "/2348123456789");
+
+  const textParam = parsed.searchParams.get("text") || "";
+  assert.match(textParam, /^Hi Emeka,/);
+  assert.match(textParam, /Silver Crest Lodge/);
+  assert.match(textParam, /UniPort/);
+  assert.match(textParam, /150,000/);
+});
+
+test("student roommate direct WhatsApp contact enforces student role authorization and phone protection", () => {
+  function getRoommateContactPayload(
+    roommate: { phone_number: string; room_address: string },
+    viewerRole: string | null,
+  ) {
+    const isStudent = viewerRole === "student";
+    return {
+      phone_number: isStudent ? roommate.phone_number : "",
+      room_address: isStudent ? roommate.room_address : "",
+      canDirectWhatsApp: isStudent && Boolean(roommate.phone_number),
+    };
+  }
+
+  const sample = {
+    phone_number: "08012345678",
+    room_address: "12 University Road, Choba",
+  };
+
+  // Guest (not logged in)
+  const guestResult = getRoommateContactPayload(sample, null);
+  assert.equal(guestResult.phone_number, "");
+  assert.equal(guestResult.room_address, "");
+  assert.equal(guestResult.canDirectWhatsApp, false);
+
+  // Landlord
+  const landlordResult = getRoommateContactPayload(sample, "landlord");
+  assert.equal(landlordResult.phone_number, "");
+  assert.equal(landlordResult.room_address, "");
+  assert.equal(landlordResult.canDirectWhatsApp, false);
+
+  // Signed in student
+  const studentResult = getRoommateContactPayload(sample, "student");
+  assert.equal(studentResult.phone_number, "08012345678");
+  assert.equal(studentResult.room_address, "12 University Road, Choba");
+  assert.equal(studentResult.canDirectWhatsApp, true);
+});
+
 test("roommate connection requirements enforce mutual active profile invariant", () => {
   function validateRoommateProfileEligibility(profile: {
     status: string;

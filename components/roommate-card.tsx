@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { BadgeCheck, User, MessageCircle, Info, Home, Eye, X, MapPin, Sparkles, Phone, ShieldCheck, AlertCircle, ArrowRight, Share2, Check, Building, Zap } from "lucide-react"
 import { UNIVERSITIES } from "@/lib/constants"
 import { UniversityLogo } from "@/components/university"
+import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 
 type RoommateProfile = {
   id: string
@@ -103,8 +104,21 @@ export function RoommateCard({
       return
     }
 
-    // Roommate contact is shared only after both students accept a connection.
-    router.push(`/roommates/${data.id}`)
+    // Case 3: fallback to profile page if phone_number is not loaded
+    if (!data.phone_number) {
+      router.push(`/roommates/${data.id}`)
+      return
+    }
+
+    // Case 4: student — open WhatsApp with smart pre-filled message
+    const waUrl = buildGeneralRoommateWhatsAppLink({
+      phone: data.phone_number,
+      candidateName: firstName || displayName,
+      targetLodgeTitle: data.target_listing_title,
+      targetLodgeId: data.target_listing_id,
+      campusName: data.university,
+    })
+    window.open(waUrl, "_blank")
   }
 
   return (
@@ -272,7 +286,7 @@ export function RoommateCard({
             className="flex-1 rounded-xl bg-[#1B4332] px-3 py-3 text-sm font-bold text-white transition-all hover:bg-[#143326] active:scale-95 flex items-center justify-center gap-1.5 shadow-sm min-h-[44px]"
           >
             <MessageCircle className="h-4 w-4 text-[#F59E0B]" />
-            View &amp; connect
+            WhatsApp
           </button>
         </div>
       </div>

@@ -1,9 +1,8 @@
 "use client"
 
-import { Phone, AlertCircle } from "lucide-react"
-import { useState } from "react"
+import { Phone, AlertCircle, X } from "lucide-react"
+import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { X } from "lucide-react"
 import { buildGeneralRoommateWhatsAppLink } from "@/lib/roommate-matching"
 
 export function RoommateContactButton({
@@ -22,10 +21,20 @@ export function RoommateContactButton({
   campusName?: string
 }) {
   const [showRoleModal, setShowRoleModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleConnect = () => {
     if (currentUserRole !== "student") {
       setShowRoleModal(true)
+      return
+    }
+
+    if (!phoneNumber) {
+      alert("This roommate has not provided a contact phone number yet.")
       return
     }
 
@@ -43,12 +52,12 @@ export function RoommateContactButton({
     <>
       <button
         onClick={handleConnect}
-        className="w-full py-4 rounded-xl bg-[#1B4332] text-white font-bold text-base hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md"
+        className="w-full py-4 rounded-xl bg-[#1B4332] text-white font-bold text-base hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
       >
         <Phone className="h-5 w-5 text-[#F59E0B]" /> Connect on WhatsApp
       </button>
 
-      {showRoleModal && createPortal(
+      {mounted && showRoleModal && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative text-center">
             <button
@@ -69,7 +78,7 @@ export function RoommateContactButton({
             <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 mb-8">
               <p className="text-red-700 text-xs font-semibold">
                 Your current account type does not have permission to contact roommate listings.
-                If you're a student, please sign up with a student account.
+                If you&apos;re a student, please sign up with a student account.
               </p>
             </div>
             <button

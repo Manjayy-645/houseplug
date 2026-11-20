@@ -77,11 +77,15 @@ export default async function RoommatesPage({
     }
   }
 
-  // Build query — public active roommate profiles (excludes phone_number to protect privacy)
+  const isStudent = !isGuest && currentUserRole === "student";
+
+  // Build query — public active roommate profiles
   let query = db
     .from("roommate_profiles")
     .select(
-      "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
+      isStudent
+        ? "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at, phone_number"
+        : "id, user_id, intent, university, budget_min, budget_max, gender, preferred_gender, lifestyle_tags, bio, room_photos, room_address, target_listing_id, target_listing_title, status, created_at, updated_at",
     )
     .eq("status", "active")
     .order("created_at", { ascending: false });
@@ -158,9 +162,16 @@ export default async function RoommatesPage({
     }
   }
 
+  // Protect private contact details for guests and non-students
+  profiles = profiles.map((p) => ({
+    ...p,
+    phone_number: isStudent ? (p.phone_number || "") : "",
+    room_address: isStudent ? (p.room_address || "") : "",
+  }));
+
   // Calculate top compatible matches for logged in student
   const topMatches =
-    currentUserRoommateProfile && currentUserRoommateProfile.score_opt_in
+    currentUserRoommateProfile
       ? profiles
           .filter((p: any) => p.user_id !== currentUserId)
           .map((p: any) => {
@@ -179,12 +190,6 @@ export default async function RoommatesPage({
           .sort((a: any, b: any) => b.matchResult.score - a.matchResult.score)
           .slice(0, 3)
       : [];
-
-  profiles = profiles.map((p) => ({
-    ...p,
-    phone_number: "",
-    room_address: "",
-  }));
   return (
     <main className="min-h-screen bg-[#F9FAFB] pt-24 pb-20">
       <BreadcrumbJsonLd
@@ -216,8 +221,7 @@ export default async function RoommatesPage({
             </h1>
             <p className="text-base md:text-lg text-white/80 mb-8 max-w-xl leading-relaxed">
               Have a room that permits sharing, or want to search together?
-              Compare campuses and budgets, then request a private connection.
-              Contact details are shared only after both students agree.
+              Connect with verified students near your campus and split rent on WhatsApp.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -244,8 +248,7 @@ export default async function RoommatesPage({
                   You&apos;re browsing as a guest
                 </p>
                 <p className="text-gray-500 text-sm">
-                  Create a free student account to request a private roommate
-                  connection. Contact details require mutual agreement.
+                  Create a free student account to contact roommates directly on WhatsApp.
                 </p>
               </div>
             </div>
