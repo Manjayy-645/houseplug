@@ -35,7 +35,7 @@ export default async function StudentDashboardPage() {
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("saved_listings")
-      .select("listing_id, listing:listings(*, landlord:profiles(full_name, verification_status, role))")
+      .select("listing_id, listing:listings(*, landlord:profiles!landlord_id(full_name, verification_status, role))")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(4),

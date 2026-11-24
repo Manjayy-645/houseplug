@@ -19,7 +19,7 @@ export default async function AdminUsersPage({
     .from("profiles")
     .select(`
       *,
-      listings:listings(count)
+      listings:listings!landlord_id(count)
     `, { count: "exact" })
     .order("created_at", { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
