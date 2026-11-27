@@ -101,6 +101,7 @@ try {
     "supabase/migrations/020_real_time_tracking.sql",
     "supabase/migrations/038_activity_events.sql",
     ...(legacyCapture ? [] : migrations.map((m) => "supabase/migrations/" + m)),
+    ...(legacyCapture ? [] : ["tests/fixtures/housing-request-board-compat.sql"]),
     legacyCapture
       ? "tests/fixtures/visual-original-seed.sql"
       : "tests/fixtures/e2e-seed.sql",

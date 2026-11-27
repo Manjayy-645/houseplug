@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { UNIVERSITIES } from "@/lib/constants";
 import { formatRoomType } from "@/lib/utils";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { parseBrowsePage } from "@/lib/seo-pagination";
 import { HousingRequestsBanner } from "@/components/housing-requests/housing-requests-banner";
 import type { Listing } from "@/types";
 
@@ -42,6 +43,7 @@ export async function generateMetadata({
   const university = searchParams.university?.trim();
   const q = searchParams.q?.trim();
   const roomType = searchParams.room_type?.trim();
+  const parsedPage = parseBrowsePage(searchParams.page);
 
   const matchedUni = UNIVERSITIES.find(
     (u) =>
@@ -72,18 +74,26 @@ export async function generateMetadata({
   const queryParams = new URLSearchParams();
   if (university) queryParams.set("university", university);
   if (roomType) queryParams.set("room_type", roomType);
-  if (Number(searchParams.page) > 1)
-    queryParams.set("page", String(Math.floor(Number(searchParams.page))));
+  if (parsedPage.page > 1)
+    queryParams.set("page", String(parsedPage.page));
   const queryString = queryParams.toString();
   const canonicalUrl = queryString
     ? `https://www.houseplug.ng/browse?${queryString}`
     : "https://www.houseplug.ng/browse";
 
+  const hasFacet = Object.entries(searchParams).some(
+    ([key, value]) => Boolean(value) && key !== "page",
+  );
+  let pageHasListings = true;
+  if (parsedPage.page > 1 && !hasFacet) {
+    const { count, error } = await inventoryQuery().limit(1);
+    pageHasListings =
+      !error && parsedPage.page <= Math.ceil((count ?? 0) / PER_PAGE);
+  }
+  if (parsedPage.page > 1) title += ` — Page ${parsedPage.page}`;
   return {
     robots: {
-      index: !Object.entries(searchParams).some(
-        ([k, v]) => !!v && !["page"].includes(k),
-      ),
+      index: !hasFacet && parsedPage.valid && pageHasListings,
       follow: true,
     },
     title,
@@ -120,10 +130,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const distance = searchParams.distance?.trim();
   const landlordId = searchParams.landlord_id?.trim();
   const sort = searchParams.sort ?? "newest";
-  const page = Math.min(
-    10000,
-    Math.max(Math.floor(Number(searchParams.page)) || 1, 1),
-  );
+  const page = parseBrowsePage(searchParams.page).page;
   const from = (page - 1) * PER_PAGE;
   const to = from + PER_PAGE - 1;
 

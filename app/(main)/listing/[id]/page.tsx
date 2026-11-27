@@ -336,10 +336,17 @@ export default async function ListingDetailPage({
         title={listing.title}
         description={listing.description}
         priceYearly={listing.price_yearly}
+        priceBasis={listing.price_basis}
+        showAnnualOffer={
+          listing.rent_term_months === 12 &&
+          Boolean(listing.price_basis && listing.price_basis !== "unconfirmed") &&
+          publicContactAvailable(listing)
+        }
         roomType={formatRoomType(listing.room_type)}
         address={listing.address}
         area={listing.area}
         university={campusName}
+        state={UNIVERSITIES.find((u) => u.id === listing.university)?.state}
         photos={listing.photos}
         amenities={listing.amenities}
         createdAt={listing.created_at}

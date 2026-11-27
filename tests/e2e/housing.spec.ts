@@ -448,13 +448,15 @@ test("optional assistance needs no agent assignment; private requests stay autho
   const p = await admin.newPage();
   await p.goto("/admin/requests");
   await expect(
-    p.getByRole("heading", { name: "Housing requests", exact: true }),
+    p.getByRole("heading", { name: "Student Housing Requests", exact: true }),
   ).toBeVisible();
+  await p.getByRole("button", { name: /^All \(/ }).click();
   await expect(
     p.getByText("Fixture Student", { exact: false }).first(),
   ).toBeVisible();
   const id = await p
-    .locator("article[data-request-id]")
+    .locator("[data-request-id]")
+    .filter({ hasText: "08012345678" })
     .first()
     .getAttribute("data-request-id");
   expect(id).toBeTruthy();
@@ -483,10 +485,17 @@ test("optional assistance needs no agent assignment; private requests stay autho
     data: { listing_ids: [listing] },
   });
   expect(matched.status()).toBe(200);
-  await p.reload();
-  await expect(
-    p.getByRole("link", { name: "View suggested room" }),
-  ).toBeVisible();
+  const matchResponse = await p.request.get(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/housing_request_matches?lead_id=eq.${id}&select=listing_id`,
+    {
+      headers: {
+        apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        Authorization: `Bearer ${sessions.admin.access_token}`,
+      },
+    },
+  );
+  expect(matchResponse.status()).toBe(200);
+  expect(await matchResponse.json()).toEqual([{ listing_id: listing }]);
   const connected = await p.request.patch(
     `${baseURL}/api/housing-requests/${id}`,
     { headers: { Origin: baseURL! }, data: { status: "connected" } },
@@ -516,5 +525,97 @@ test("canonical host, sitemap and guides do not expose previews or private reque
   await expect(page.locator("link[rel=canonical]")).toHaveAttribute(
     "href",
     "https://www.houseplug.ng/guides/student-rental-fees-nigeria",
+  );
+});
+
+test("national location routes show honest inventory and keep thin pages out of the sitemap", async ({
+  page,
+}) => {
+  await page.goto("/university/uniport");
+  await expect(page.getByRole("heading", { name: "Student accommodation near University of Port Harcourt" })).toBeVisible();
+  await expect(page.getByText("Test fixture room")).toBeVisible();
+  await expect(page.getByText("Legacy room with recorded rent")).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://www.houseplug.ng/university/uniport",
+  );
+  expect(await page.locator("main").innerText()).not.toContain("08087654321");
+  const schemas = await page.locator('script[type="application/ld+json"]').allInnerTexts();
+  const breadcrumb = schemas.map((source) => JSON.parse(source))
+    .find((schema) => schema["@type"] === "BreadcrumbList");
+  expect(breadcrumb).toBeTruthy();
+  expect(breadcrumb["@type"]).toBe("BreadcrumbList");
+  expect(breadcrumb.itemListElement.at(-1).item).toBe(
+    "https://www.houseplug.ng/university/uniport",
+  );
+  for (const width of [375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/university/uniport");
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: `test-results/national-seo-after-${width}.jpg`,
+      type: "jpeg",
+      quality: 72,
+      fullPage: true,
+    });
+  }
+
+  await page.goto("/student-housing/uniport");
+  await expect(page).toHaveURL(/\/university\/uniport$/);
+  await page.goto("/university/uniport/aluu");
+  await expect(page.getByText("Test fixture room")).toBeVisible();
+  await expect(page.getByText("Legacy room with recorded rent")).toBeVisible();
+  await expect(page.getByText("Private draft fixture")).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await page.goto("/student-housing/uniport/aluu");
+  await expect(page).toHaveURL(/\/university\/uniport\/aluu$/);
+  await page.goto("/student-housing-nigeria");
+  await expect(page.getByRole("heading", { name: "Student housing in Nigeria" })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await page.goto("/student-housing/rivers");
+  await expect(page.getByRole("heading", { name: "Student housing in Rivers State" })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+
+  const sitemap = await page.request.get("/sitemap.xml");
+  const xml = await sitemap.text();
+  expect(xml).toContain("https://www.houseplug.ng/guides");
+  expect(xml).not.toContain("https://www.houseplug.ng/university/uniport");
+  expect(xml).not.toContain("https://www.houseplug.ng/student-housing-nigeria");
+  expect(xml).not.toContain("/listing/20000000-0000-4000-8000-000000000003");
+  const unpublished = await page.request.get("/university/rsu");
+  expect(unpublished.status()).toBe(404);
+  expect(unpublished.headers()["x-robots-tag"]).toContain("noindex");
+  expect((await page.request.get("/university/no-such-campus")).status()).toBe(404);
+  expect((await page.request.get("/student-housing/no-such-state")).status()).toBe(404);
+  await page.goto("/browse?page=999");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://www.houseplug.ng/browse?page=999",
+  );
+  await page.goto("/browse?page=02");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://www.houseplug.ng/browse",
+  );
+});
+
+test("reviewed guide hub has crawlable guidance without an invented price range", async ({
+  page,
+}) => {
+  await page.goto("/guides");
+  await expect(page.getByRole("heading", { name: "Student housing guides" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Comparing UNIPORT housing areas" }).first(),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Comparing UNIPORT housing areas" }).first().click();
+  await expect(page.getByRole("heading", { name: "Comparing UNIPORT housing areas" })).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://www.houseplug.ng/guides/uniport-neighbourhood-comparison",
   );
 });

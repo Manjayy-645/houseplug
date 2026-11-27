@@ -57,6 +57,7 @@ export function SiteFooter() {
             {[
               ["/contact", "Contact support"],
               ["/safety", "Safety guide"],
+              ["/guides", "Housing guides"],
               ["/guides/student-rental-fees-nigeria", "Rental fees explained"],
               ["/terms", "Terms & refund policy"],
               ["/privacy", "Privacy policy"],

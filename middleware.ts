@@ -1,7 +1,39 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { neighborhoodBySlug, stateBySlug, universityBySlug } from "@/lib/seo-locations"
 
 export async function middleware(request: NextRequest) {
+  const segments = request.nextUrl.pathname.split("/").filter(Boolean)
+  let invalidLocation = false
+  if (segments[0] === "university" && segments.length >= 2) {
+    const university = universityBySlug(segments[1])
+    invalidLocation =
+      segments.length > 3 ||
+      !university?.editorial.approved ||
+      (segments.length === 3 &&
+        !neighborhoodBySlug(university.slug, segments[2]))
+  }
+  if (segments[0] === "student-housing" && segments.length >= 2) {
+    const state = stateBySlug(segments[1])
+    const university = universityBySlug(segments[1])
+    invalidLocation =
+      segments.length > 3 ||
+      (!state && !university) ||
+      (Boolean(state) && (!state!.editorial.approved || segments.length > 2)) ||
+      (segments.length === 3 &&
+        (!university || !neighborhoodBySlug(university.slug, segments[2])))
+  }
+  if (invalidLocation)
+    return new NextResponse(
+      '<html lang="en"><title>Location not found | HousePlug</title><meta name="robots" content="noindex"><body><h1>Location not found</h1><a href="/browse">Browse available rooms</a></body></html>',
+      {
+        status: 404,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "X-Robots-Tag": "noindex, nofollow",
+        },
+      },
+    )
   if (
     /^\/listing\/[^/]+$/.test(request.nextUrl.pathname) &&
     !/^\/listing\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.nextUrl.pathname)
