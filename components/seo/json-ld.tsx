@@ -18,7 +18,7 @@ export function OrganizationJsonLd() {
     url: "https://www.houseplug.ng",
     logo: "https://www.houseplug.ng/logo.png",
     description:
-      "Verified student housing, lodges, self-cons, and flatshares for Nigerian university students.",
+      "Student housing listings, lodges, self-cons, and flatshares for Nigerian university students.",
     foundingDate: "2026",
     address: {
       "@type": "PostalAddress",
@@ -72,10 +72,13 @@ interface ListingJsonLdProps {
   title: string;
   description?: string | null;
   priceYearly: number;
+  priceBasis?: "unconfirmed" | "per_bed" | "per_room" | "per_unit";
+  showAnnualOffer?: boolean;
   roomType: string;
   address: string;
   area: string;
   university: string;
+  state?: string;
   photos?: string[] | null;
   amenities?: string[] | null;
   createdAt?: string | null;
@@ -86,10 +89,13 @@ export function ListingJsonLd({
   title,
   description,
   priceYearly,
+  priceBasis,
+  showAnnualOffer,
   roomType,
   address,
   area,
   university,
+  state,
   photos,
   amenities,
   createdAt,
@@ -110,23 +116,31 @@ export function ListingJsonLd({
       "@type": "PostalAddress",
       streetAddress: address,
       addressLocality: area,
-      addressRegion: "Rivers State",
+      addressRegion: state,
       addressCountry: "NG",
     },
-    offers: {
-      "@type": "Offer",
-      price: priceYearly,
-      priceCurrency: "NGN",
-
-      url: `https://www.houseplug.ng/listing/${id}`,
-      validFrom: createdAt || undefined,
-      priceSpecification: {
-        "@type": "UnitPriceSpecification",
-        price: priceYearly,
-        priceCurrency: "NGN",
-        unitText: "year",
-      },
-    },
+    ...(showAnnualOffer && Number.isSafeInteger(priceYearly) && priceYearly > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            price: priceYearly,
+            priceCurrency: "NGN",
+            url: `https://www.houseplug.ng/listing/${id}`,
+            validFrom: createdAt || undefined,
+            priceSpecification: {
+              "@type": "UnitPriceSpecification",
+              price: priceYearly,
+              priceCurrency: "NGN",
+              unitText:
+                priceBasis === "per_bed"
+                  ? "per bed per year"
+                  : priceBasis === "per_room"
+                    ? "per room per year"
+                    : "per unit per year",
+            },
+          },
+        }
+      : {}),
     amenityFeature: amenities?.map((amenity) => ({
       "@type": "LocationFeatureSpecification",
       name: amenity,

@@ -13,7 +13,8 @@
     "deploymentEnabled": {
       "feat/master-brief-implementation": false,
       "feat/release-integration": false,
-      "fix/restore-houseplug-visuals": false
+      "fix/restore-houseplug-visuals": false,
+      "feat/national-seo-architecture": false
     }
   }
 }

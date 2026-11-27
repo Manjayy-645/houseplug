@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         <Link className="underline" href="/">
           Home
         </Link>{" "}
-        / Housing guides
+        / <Link className="underline" href="/guides">Housing guides</Link>
       </nav>
       <h1 className="text-3xl sm:text-4xl font-bold mb-4">{g.title}</h1>
       <p className="text-lg">{g.description}</p>
@@ -52,7 +52,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
         </section>
       ))}
       <div className="flex flex-wrap gap-5 mt-8">
-        <Link href="/student-housing/uniport" className="underline py-3">
+        <Link href="/university/uniport" className="underline py-3">
           Explore UNIPORT rooms
         </Link>
         <Link href="/housing-assistance" className="underline py-3">

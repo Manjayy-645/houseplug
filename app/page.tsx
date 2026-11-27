@@ -7,6 +7,7 @@ import { Header } from "@/components/header";
 import { HeroSearch } from "@/components/hero-search";
 import { ListingCard } from "@/components/listing-card";
 import { UNIVERSITIES } from "@/lib/constants";
+import { universityBySlug } from "@/lib/seo-locations";
 import { inventoryQuery, eligibleCampusCount } from "@/lib/public-inventory";
 import { promotionEligible } from "@/lib/housing";
 import { siteUrl, DEFAULT_OG_IMAGE } from "@/lib/site";
@@ -245,7 +246,11 @@ export default async function Home() {
                         {counts[u.id] === 1 ? "room" : "rooms"}
                       </p>
                       <Link
-                        href={`/student-housing/${u.id}`}
+                        href={
+                          universityBySlug(u.id)?.editorial.approved
+                            ? `/university/${u.id}`
+                            : `/student-housing/${u.id}`
+                        }
                         className="mt-auto inline-flex min-h-11 items-center justify-center gap-1 text-xs font-bold text-primary underline underline-offset-4"
                       >
                         Explore campus housing

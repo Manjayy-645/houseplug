@@ -15,6 +15,22 @@ export function inventoryQuery() {
     .or(`and(legacy_inventory.eq.true,last_confirmed_at.is.null),and(last_confirmed_at.lte.${new Date().toISOString()},availability_expires_at.gt.${new Date().toISOString()})`);
 }
 
+export function sitemapInventoryQuery() {
+  const now = new Date().toISOString();
+  return createServiceClient()
+    .from("listings")
+    .select("id,updated_at,landlord:profiles!landlord_id!inner(id)")
+    .eq("status", "active")
+    .eq("landlord.banned", false)
+    .eq("landlord.is_banned", false)
+    .in("landlord.role", ["landlord", "agent"])
+    .eq("availability_state", "active")
+    .neq("whatsapp_number", "")
+    .or(
+      `and(legacy_inventory.eq.true,last_confirmed_at.is.null),and(last_confirmed_at.lte.${now},availability_expires_at.gt.${now})`,
+    );
+}
+
 export async function eligibleCampusCount(campus: string) {
   const { count } = await createServiceClient()
     .from("listings")

@@ -71,4 +71,27 @@ export const guides: Record<
       },
     ],
   },
+  "uniport-neighbourhood-comparison": {
+    title: "Comparing UNIPORT housing areas",
+    description:
+      "A practical way to compare individual rooms listed in Choba, Alakahia and Aluu without assuming one neighbourhood fits everyone.",
+    sections: [
+      {
+        title: "Start with actual rooms",
+        body: "HousePlug records the advertiser's area for each property. Compare the currently listed rooms in Choba, Alakahia and Aluu by room type, rent basis, mandatory fees, permitted occupancy and availability. A neighbourhood label alone cannot establish the quality or travel time of a specific room.",
+      },
+      {
+        title: "Check your own journey",
+        body: "Ask the agent for the property's precise meeting point and the campus gate behind any distance estimate. Check the route and transport you expect to use at the times you would travel. Do not treat an area name as a measured distance.",
+      },
+      {
+        title: "Compare first payments",
+        body: "Separate annual rent from the amount due before moving in. Review each listing's disclosed agency, legal, caution and service charges. If any required fee is unknown, request a written breakdown rather than assuming the total equals the rent.",
+      },
+      {
+        title: "Inspect with the advertiser",
+        body: "Contact the responsible agent directly on WhatsApp from the listing. You and the advertiser arrange any inspection; HousePlug does not confirm visits. Check the actual room, utilities, house rules and authority to rent before paying.",
+      },
+    ],
+  },
 };
